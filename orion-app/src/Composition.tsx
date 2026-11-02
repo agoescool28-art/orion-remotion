@@ -1,420 +1,116 @@
-
 import React from "react";
 import {
   AbsoluteFill,
-  Easing,
+  Audio,
   interpolate,
+  Sequence,
   spring,
+  staticFile,
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { ORION_TEMPLATE } from "./orionTemplate";
 
-const colorToRgba = (hex: string, opacity: number) => {
-  const value = hex.slice(1);
-  const red = Number.parseInt(value.slice(0, 2), 16);
-  const green = Number.parseInt(value.slice(2, 4), 16);
-  const blue = Number.parseInt(value.slice(4, 6), 16);
-
-  return `rgba(${red},${green},${blue},${opacity})`;
+type Props = {
+  voiceoverSrc?: string;
+  musicSrc?: string;
+  sfxSrc?: string;
 };
 
-export const MyComponent: React.FC = () => {
+const scenes = [
+  { eyebrow: "ORION CREATIVE PRESENTS", title: "IDEA", subtitle: "Semua karya besar dimulai dari satu gagasan.", number: "01" },
+  { eyebrow: "01 / DISCOVER", title: "TEMUKAN", subtitle: "Gali inti pesan. Kenali siapa yang perlu mendengarnya.", number: "02" },
+  { eyebrow: "02 / DESIGN", title: "RANCANG", subtitle: "Bangun bahasa visual yang punya karakter dan arah.", number: "03" },
+  { eyebrow: "03 / MOTION", title: "GERAKKAN", subtitle: "Satukan ritme, tipografi, cahaya, dan suara.", number: "04" },
+  { eyebrow: "04 / STORY", title: "HIDUPKAN", subtitle: "Ubah informasi menjadi pengalaman yang berkesan.", number: "05" },
+  { eyebrow: "ORION CREATIVE", title: "MAKE IT MATTER.", subtitle: "Bukan sekadar terlihat. Tetapi punya makna.", number: "06" },
+];
+
+const clamp = { extrapolateLeft: "clamp" as const, extrapolateRight: "clamp" as const };
+
+const Scene: React.FC<{ index: number; data: (typeof scenes)[number] }> = ({ index, data }) => {
   const frame = useCurrentFrame();
-  const { fps, width, height } = useVideoConfig();
-
-  const sceneDuration = fps * ORION_TEMPLATE.sceneDurationSeconds;
-  const totalDuration = sceneDuration * ORION_TEMPLATE.scenes.length;
-  const index = Math.min(
-    ORION_TEMPLATE.scenes.length - 1,
-    Math.floor(frame / sceneDuration),
-  );
-
-  const scene = ORION_TEMPLATE.scenes[index];
-  const localFrame = frame - index * sceneDuration;
-  const enter = spring({
-    frame: localFrame,
-    fps,
-    config: { damping: 22, stiffness: 115, mass: 0.8 },
-  });
-  const exit = interpolate(
-    localFrame,
-    [sceneDuration - 18, sceneDuration],
-    [1, 0],
-    {
-      easing: Easing.in(Easing.cubic),
-      extrapolateLeft: "clamp",
-      extrapolateRight: "clamp",
-    },
-  );
-  const sceneOpacity = Math.min(enter, exit);
-  const sceneOffset = interpolate(enter, [0, 1], [42, 0], {
-    easing: Easing.out(Easing.cubic),
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-  const sceneScale = interpolate(enter, [0, 1], [0.985, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-  const titleSpring = spring({
-    frame: Math.max(0, localFrame - 7),
-    fps,
-    config: { damping: 20, stiffness: 125, mass: 0.7 },
-  });
-  const accentSpring = spring({
-    frame: Math.max(0, localFrame - 12),
-    fps,
-    config: { damping: 20, stiffness: 125, mass: 0.7 },
-  });
-  const detailSpring = spring({
-    frame: Math.max(0, localFrame - 19),
-    fps,
-    config: { damping: 22, stiffness: 115, mass: 0.75 },
-  });
-  const titleEnter = interpolate(localFrame, [7, 27], [28, 0], {
-    easing: Easing.out(Easing.cubic),
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-  const accentEnter = interpolate(localFrame, [12, 32], [24, 0], {
-    easing: Easing.out(Easing.cubic),
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-  const detailEnter = interpolate(localFrame, [19, 39], [18, 0], {
-    easing: Easing.out(Easing.cubic),
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-
-  const glowMove = Math.sin(frame / 24) * width * 0.035;
-  const progressWidth = interpolate(frame, [0, totalDuration - 1], [0, 100], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-  const progress = Math.round(progressWidth);
-
-  const small = width * 0.023;
-  const headline = Math.min(width * 0.103, 112);
+  const { fps, durationInFrames } = useVideoConfig();
+  const enter = spring({ frame, fps, config: { damping: 18, stiffness: 90, mass: 0.8 } });
+  const exit = interpolate(frame, [durationInFrames - 12, durationInFrames], [0, 1], clamp);
+  const opacity = interpolate(exit, [0, 1], [1, 0]);
+  const titleY = interpolate(enter, [0, 1], [90, 0]);
+  const titleScale = interpolate(enter, [0, 1], [0.88, 1]);
+  const line = interpolate(frame, [8, 30], [0, 1], clamp);
+  const orbit = frame * (index % 2 === 0 ? 0.45 : -0.35);
+  const glow = 0.45 + Math.sin(frame / 13) * 0.12;
 
   return (
-    <AbsoluteFill
-      style={{
-        backgroundColor: ORION_TEMPLATE.colors.background,
-        color: ORION_TEMPLATE.colors.foreground,
-        fontFamily: "Arial, Helvetica, sans-serif",
-        overflow: "hidden",
-      }}
-    >
-      {/* LAYERED DARK GREEN BACKGROUND */}
-      <AbsoluteFill
-        style={{
-          background:
-            "radial-gradient(ellipse at 78% 36%, rgba(39,93,56,0.42) 0%, rgba(15,33,25,0.4) 30%, transparent 62%), radial-gradient(ellipse at 14% 76%, rgba(32,108,148,0.2) 0%, transparent 48%), linear-gradient(145deg, #101914 0%, #080d0a 48%, #040605 100%)",
-        }}
-      />
+    <AbsoluteFill style={{ backgroundColor: "#101713", color: "#F4F1E8", overflow: "hidden", opacity }}>
+      <AbsoluteFill style={{
+        background: "radial-gradient(circle at 72% 25%, rgba(157,205,120,.18), transparent 34%), radial-gradient(circle at 15% 82%, rgba(77,130,108,.18), transparent 38%), linear-gradient(145deg,#111A15 0%,#0A0F0D 100%)"
+      }} />
+      <AbsoluteFill style={{ opacity: 0.18, backgroundImage: "linear-gradient(rgba(235,242,224,.12) 1px, transparent 1px), linear-gradient(90deg,rgba(235,242,224,.12) 1px, transparent 1px)", backgroundSize: "72px 72px" }} />
+      <div style={{
+        position: "absolute", width: 900, height: 900, border: "1px solid rgba(194,220,167,.18)",
+        borderRadius: "50%", right: -360, top: 150, transform: `rotate(${orbit}deg) scale(${0.9 + glow * 0.1})`,
+        boxShadow: "0 0 100px rgba(146,190,118,.08)"
+      }} />
+      <div style={{
+        position: "absolute", width: 620, height: 620, border: "1px solid rgba(194,220,167,.14)",
+        borderRadius: "50%", right: -220, top: 290, transform: `rotate(${-orbit * 1.7}deg)`
+      }} />
+      <div style={{ position: "absolute", left: 76, right: 76, top: 78, height: 1, background: "rgba(240,240,220,.28)" }} />
+      <div style={{ position: "absolute", left: 76, right: 76, bottom: 90, height: 1, background: "rgba(240,240,220,.28)" }} />
 
-      <AbsoluteFill
-        style={{
-          background:
-            `linear-gradient(120deg, ${colorToRgba(ORION_TEMPLATE.colors.neon, 0.045)}, transparent 38%, rgba(3,7,5,0.55) 82%)`,
-        }}
-      />
+      <div style={{ position: "absolute", left: 78, top: 104, fontFamily: "Arial, sans-serif", fontSize: 22, letterSpacing: 5, color: "#B8C9A4" }}>
+        {data.eyebrow}
+      </div>
+      <div style={{
+        position: "absolute", left: 76, top: "34%", width: 930,
+        transform: `translateY(${titleY}px) scale(${titleScale})`, transformOrigin: "left center",
+        fontFamily: "Arial, Helvetica, sans-serif", fontSize: index === 5 ? 112 : 164,
+        fontWeight: 800, letterSpacing: index === 5 ? -4 : -7, lineHeight: 0.92,
+        color: "#F4F1E8", textShadow: "0 14px 70px rgba(0,0,0,.25)"
+      }}>
+        {data.title}
+      </div>
+      <div style={{
+        position: "absolute", left: 82, top: "57%", width: 720, height: 4,
+        background: "linear-gradient(90deg,#B8D99A,rgba(184,217,154,0))",
+        transform: `scaleX(${line})`, transformOrigin: "left center"
+      }} />
+      <div style={{
+        position: "absolute", left: 82, top: "60%", width: 720,
+        fontFamily: "Arial, sans-serif", fontSize: 34, lineHeight: 1.35,
+        color: "rgba(244,241,232,.78)", opacity: interpolate(frame, [15, 35], [0, 1], clamp),
+        transform: `translateY(${interpolate(frame, [15, 35], [24, 0], clamp)}px)`
+      }}>
+        {data.subtitle}
+      </div>
+      <div style={{ position: "absolute", left: 82, bottom: 122, fontFamily: "Arial, sans-serif", fontSize: 19, letterSpacing: 4, color: "rgba(244,241,232,.48)" }}>
+        VISUAL STORYTELLING ENGINE
+      </div>
+      <div style={{ position: "absolute", right: 82, bottom: 112, fontFamily: "Arial, sans-serif", fontSize: 24, color: "#B8D99A", letterSpacing: 3 }}>
+        {data.number} / 06
+      </div>
+      <div style={{
+        position: "absolute", right: 100, top: 150, width: 12, height: 12, borderRadius: "50%",
+        background: "#B8D99A", boxShadow: "0 0 28px rgba(184,217,154,.8)",
+        opacity: interpolate(frame, [0, 12, 24], [0, 1, 0.45], clamp)
+      }} />
+    </AbsoluteFill>
+  );
+};
 
-      {/* SLOW NEON LIGHT */}
-      <div
-        style={{
-          position: "absolute",
-          width: width * 0.72,
-          height: width * 0.72,
-          borderRadius: "50%",
-          top: height * 0.13,
-          right: -width * 0.28 + glowMove,
-          transform: `translateY(${Math.sin(frame / 45) * height * 0.008}px)`,
-          background:
-            `radial-gradient(circle, ${colorToRgba(ORION_TEMPLATE.colors.neon, 0.13)}, ${colorToRgba(ORION_TEMPLATE.colors.neonBright, 0.035)} 55%, transparent 72%)`,
-        }}
-      />
+export const MyComponent: React.FC<Props> = ({ voiceoverSrc, musicSrc, sfxSrc }) => {
+  const { fps } = useVideoConfig();
+  const framesPerScene = 5 * fps;
 
-      {/* GEOMETRIC RINGS */}
-      {[0, 1, 2].map((n) => (
-        <div
-          key={n}
-          style={{
-            position: "absolute",
-            width: width * (0.48 + n * 0.14),
-            height: width * (0.48 + n * 0.14),
-            border:
-              n === 1
-                ? `1px solid ${colorToRgba(ORION_TEMPLATE.colors.blue, 0.14)}`
-                : `1px solid ${colorToRgba(ORION_TEMPLATE.colors.neon, 0.12 - n * 0.025)}`,
-            borderRadius: "50%",
-            top: height * 0.16 - n * width * 0.07,
-            right: -width * 0.2 - n * width * 0.07 + glowMove,
-            transform: `rotate(${frame * (n % 2 ? -0.12 : 0.08)}deg)`,
-          }}
-        />
+  return (
+    <AbsoluteFill style={{ backgroundColor: "#101713" }}>
+      {scenes.map((scene, index) => (
+        <Sequence key={scene.number} from={index * framesPerScene} durationInFrames={framesPerScene}>
+          <Scene index={index} data={scene} />
+        </Sequence>
       ))}
-
-      {/* SUBTLE TECHNICAL GRID */}
-      <AbsoluteFill
-        style={{
-          opacity: 0.085,
-          backgroundImage:
-            `linear-gradient(${colorToRgba(ORION_TEMPLATE.colors.neon, 0.16)} 1px, transparent 1px), linear-gradient(90deg, ${colorToRgba(ORION_TEMPLATE.colors.neon, 0.16)} 1px, transparent 1px)`,
-          backgroundSize: `${width * 0.07}px ${width * 0.07}px`,
-          maskImage:
-            "linear-gradient(to bottom, transparent, black 30%, black 80%, transparent)",
-        }}
-      />
-
-      {/* FRAME */}
-      <AbsoluteFill
-        style={{
-          margin: width * 0.045,
-          width: "auto",
-          height: "auto",
-          border: `1px solid ${colorToRgba(ORION_TEMPLATE.colors.neon, 0.18)}`,
-        }}
-      />
-
-      {/* HEADER */}
-      <div
-        style={{
-          position: "absolute",
-          top: height * 0.068,
-          left: width * 0.09,
-          right: width * 0.09,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          fontSize: small,
-          fontWeight: 700,
-          color: ORION_TEMPLATE.colors.mutedForeground,
-        }}
-      >
-        <span>{ORION_TEMPLATE.title}</span>
-        <span style={{ color: ORION_TEMPLATE.colors.blue }}>
-          {scene.number} / {`0${ORION_TEMPLATE.scenes.length}`.slice(-2)}
-        </span>
-      </div>
-
-      {/* SCENE CONTENT */}
-      <div
-        style={{
-          position: "absolute",
-          top: height * 0.235,
-          left: width * 0.09,
-          right: width * 0.09,
-          opacity: sceneOpacity,
-          transform: `translateY(${sceneOffset}px) scale(${sceneScale})`,
-        }}
-      >
-        <div
-          style={{
-            display: "inline-block",
-            background: `linear-gradient(105deg, ${ORION_TEMPLATE.colors.neon}, ${ORION_TEMPLATE.colors.neonBright})`,
-            color: ORION_TEMPLATE.colors.neonInk,
-            padding: `${height * 0.009}px ${width * 0.02}px`,
-            fontSize: width * 0.027,
-            fontWeight: 800,
-            marginBottom: height * 0.034,
-            opacity: interpolate(localFrame, [0, 18], [0, 1], {
-              extrapolateLeft: "clamp",
-              extrapolateRight: "clamp",
-            }),
-            transform: `translateY(${interpolate(localFrame, [0, 18], [14, 0], {
-              easing: Easing.out(Easing.cubic),
-              extrapolateLeft: "clamp",
-              extrapolateRight: "clamp",
-            })}px) scale(${interpolate(localFrame, [0, 18], [0.96, 1], {
-              extrapolateLeft: "clamp",
-              extrapolateRight: "clamp",
-            })})`,
-          }}
-        >
-          {scene.label}
-        </div>
-
-        <div
-          style={{
-            fontSize: headline,
-            lineHeight: 1,
-            fontWeight: 900,
-            overflowWrap: "break-word",
-            textWrap: "balance",
-            maxWidth: "100%",
-            opacity: interpolate(localFrame, [7, 27], [0, 1], {
-              extrapolateLeft: "clamp",
-              extrapolateRight: "clamp",
-            }),
-            transform: `translateY(${titleEnter}px) scale(${interpolate(titleSpring, [0, 1], [0.965, 1], {
-              extrapolateLeft: "clamp",
-              extrapolateRight: "clamp",
-            })})`,
-          }}
-        >
-          {scene.title}
-        </div>
-
-        <div
-          style={{
-            color: ORION_TEMPLATE.colors.neon,
-            fontSize: headline,
-            lineHeight: 1,
-            fontWeight: 900,
-            overflowWrap: "break-word",
-            textWrap: "balance",
-            marginTop: height * 0.012,
-            maxWidth: "100%",
-            opacity: interpolate(localFrame, [12, 32], [0, 1], {
-              extrapolateLeft: "clamp",
-              extrapolateRight: "clamp",
-            }),
-            transform: `translateY(${accentEnter}px) scale(${interpolate(accentSpring, [0, 1], [0.97, 1], {
-              extrapolateLeft: "clamp",
-              extrapolateRight: "clamp",
-            })})`,
-          }}
-        >
-          {scene.accent}
-        </div>
-
-        {/* ACCENT LINE */}
-        <div
-          style={{
-            width: interpolate(
-              localFrame,
-              [15, 35],
-              [width * 0.035, width * 0.22],
-              {
-                easing: Easing.out(Easing.cubic),
-                extrapolateLeft: "clamp",
-                extrapolateRight: "clamp",
-              },
-            ),
-            height: 5,
-            opacity: interpolate(localFrame, [12, 30], [0, 1], {
-              extrapolateLeft: "clamp",
-              extrapolateRight: "clamp",
-            }),
-            transform: `translateX(${interpolate(localFrame, [12, 30], [-18, 0], {
-              easing: Easing.out(Easing.cubic),
-              extrapolateLeft: "clamp",
-              extrapolateRight: "clamp",
-            })}px)`,
-            background: `linear-gradient(90deg, ${ORION_TEMPLATE.colors.neon} 0%, ${colorToRgba(ORION_TEMPLATE.colors.neon, 0.72)} 68%, ${colorToRgba(ORION_TEMPLATE.colors.blue, 0.42)} 100%)`,
-            marginTop: height * 0.032,
-            marginBottom: height * 0.028,
-            boxShadow: `0 0 18px ${colorToRgba(ORION_TEMPLATE.colors.neon, 0.28)}`,
-          }}
-        />
-
-        <div
-          style={{
-            borderLeft: `3px solid ${ORION_TEMPLATE.colors.blueSoft}`,
-            paddingLeft: width * 0.025,
-            maxWidth: width * 0.72,
-            fontSize: width * 0.036,
-            lineHeight: 1.4,
-            color: "#d2dbce",
-            opacity: interpolate(localFrame, [19, 39], [0, 1], {
-              extrapolateLeft: "clamp",
-              extrapolateRight: "clamp",
-            }),
-            transform: `translateY(${detailEnter}px) scale(${interpolate(detailSpring, [0, 1], [0.985, 1], {
-              extrapolateLeft: "clamp",
-              extrapolateRight: "clamp",
-            })})`,
-          }}
-        >
-          {scene.detail}
-        </div>
-      </div>
-
-      {/* LOWER INFORMATION */}
-      <div
-        style={{
-          position: "absolute",
-          left: width * 0.09,
-          right: width * 0.09,
-          bottom: height * 0.105,
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            color: ORION_TEMPLATE.colors.mutedForeground,
-            fontSize: small,
-            fontWeight: 700,
-            marginBottom: height * 0.014,
-          }}
-        >
-          <span>{ORION_TEMPLATE.topic}</span>
-          <span>{progress}%</span>
-        </div>
-
-        <div
-          style={{
-            position: "relative",
-            width: "100%",
-            height: 7,
-            backgroundColor: "rgba(210,235,198,0.17)",
-            overflow: "hidden",
-          }}
-        >
-          <div
-            style={{
-              width: `${progressWidth}%`,
-              height: "100%",
-              background: `linear-gradient(90deg, ${ORION_TEMPLATE.colors.neonBright} 0%, ${ORION_TEMPLATE.colors.neonSoft} 78%, ${ORION_TEMPLATE.colors.blue} 100%)`,
-              boxShadow: `0 0 14px ${colorToRgba(ORION_TEMPLATE.colors.neon, 0.55)}`,
-            }}
-          />
-          {[1, 2, 3, 4, 5].map((marker) => (
-            <div
-              key={marker}
-              style={{
-                position: "absolute",
-                top: 0,
-                bottom: 0,
-                left: `${(marker / ORION_TEMPLATE.scenes.length) * 100}%`,
-                width: 2,
-                backgroundColor: "rgba(4,8,5,0.7)",
-              }}
-            />
-          ))}
-          <div
-            style={{
-              position: "absolute",
-              top: 0,
-              bottom: 0,
-              left: `${Math.min(progressWidth, 99)}%`,
-              width: Math.max(5, width * 0.008),
-              backgroundColor: ORION_TEMPLATE.colors.neonMarker,
-              boxShadow: `0 0 12px ${colorToRgba(ORION_TEMPLATE.colors.neon, 0.9)}`,
-              transform: "translateX(-50%)",
-            }}
-          />
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginTop: height * 0.018,
-            color: ORION_TEMPLATE.colors.progressMuted,
-            fontSize: width * 0.019,
-          }}
-        >
-          <span>THINK</span>
-          <span>UNDERSTAND</span>
-          <span>CREATE</span>
-        </div>
-      </div>
+      {voiceoverSrc ? <Audio src={staticFile(voiceoverSrc)} volume={1} /> : null}
+      {musicSrc ? <Audio src={staticFile(musicSrc)} volume={0.18} /> : null}
+      {sfxSrc ? <Audio src={staticFile(sfxSrc)} volume={0.55} /> : null}
     </AbsoluteFill>
   );
 };
