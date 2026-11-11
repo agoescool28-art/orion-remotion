@@ -11,6 +11,9 @@ on:
 jobs:
   render-motion-graphic:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: orion-threat-excellence-v2
     steps:
       - name: Tarik Kode dari Repository
         uses: actions/checkout@v4
@@ -35,5 +38,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Hasil-Video-AI
-          path: out/*.mp4
+          path: orion-threat-excellence-v2/out/*.mp4
           retention-days: 7
