@@ -101,7 +101,7 @@ async function textToMp4() {
   
   const composition = await selectComposition({
     serveUrl: bundled,
-    id: "VerticalMotionReel", 
+    id: "StyleframeAkalV36", 
     inputProps: { data: sceneData },
   });
 
