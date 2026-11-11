@@ -19,6 +19,7 @@ async function textToMp4() {
   
   // === TAMBAHAN BARU: Pastikan folder public tersedia untuk simpan audio ===
   if (!fs.existsSync("public")) fs.mkdirSync("public");
+  if (!fs.existsSync("public/audio")) fs.mkdirSync("public/audio");
   // ========================================================================
 
   const model = genAI.getGenerativeModel({ 
@@ -49,7 +50,7 @@ async function textToMp4() {
     // Download audio-nya dan simpan sebagai file .mp3
     const response = await fetch(audioUrl);
     const buffer = await response.arrayBuffer();
-    fs.writeFileSync(path.resolve("./public/voiceover.mp3"), Buffer.from(buffer));
+    fs.writeFileSync(path.resolve("./public/audio/voiceover.mp3"), Buffer.from(buffer));
     console.log("✅ File voiceover.mp3 berhasil disimpan ke folder public!");
   } catch (error) {
     console.log("⚠️ Gagal membuat TTS, lanjut render tanpa suara narasi baru. Error:", error);
