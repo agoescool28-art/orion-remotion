@@ -51,7 +51,7 @@ async function textToMp4() {
   if (!fs.existsSync("public/audio")) fs.mkdirSync("public/audio");
 
   const model = genAI.getGenerativeModel({ 
-    model: "gemini-2.0-flash", 
+    model: "gemini-3.8-flash", 
     generationConfig: { responseMimeType: "application/json" } 
   });
   
