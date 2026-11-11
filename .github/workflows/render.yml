@@ -30,7 +30,7 @@ jobs:
         run: npm install
 
       - name: Generate MP4 via Gemini & Remotion
-        run: node scripts/generate.js
+        run: node scripts/generate.mjs
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           IDE_KONTEN: ${{ github.event.inputs.ide_konten }}
