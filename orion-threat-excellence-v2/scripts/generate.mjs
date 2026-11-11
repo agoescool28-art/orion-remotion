@@ -8,6 +8,38 @@ import * as googleTTS from "google-tts-api";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const ideKonten = process.env.IDE_KONTEN || "Konsep Produktivitas Kerja"; 
 
+// Fungsi untuk mengirim video langsung ke Telegram
+async function sendToTelegram(videoPath) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+
+  if (!token || !chatId) {
+    console.log("⚠️ Token atau Chat ID Telegram belum diset di GitHub Secrets. Lewatkan pengiriman Telegram.");
+    return;
+  }
+
+  console.log("📤 Mengirim video hasil render ke Telegram pribadi...");
+  const FormData = (await import("form-data")).default;
+  const fetch = (await import("node-fetch")).default;
+
+  const form = new FormData();
+  form.append("chat_id", chatId);
+  form.append("video", fs.createReadStream(videoPath));
+  form.append("caption", `🎬 Video Motion Graphic Selesai Dirender!\n\nTopik: "${ideKonten}"`);
+
+  const response = await fetch(`https://api.telegram.org/bot${token}/sendVideo`, {
+    method: "POST",
+    body: form,
+  });
+
+  const result = await response.json();
+  if (result.ok) {
+    console.log("✅ Video berhasil dikirim ke Telegram!");
+  } else {
+    console.log("❌ Gagal mengirim ke Telegram:", result);
+  }
+}
+
 async function textToMp4() {
   console.log(`🧠 AI Director memproses ide secara dinamis: "${ideKonten}"...`);
 
@@ -20,7 +52,6 @@ async function textToMp4() {
     generationConfig: { responseMimeType: "application/json" } 
   });
   
-  // === PROMPT DINAMIS: Gemini menyesuaikan style visual & narasi berdasarkan topik ===
   const prompt = `
   Bertindaklah sebagai Senior Motion Designer dan AI Director. Analisis ide konten berikut: "${ideKonten}".
   Tentukan secara cerdas dan dinamis:
@@ -39,7 +70,6 @@ async function textToMp4() {
 
   console.log(`🎥 Skenario & Style Dinamis Jadi! (Gaya: ${sceneData.themeStyle}, Warna: ${sceneData.accentColor})`);
 
-  // Proses Generate Voiceover TTS
   console.log("🎙️ Membuat Voiceover Text-to-Speech (TTS)...");
   try {
     const teksNarasi = sceneData.insight || "Proses selesai";
@@ -77,6 +107,9 @@ async function textToMp4() {
   });
 
   console.log(`✅ Selesai! Video dirender: ${outputFileName}`);
+
+  // Panggil fungsi kirim ke Telegram
+  await sendToTelegram(outputFileName);
 }
 
 textToMp4();
