@@ -3,68 +3,66 @@ import { bundle } from "@remotion/bundler";
 import { renderMedia, selectComposition } from "@remotion/renderer";
 import path from "path";
 import fs from "fs";
-
-// === TAMBAHAN BARU: Import Google TTS ===
 import * as googleTTS from "google-tts-api"; 
-// ========================================
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const ideKonten = process.env.IDE_KONTEN; 
+const ideKonten = process.env.IDE_KONTEN || "Konsep Produktivitas Kerja"; 
 
 async function textToMp4() {
-  console.log(`🧠 AI Director memproses ide: "${ideKonten}"...`);
+  console.log(`🧠 AI Director memproses ide secara dinamis: "${ideKonten}"...`);
 
-  // Pastikan folder output tersedia
   if (!fs.existsSync("out")) fs.mkdirSync("out");
-  
-  // === TAMBAHAN BARU: Pastikan folder public tersedia untuk simpan audio ===
   if (!fs.existsSync("public")) fs.mkdirSync("public");
   if (!fs.existsSync("public/audio")) fs.mkdirSync("public/audio");
-  // ========================================================================
 
   const model = genAI.getGenerativeModel({ 
     model: "gemini-3.8-flash", 
     generationConfig: { responseMimeType: "application/json" } 
   });
   
-  const prompt = `Buat 1 scene motion graphic vertikal tentang ${ideKonten}. Keluarkan JSON murni dengan: title (string), subtitle (string), insight (string), durationInFrames (number max 150), themeColor (hex code).`;
+  // === PROMPT DINAMIS: Gemini menyesuaikan style visual & narasi berdasarkan topik ===
+  const prompt = `
+  Bertindaklah sebagai Senior Motion Designer dan AI Director. Analisis ide konten berikut: "${ideKonten}".
+  Tentukan secara cerdas dan dinamis:
+  1. title: Judul singkat yang kuat (maks 4 kata).
+  2. subtitle: Penjelas atau poin utama yang tajam.
+  3. insight: Narasi voiceover yang mengalir natural, edukatif, dan sesuai konteks topik dalam Bahasa Indonesia.
+  4. themeStyle: Pilih salah satu gaya visual yang paling cocok dengan topik ("industrial" untuk manufaktur/teknik, "corporate" untuk bisnis/manajemen, "creative" untuk psikologi/ide/quotes, atau "clean" untuk edukasi umum).
+  5. accentColor: Kode HEX warna aksen yang cocok dengan tema (misal: #10b981 untuk hijau pendar industrial, #3b82f6 untuk biru korporat, #f59e0b untuk kuning kreatif).
+  6. durationInFrames: Angka durasi antara 120 sampai 180.
+
+  Keluarkan hasilnya dalam format JSON murni tanpa teks lain.
+  `;
   
   const result = await model.generateContent(prompt);
   const sceneData = JSON.parse(result.response.text());
 
-  console.log("🎥 JSON Skenario jadi!");
+  console.log(`🎥 Skenario & Style Dinamis Jadi! (Gaya: ${sceneData.themeStyle}, Warna: ${sceneData.accentColor})`);
 
-  // === TAMBAHAN BARU: PROSES GENERATE AUDIO TTS SEBELUM RENDER ===
+  // Proses Generate Voiceover TTS
   console.log("🎙️ Membuat Voiceover Text-to-Speech (TTS)...");
   try {
-    // Kita minta TTS membacakan bagian 'insight' dari hasil Gemini
     const teksNarasi = sceneData.insight || "Proses selesai";
-    
-    // Generate URL audio dari Google Translate TTS versi bahasa Indonesia
     const audioUrl = googleTTS.getAudioUrl(teksNarasi, {
       lang: 'id',
       slow: false,
       host: 'https://translate.google.com',
     });
     
-    // Download audio-nya dan simpan sebagai file .mp3
     const response = await fetch(audioUrl);
     const buffer = await response.arrayBuffer();
     fs.writeFileSync(path.resolve("./public/audio/voiceover.mp3"), Buffer.from(buffer));
-    console.log("✅ File voiceover.mp3 berhasil disimpan ke folder public!");
+    console.log("✅ File voiceover.mp3 berhasil disimpan!");
   } catch (error) {
-    console.log("⚠️ Gagal membuat TTS, lanjut render tanpa suara narasi baru. Error:", error);
+    console.log("⚠️ Gagal membuat TTS, lanjut render tanpa suara narasi. Error:", error);
   }
-  // ================================================================
 
   console.log("🚀 Memulai proses Remotion FFmpeg...");
 
-  // Proses render (Sama persis seperti kode Anda sebelumnya)
   const bundled = await bundle(path.resolve("./src/index.ts"));
   
   const composition = await selectComposition({
     serveUrl: bundled,
-    // CATATAN: Pastikan ID ini sesuai dengan ID di Root.tsx Anda
     id: "VerticalMotionReel", 
     inputProps: { data: sceneData },
   });
