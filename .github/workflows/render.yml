@@ -30,14 +30,11 @@ jobs:
         run: npm install
 
       - name: Generate MP4 via Gemini & Remotion
-        run: node scripts/generate.mjs
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          IDE_KONTEN: ${{ github.event.inputs.ide_konten }}
-          - name: Generate MP4 via Gemini & Remotion
-            run: node scripts/generate.mjs
+    run: node scripts/generate.mjs
     env:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       IDE_KONTEN: ${{ github.event.inputs.ide_konten }}
 
       - name: Upload Video Artifact
