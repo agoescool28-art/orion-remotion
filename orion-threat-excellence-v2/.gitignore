@@ -1,0 +1,4 @@
+/.env*
+!/.env.example
+/.orion-cache/
+/node_modules/
