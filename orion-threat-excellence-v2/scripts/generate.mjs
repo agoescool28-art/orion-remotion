@@ -68,7 +68,21 @@ async function textToMp4() {
   Keluarkan hasilnya dalam format JSON murni tanpa teks lain.
   `;
   
-  const result = await model.generateContent(prompt);
+  let result;
+  let attempts = 0;
+  const maxAttempts = 3;
+
+  while (attempts < maxAttempts) {
+    try {
+      attempts++;
+      result = await model.generateContent(prompt);
+      break;
+    } catch (err) {
+      console.log(`⚠️ Server Gemini sibuk (Percobaan ${attempts}/${maxAttempts}). Menunggu 5 detik...`);
+      if (attempts >= maxAttempts) throw err;
+      await new Promise(res => setTimeout(res, 5000));
+    }
+  }
   const sceneData = JSON.parse(result.response.text());
 
   console.log(`🎥 Skenario & Style Dinamis Jadi! (Gaya: ${sceneData.themeStyle}, Warna: ${sceneData.accentColor})`);
