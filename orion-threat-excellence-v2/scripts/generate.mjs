@@ -8,7 +8,6 @@ import * as googleTTS from "google-tts-api";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const ideKonten = process.env.IDE_KONTEN || "Konsep Produktivitas Kerja"; 
 
-// Fungsi untuk mengirim video langsung ke Telegram
 async function sendToTelegram(videoPath) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
@@ -19,24 +18,28 @@ async function sendToTelegram(videoPath) {
   }
 
   console.log("📤 Mengirim video hasil render ke Telegram pribadi...");
-  const FormData = (await import("form-data")).default;
-  const fetch = (await import("node-fetch")).default;
+  try {
+    const FormData = (await import("form-data")).default;
+    const fetch = (await import("node-fetch")).default;
 
-  const form = new FormData();
-  form.append("chat_id", chatId);
-  form.append("video", fs.createReadStream(videoPath));
-  form.append("caption", `🎬 Video Motion Graphic Selesai Dirender!\n\nTopik: "${ideKonten}"`);
+    const form = new FormData();
+    form.append("chat_id", chatId);
+    form.append("video", fs.createReadStream(videoPath));
+    form.append("caption", `🎬 Video Motion Graphic Selesai Dirender!\n\nTopik: "${ideKonten}"`);
 
-  const response = await fetch(`https://api.telegram.org/bot${token}/sendVideo`, {
-    method: "POST",
-    body: form,
-  });
+    const response = await fetch(`https://api.telegram.org/bot${token}/sendVideo`, {
+      method: "POST",
+      body: form,
+    });
 
-  const result = await response.json();
-  if (result.ok) {
-    console.log("✅ Video berhasil dikirim ke Telegram!");
-  } else {
-    console.log("❌ Gagal mengirim ke Telegram:", result);
+    const result = await response.json();
+    if (result.ok) {
+      console.log("✅ Video berhasil dikirim ke Telegram!");
+    } else {
+      console.log("❌ Gagal mengirim ke Telegram:", result);
+    }
+  } catch (err) {
+    console.log("❌ Error saat kirim Telegram:", err.message);
   }
 }
 
@@ -57,9 +60,9 @@ async function textToMp4() {
   Tentukan secara cerdas dan dinamis:
   1. title: Judul singkat yang kuat (maks 4 kata).
   2. subtitle: Penjelas atau poin utama yang tajam.
-  3. insight: Narasi voiceover yang mengalir natural, edukatif, dan sesuai konteks topik dalam Bahasa Indonesia.
-  4. themeStyle: Pilih salah satu gaya visual yang paling cocok dengan topik ("industrial" untuk manufaktur/teknik, "corporate" untuk bisnis/manajemen, "creative" untuk psikologi/ide/quotes, atau "clean" untuk edukasi umum).
-  5. accentColor: Kode HEX warna aksen yang cocok dengan tema (misal: #10b981 untuk hijau pendar industrial, #3b82f6 untuk biru korporat, #f59e0b untuk kuning kreatif).
+  3. insight: Narasi voiceover yang mengalir natural dalam Bahasa Indonesia (WAJIB di bawah 170 karakter agar aman di TTS).
+  4. themeStyle: Pilih salah satu gaya visual ("industrial", "corporate", "creative", atau "clean").
+  5. accentColor: Kode HEX warna aksen yang cocok (misal: #10b981, #3b82f6, #f59e0b).
   6. durationInFrames: Angka durasi antara 120 sampai 180.
 
   Keluarkan hasilnya dalam format JSON murni tanpa teks lain.
@@ -72,7 +75,12 @@ async function textToMp4() {
 
   console.log("🎙️ Membuat Voiceover Text-to-Speech (TTS)...");
   try {
-    const teksNarasi = sceneData.insight || "Proses selesai";
+    // PEMBATASAN KARAKTER: Potong otomatis jika narasi melebihi 180 karakter
+    let teksNarasi = sceneData.insight || "Proses render selesai";
+    if (teksNarasi.length > 180) {
+      teksNarasi = teksNarasi.substring(0, 175) + "...";
+    }
+
     const audioUrl = googleTTS.getAudioUrl(teksNarasi, {
       lang: 'id',
       slow: false,
@@ -84,7 +92,7 @@ async function textToMp4() {
     fs.writeFileSync(path.resolve("./public/audio/voiceover.mp3"), Buffer.from(buffer));
     console.log("✅ File voiceover.mp3 berhasil disimpan!");
   } catch (error) {
-    console.log("⚠️ Gagal membuat TTS, lanjut render tanpa suara narasi. Error:", error);
+    console.log("⚠️ Gagal membuat TTS:", error.message);
   }
 
   console.log("🚀 Memulai proses Remotion FFmpeg...");
@@ -108,7 +116,6 @@ async function textToMp4() {
 
   console.log(`✅ Selesai! Video dirender: ${outputFileName}`);
 
-  // Panggil fungsi kirim ke Telegram
   await sendToTelegram(outputFileName);
 }
 
