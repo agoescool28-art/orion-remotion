@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       ide_konten:
-        description: 'Ketik ide konten video Anda di sini (contoh: Konsep Takt Time)'
+        description: 'Ketik ide konten video Anda di sini'
         required: true
         default: 'Penjelasan Singkat 5S di Area Produksi'
 
@@ -12,10 +12,10 @@ jobs:
   render-motion-graphic:
     runs-on: ubuntu-latest
     
-    # Catatan: Hapus atau sesuaikan bagian ini jika letak folder berubah
-    # defaults:
-    #   run:
-    #     working-directory: ./orion-app
+    # KUNCI PERBAIKAN: Memberi tahu GitHub letak folder proyek Anda
+    defaults:
+      run:
+        working-directory: ./orion-threat-excellence-v2
 
     steps:
       - name: Tarik Kode dari Repository
@@ -30,7 +30,7 @@ jobs:
         run: npm install
 
       - name: Generate MP4 via Gemini & Remotion
-        run: node scripts/generate.js
+        run: node scripts/generate.mjs
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           IDE_KONTEN: ${{ github.event.inputs.ide_konten }}
@@ -39,5 +39,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Hasil-Video-AI
-          path: out/*.mp4
+          # Menyesuaikan jalur folder saat mengunduh hasil video
+          path: ./orion-threat-excellence-v2/out/*.mp4
           retention-days: 7
