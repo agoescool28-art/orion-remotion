@@ -70,7 +70,7 @@ async function textToMp4() {
   
   let result;
   let attempts = 0;
-  const maxAttempts = 3;
+  const maxAttempts = 5; // Ditingkatkan jadi 5 kali
 
   while (attempts < maxAttempts) {
     try {
@@ -78,9 +78,9 @@ async function textToMp4() {
       result = await model.generateContent(prompt);
       break;
     } catch (err) {
-      console.log(`⚠️ Server Gemini sibuk (Percobaan ${attempts}/${maxAttempts}). Menunggu 5 detik...`);
+      console.log(`⚠️ Server Gemini sibuk (Percobaan ${attempts}/${maxAttempts}). Menunggu 10 detik...`);
       if (attempts >= maxAttempts) throw err;
-      await new Promise(res => setTimeout(res, 5000));
+      await new Promise(res => setTimeout(res, 10000)); // Jeda 10 detik
     }
   }
   // 1. Ambil teks respons Gemini & bersihkan format markdown jika ada
