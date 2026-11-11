@@ -1,7 +1,7 @@
 
 import React from "react";
-import { AbsoluteFill, interpolate, useCurrentFrame } from "remotion";
-
+import { AbsoluteFill,interpolate, getInputProps, useCurrentFrame } from "remotion";
+import defaultData from "./materi.json";
 const W = 1080;
 const H = 1920;
 
@@ -434,7 +434,13 @@ const SceneFour: React.FC<{ f: number }> = ({ f }) => {
   );
 };
 
-export const StyleframeAkalV36: React.FC = () => {
+export const StyleframeAkalV36: React.FC = () => {// Ambil data dinamis dari Gemini
+  const inputProps = getInputProps();
+const data = Object.keys(inputProps).length > 0 ? inputProps : defaultData;
+
+const titleText = data.title;
+const subtitleText = data.subtitle;
+const insightText = data.insight;
   const f = useCurrentFrame();
 
   return (

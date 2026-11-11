@@ -83,6 +83,24 @@ async function textToMp4() {
       await new Promise(res => setTimeout(res, 5000));
     }
   }
+  // 1. Ambil teks respons Gemini & bersihkan format markdown jika ada
+  const rawText = result.response.text();
+  const jsonString = rawText.replace(/```json|```/g, "").trim();
+  const dynamicData = JSON.parse(jsonString);
+
+  console.log("💡 Data Dinamis dari Gemini:", dynamicData);
+
+  // 2. Simpan juga ke file materi.json (agar komponen React bisa membaca/fallback)
+  fs.writeFileSync("./src/materi.json", JSON.stringify(dynamicData, null, 2));
+
+  // 3. Masukkan dynamicData ke dalam inputProps saat merender
+  await renderMedia({
+    composition,
+    serveUrl,
+    codec: "h264",
+    outputLocation: outputFileName,
+    inputProps: dynamicData, // <--- KUNCI UTAMA: Menyuntikkan data Gemini ke Remotion
+  });
   const sceneData = JSON.parse(result.response.text());
 
   console.log(`🎥 Skenario & Style Dinamis Jadi! (Gaya: ${sceneData.themeStyle}, Warna: ${sceneData.accentColor})`);
