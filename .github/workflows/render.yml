@@ -1,34 +1,43 @@
-name: Render Remotion Video
+name: 🎬 AI Text-to-Video Generator
 
 on:
   workflow_dispatch:
+    inputs:
+      ide_konten:
+        description: 'Ketik ide konten video Anda di sini (contoh: Konsep Takt Time)'
+        required: true
+        default: 'Penjelasan Singkat 5S di Area Produksi'
 
 jobs:
-  render:
+  render-motion-graphic:
     runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: ./orion-app
+    
+    # Catatan: Hapus atau sesuaikan bagian ini jika letak folder berubah
+    # defaults:
+    #   run:
+    #     working-directory: ./orion-app
 
     steps:
-      - name: Checkout
+      - name: Tarik Kode dari Repository
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: '18'
 
       - name: Install Dependencies
         run: npm install
 
-      - name: Render Video
-        run: |
-          mkdir -p out
-          npx remotion render MyComp out/video.mp4
-      - name: Upload Video
+      - name: Generate MP4 via Gemini & Remotion
+        run: node scripts/generate.js
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          IDE_KONTEN: ${{ github.event.inputs.ide_konten }}
+
+      - name: Upload Video Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: rendered-video
-          path: orion-app/out/video.mp4
+          name: Hasil-Video-AI
+          path: out/*.mp4
+          retention-days: 7
