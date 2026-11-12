@@ -1,6 +1,6 @@
 
 import React from "react";
-import { AbsoluteFill,interpolate, getInputProps, useCurrentFrame } from "remotion";
+import { AbsoluteFill, interpolate, getInputProps, useCurrentFrame, Audio, staticFile } from "remotion";
 import defaultData from "./materi.json";
 const W = 1080;
 const H = 1920;
@@ -444,13 +444,14 @@ const insightText = data.insight;
   const f = useCurrentFrame();
 
   return (
-    <AbsoluteFill style={{ backgroundColor: C.bg }}>
-      <svg
-        width="100%"
-        height="100%"
-        viewBox={`0 0 ${W} ${H}`}
-        preserveAspectRatio="xMidYMid meet"
-      >
+  <AbsoluteFill style={{ backgroundColor: C.bg }}>
+    <Audio src={staticFile("audio/voiceover.mp3")} />
+    <svg
+      width="100%"
+      height="100%"
+      viewBox={`0 0 ${W} ${H}`}
+      preserveAspectRatio="xMidYMid meet"
+    >
         <Background />
         <Header />
         <SceneOne f={f} />

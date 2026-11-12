@@ -3,10 +3,10 @@ import { bundle } from "@remotion/bundler";
 import { renderMedia, selectComposition } from "@remotion/renderer";
 import path from "path";
 import fs from "fs";
-import * as googleTTS from "google-tts-api"; 
+import * as googleTTS from "google-tts-api";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const ideKonten = process.env.IDE_KONTEN || "Konsep Produktivitas Kerja"; 
+const ideKonten = process.env.IDE_KONTEN || "Konsep Kaizen dan Manfaatnya di Industri";
 
 async function sendToTelegram(videoPath) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -17,10 +17,10 @@ async function sendToTelegram(videoPath) {
     return;
   }
 
-  console.log("📤 Mengirim video hasil render ke Telegram pribadi...");
+  console.log("📤 Mengirim video hasil render ke Telegram...");
   try {
     const FormData = (await import("form-data")).default;
-    const fetch = (await import("node-fetch")).default;
+    const fetch = globalThis.fetch || (await import("node-fetch")).default;
 
     const form = new FormData();
     form.append("chat_id", chatId);
@@ -46,15 +46,17 @@ async function sendToTelegram(videoPath) {
 async function textToMp4() {
   console.log(`🧠 AI Director memproses ide secara dinamis: "${ideKonten}"...`);
 
+  // Pastikan direktori tempat penyimpanan ada
   if (!fs.existsSync("out")) fs.mkdirSync("out");
   if (!fs.existsSync("public")) fs.mkdirSync("public");
   if (!fs.existsSync("public/audio")) fs.mkdirSync("public/audio");
+  if (!fs.existsSync("src")) fs.mkdirSync("src");
 
-  const model = genAI.getGenerativeModel({ 
-    model: "gemini-3.8-flash", 
-    generationConfig: { responseMimeType: "application/json" } 
+  const model = genAI.getGenerativeModel({
+    model: "gemini-3.8-flash",
+    generationConfig: { responseMimeType: "application/json" }
   });
-  
+
   const prompt = `
   Bertindaklah sebagai Senior Motion Designer dan AI Director. Analisis ide konten berikut: "${ideKonten}".
   Tentukan secara cerdas dan dinamis:
@@ -67,11 +69,12 @@ async function textToMp4() {
 
   Keluarkan hasilnya dalam format JSON murni tanpa teks lain.
   `;
-  
+
   let result;
   let attempts = 0;
-  const maxAttempts = 5; // Ditingkatkan jadi 5 kali
+  const maxAttempts = 5;
 
+  // 1. Logika Auto-Retry jika Server Gemini 503
   while (attempts < maxAttempts) {
     try {
       attempts++;
@@ -80,35 +83,24 @@ async function textToMp4() {
     } catch (err) {
       console.log(`⚠️ Server Gemini sibuk (Percobaan ${attempts}/${maxAttempts}). Menunggu 10 detik...`);
       if (attempts >= maxAttempts) throw err;
-      await new Promise(res => setTimeout(res, 10000)); // Jeda 10 detik
+      await new Promise(res => setTimeout(res, 10000));
     }
   }
-  // 1. Ambil teks respons Gemini & bersihkan format markdown jika ada
+
+  // 2. Parse Hasil JSON
   const rawText = result.response.text();
   const jsonString = rawText.replace(/```json|```/g, "").trim();
-  const dynamicData = JSON.parse(jsonString);
+  const sceneData = JSON.parse(jsonString);
 
-  console.log("💡 Data Dinamis dari Gemini:", dynamicData);
+  console.log("💡 Data Dinamis dari Gemini:", sceneData);
 
-  // 2. Simpan juga ke file materi.json (agar komponen React bisa membaca/fallback)
-  fs.writeFileSync("./src/materi.json", JSON.stringify(dynamicData, null, 2));
+  // 3. Simpan materi.json sebagai fallback
+  fs.writeFileSync("./src/materi.json", JSON.stringify(sceneData, null, 2));
 
-  // 3. Masukkan dynamicData ke dalam inputProps saat merender
-  await renderMedia({
-    composition,
-    serveUrl,
-    codec: "h264",
-    outputLocation: outputFileName,
-    inputProps: dynamicData, // <--- KUNCI UTAMA: Menyuntikkan data Gemini ke Remotion
-  });
-  const sceneData = JSON.parse(result.response.text());
-
-  console.log(`🎥 Skenario & Style Dinamis Jadi! (Gaya: ${sceneData.themeStyle}, Warna: ${sceneData.accentColor})`);
-
+  // 4. Generate Voiceover TTS Audio
   console.log("🎙️ Membuat Voiceover Text-to-Speech (TTS)...");
   try {
-    // PEMBATASAN KARAKTER: Potong otomatis jika narasi melebihi 180 karakter
-    let teksNarasi = sceneData.insight || "Proses render selesai";
+    let teksNarasi = sceneData.insight || "Proses perbaikan berkelanjutan";
     if (teksNarasi.length > 180) {
       teksNarasi = teksNarasi.substring(0, 175) + "...";
     }
@@ -118,7 +110,8 @@ async function textToMp4() {
       slow: false,
       host: 'https://translate.google.com',
     });
-    
+
+    const fetch = globalThis.fetch || (await import("node-fetch")).default;
     const response = await fetch(audioUrl);
     const buffer = await response.arrayBuffer();
     fs.writeFileSync(path.resolve("./public/audio/voiceover.mp3"), Buffer.from(buffer));
@@ -127,27 +120,32 @@ async function textToMp4() {
     console.log("⚠️ Gagal membuat TTS:", error.message);
   }
 
-  console.log("🚀 Memulai proses Remotion FFmpeg...");
-
+  // 5. Remotion Bundling & Composition Selection
+  console.log("🚀 Memulai proses Remotion Bundle & Render...");
   const bundled = await bundle(path.resolve("./src/index.ts"));
-  
+
+  const inputPropsData = { ...sceneData, data: sceneData };
+
   const composition = await selectComposition({
     serveUrl: bundled,
-    id: "StyleframeAkalV36", 
-    inputProps: { data: sceneData },
+    id: "StyleframeAkalV36",
+    inputProps: inputPropsData,
   });
 
   const outputFileName = `out/Video_${Date.now()}.mp4`;
+
+  // 6. Render Video MP4
   await renderMedia({
     composition,
     serveUrl: bundled,
     codec: "h264",
     outputLocation: outputFileName,
-    inputProps: { data: sceneData },
+    inputProps: inputPropsData,
   });
 
   console.log(`✅ Selesai! Video dirender: ${outputFileName}`);
 
+  // 7. Kirim ke Telegram
   await sendToTelegram(outputFileName);
 }
 

@@ -21,6 +21,9 @@ import { OrionV61 } from "./OrionV61";
 import { OrionV62 } from "./OrionV62";
 import { OrionV70 } from "./OrionV70";
 import { OrionV70MotionTest } from "./OrionV70MotionTest";
+import {
+  OrionV70MotionTestRevision3
+} from "./OrionV70MotionTest-REVISION3";
 export const RemotionRoot: React.FC = () => {
   return (
     <>
@@ -174,6 +177,14 @@ export const RemotionRoot: React.FC = () => {
 <Composition
   id="OrionV70MotionTest"
   component={OrionV70MotionTest}
+  durationInFrames={960}
+  fps={30}
+  width={1080}
+  height={1920}
+/>
+<Composition
+  id="OrionV70MotionTestRevision3"
+  component={OrionV70MotionTestRevision3}
   durationInFrames={960}
   fps={30}
   width={1080}
