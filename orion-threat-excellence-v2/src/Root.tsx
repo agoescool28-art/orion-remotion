@@ -194,11 +194,16 @@ export const RemotionRoot: React.FC = () => {
 <Composition
   id="DynamicMotionVideo"
   component={DynamicMotionVideo}
-  durationInFrames={180}
+  durationInFrames={1800}
   fps={30}
   width={1080}
   height={1920}
-/>      
+  calculateMetadata={({ props }) => {
+  return {
+  durationInFrames: (props as any)?.durationInFrames || 1800,
+  };
+    }}
+      />
     </>
   );
 };
