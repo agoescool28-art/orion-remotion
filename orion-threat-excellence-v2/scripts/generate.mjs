@@ -20,7 +20,7 @@ async function generateWithTimeout(model, prompt, timeoutMs = 20000) {
   ]);
 }
 
-async function sendToTelegram(videoPath) {
+async function sendToTelegram(videoPath, judulTopik, durasiDetik) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
 
@@ -39,7 +39,7 @@ async function sendToTelegram(videoPath) {
     form.append("video", videoBlob, path.basename(videoPath));
     form.append(
       "caption",
-      `🎬 Video Motion Graphic Selesai Dirender!\n\nTopik: "${ideKonten}"`
+      `🎬 Video Motion Graphic Selesai Dirender!\n\nJudul: "${judulTopik}"\nDurasi: ${durasiDetik} detik`
     );
 
     const response = await fetch(`https://api.telegram.org/bot${token}/sendVideo`, {
@@ -59,139 +59,169 @@ async function sendToTelegram(videoPath) {
 }
 
 async function textToMp4() {
-  console.log(`🧠 AI Director merancang 3 adegan untuk topik: "${ideKonten}"...`);
-
   if (!fs.existsSync("out")) fs.mkdirSync("out", { recursive: true });
   if (!fs.existsSync("public/audio")) fs.mkdirSync("public/audio", { recursive: true });
 
-  const prompt = `
-  Bertindaklah sebagai Senior Motion Designer dan Industrial Engineer. Buat skenario video motion graphic vertikal 3 adegan untuk topik: "${ideKonten}".
-  Keluarkan JSON murni dengan struktur persis seperti ini:
-  {
-    "title": "Judul utama singkat maks 4 kata",
-    "subtitle": "Subjudul ringkas",
-    "insight": "Narasi voiceover Bahasa Indonesia yang jelas dan mengalir (WAJIB di bawah 165 karakter)",
-    "accentColor": "#10b981",
-    "durationInFrames": 180,
-    "scenes": [
-      {
-        "tag": "01 • PENGENALAN",
-        "heading": "Judul Adegan 1 (maks 3 kata)",
-        "body": "Penjelasan inti adegan 1 (maks 12 kata)",
-        "visualType": "gear"
-      },
-      {
-        "tag": "02 • MEKANISME / DATA",
-        "heading": "Judul Adegan 2 (maks 3 kata)",
-        "body": "Penjelasan cara kerja atau dampak nyata (maks 12 kata)",
-        "visualType": "chart"
-      },
-      {
-        "tag": "03 • PENERAPAN",
-        "heading": "Judul Adegan 3 (maks 3 kata)",
-        "body": "Kesimpulan atau langkah aksi (maks 12 kata)",
-        "visualType": "shield"
-      }
-    ]
+  let sceneData = null;
+
+  // MODE 1: JSON MANUAL / PRESISI
+  if (ideKonten.trim().startsWith("{")) {
+    try {
+      sceneData = JSON.parse(ideKonten.trim());
+      console.log("🎯 MODE PRESISI AKTIF: Menggunakan skenario JSON langsung.");
+    } catch (err) {
+      console.log("⚠️ Format JSON tidak valid, beralih ke Mode AI Director:", err.message);
+    }
   }
-  Catatan visualType hanya boleh berisi salah satu dari: "gear", "chart", "shield", atau "flow".
-  `;
 
-  const daftarModel = ["gemini-3.8-flash", "gemini-3.5-flash"];
-  let result = null;
-  let modelTerpakai = "";
+  // MODE 2: AI DIRECTOR OTOMATIS (4 Adegan, durasi ~15-20 detik)
+  if (!sceneData) {
+    console.log(`🧠 MODE AI DIRECTOR: Merancang 4 adegan (15-20 detik) untuk "${ideKonten}"...`);
 
-  for (const namaModel of daftarModel) {
-    console.log(`🤖 Mencoba model AI: ${namaModel}...`);
-    const model = genAI.getGenerativeModel({
-      model: namaModel,
-      generationConfig: { responseMimeType: "application/json" },
-    });
+    const prompt = `
+    Bertindaklah sebagai Senior Motion Designer dan Industrial Engineer. Buat skenario video motion graphic vertikal 4 adegan (durasi 18 detik / 540 frames) untuk topik: "${ideKonten}".
+    Keluarkan JSON murni dengan struktur persis seperti ini:
+    {
+      "title": "Judul utama singkat maks 4 kata",
+      "subtitle": "Subjudul ringkas",
+      "insight": "Narasi voiceover Bahasa Indonesia yang jelas, mengalir, dan informatif sepanjang 350 hingga 450 karakter untuk durasi bicara sekitar 18 detik.",
+      "accentColor": "#10b981",
+      "durationInFrames": 540,
+      "scenes": [
+        {
+          "tag": "01 • PENGENALAN",
+          "heading": "Judul Adegan 1 (maks 3 kata)",
+          "body": "Penjelasan pembuka yang menarik (maks 14 kata)",
+          "visualType": "gear"
+        },
+        {
+          "tag": "02 • MASALAH & ANALISIS",
+          "heading": "Judul Adegan 2 (maks 3 kata)",
+          "body": "Penjelasan kendala atau potensi efisiensi (maks 14 kata)",
+          "visualType": "chart"
+        },
+        {
+          "tag": "03 • CARA KERJA",
+          "heading": "Judul Adegan 3 (maks 3 kata)",
+          "body": "Penjelasan mekanisme atau solusi utama (maks 14 kata)",
+          "visualType": "flow"
+        },
+        {
+          "tag": "04 • PENERAPAN",
+          "heading": "Judul Adegan 4 (maks 3 kata)",
+          "body": "Kesimpulan dan ajakan aksi di area kerja (maks 14 kata)",
+          "visualType": "shield"
+        }
+      ]
+    }
+    Catatan visualType hanya boleh berisi salah satu dari: "gear", "chart", "shield", atau "flow".
+    `;
 
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      try {
-        result = await generateWithTimeout(model, prompt, 20000);
-        modelTerpakai = namaModel;
+    const daftarModel = ["gemini-3.8-flash", "gemini-3.5-flash"];
+    let result = null;
+    let modelTerpakai = "";
+
+    for (const namaModel of daftarModel) {
+      console.log(`🤖 Mencoba model AI: ${namaModel}...`);
+      const model = genAI.getGenerativeModel({
+        model: namaModel,
+        generationConfig: { responseMimeType: "application/json" },
+      });
+
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          result = await generateWithTimeout(model, prompt, 20000);
+          modelTerpakai = namaModel;
+          break;
+        } catch (err) {
+          console.log(`⚠️ ${namaModel} gagal (Percobaan ${attempt}/2): ${err.message}`);
+          if (err.status === 429 || err.status === 404) break;
+          if (attempt < 2) await new Promise((res) => setTimeout(res, 3000));
+        }
+      }
+
+      if (result) {
+        console.log(`✅ Skenario 4 adegan dibuat oleh: ${modelTerpakai}`);
         break;
-      } catch (err) {
-        console.log(`⚠️ ${namaModel} gagal (Percobaan ${attempt}/2): ${err.message}`);
-        if (err.status === 429 || err.status === 404) break;
-        if (attempt < 2) await new Promise((res) => setTimeout(res, 3000));
       }
     }
 
     if (result) {
-      console.log(`✅ Skenario 3 adegan dibuat oleh: ${modelTerpakai}`);
-      break;
+      const rawText = result.response.text();
+      const jsonString = rawText.replace(/```json|```/g, "").trim();
+      sceneData = JSON.parse(jsonString);
+    } else {
+      console.log("⚠️ API Gemini sibuk. Menyusun 4 adegan dinamis otomatis (18 detik)...");
+      const judulSingkat = ideKonten.split(" ").slice(0, 4).join(" ").toUpperCase();
+      sceneData = {
+        title: judulSingkat,
+        subtitle: ideKonten,
+        insight: `Mari kita pelajari konsep ${ideKonten}. Dengan pendekatan sistematis di lantai produksi, kita dapat memangkas pemborosan waktu, meningkatkan efisiensi kerja, serta menjaga standar keselamatan operator setiap hari.`,
+        accentColor: "#10b981",
+        durationInFrames: 540,
+        scenes: [
+          {
+            tag: "01 • KONSEP UTAMA",
+            heading: judulSingkat,
+            body: `Memahami prinsip dasar dan tujuan ${ideKonten}.`,
+            visualType: "gear",
+          },
+          {
+            tag: "02 • DAMPAK PROSES",
+            heading: "EFISIENSI OPTIMAL",
+            body: "Mengurangi pemborosan waktu, gerakan, dan energi secara terukur.",
+            visualType: "chart",
+          },
+          {
+            tag: "03 • ALUR KERJA",
+            heading: "SISTEM TERUKUR",
+            body: "Menyelaraskan langkah kerja operator agar proses berjalan lancar.",
+            visualType: "flow",
+          },
+          {
+            tag: "04 • IMPLEMENTASI",
+            heading: "SIAP DITERAPKAN",
+            body: "Langkah praktis yang konsisten, ergonomis, dan aman di area kerja.",
+            visualType: "shield",
+          },
+        ],
+      };
     }
   }
 
-  let sceneData;
-  if (result) {
-    const rawText = result.response.text();
-    const jsonString = rawText.replace(/```json|```/g, "").trim();
-    sceneData = JSON.parse(jsonString);
-  } else {
-    console.log("⚠️ API Gemini sibuk. Menyusun 3 adegan dinamis otomatis dari topik input...");
-    const judulSingkat = ideKonten.split(" ").slice(0, 4).join(" ").toUpperCase();
-    sceneData = {
-      title: judulSingkat,
-      subtitle: ideKonten,
-      insight: `Mari pelajari penerapan ${ideKonten} untuk meningkatkan efisiensi dan kualitas kerja.`,
-      accentColor: "#10b981",
-      durationInFrames: 180,
-      scenes: [
-        {
-          tag: "01 • KONSEP UTAMA",
-          heading: judulSingkat,
-          body: `Memahami prinsip dasar ${ideKonten}.`,
-          visualType: "gear",
-        },
-        {
-          tag: "02 • DAMPAK PROSES",
-          heading: "EFISIENSI OPTIMAL",
-          body: "Mengurangi pemborosan waktu dan tenaga kerja secara terukur.",
-          visualType: "chart",
-        },
-        {
-          tag: "03 • IMPLEMENTASI",
-          heading: "SIAP DITERAPKAN",
-          body: "Langkah praktis yang konsisten dan aman di area kerja.",
-          visualType: "shield",
-        },
-      ],
-    };
-  }
-
-  console.log("💡 Skenario Video Aktif:", JSON.stringify(sceneData, null, 2));
-
-  // Generate Voiceover TTS
+  // Generate Voiceover TTS Multi-Kalimat (Mendukung narasi panjang > 200 karakter)
   console.log("🎙️ Membuat Voiceover Text-to-Speech (TTS)...");
   let audioDataUri = "";
-  try {
-    let teksNarasi = sceneData.insight || ideKonten;
-    if (teksNarasi.length > 175) {
-      teksNarasi = teksNarasi.substring(0, 170) + "...";
-    }
+  let estimasiDurasiFrame = sceneData.durationInFrames || 540;
 
-    const audioUrl = googleTTS.getAudioUrl(teksNarasi, {
+  try {
+    const teksNarasi = sceneData.insight || sceneData.subtitle || "Video edukasi motion graphic";
+    const audioParts = await googleTTS.getAllAudioBase64(teksNarasi, {
       lang: "id",
       slow: false,
       host: "https://translate.google.com",
+      timeout: 15000,
     });
 
-    const response = await fetch(audioUrl);
-    const arrayBuffer = await response.arrayBuffer();
-    const audioBuffer = Buffer.from(arrayBuffer);
+    const combinedBuffer = Buffer.concat(
+      audioParts.map((part) => Buffer.from(part.base64, "base64"))
+    );
 
-    fs.writeFileSync(path.resolve("./public/audio/voiceover.mp3"), audioBuffer);
-    audioDataUri = `data:audio/mp3;base64,${audioBuffer.toString("base64")}`;
-    console.log("✅ Audio VO Base64 siap!");
+    fs.writeFileSync(path.resolve("./public/audio/voiceover.mp3"), combinedBuffer);
+    audioDataUri = `data:audio/mp3;base64,${combinedBuffer.toString("base64")}`;
+
+    // Sesuaikan durasi video otomatis jika mode AI aktif (rata-rata ~14 karakter per detik + 2 detik jeda)
+    if (!ideKonten.trim().startsWith("{")) {
+      const estimasiDetik = Math.max(15, Math.ceil(teksNarasi.length / 13) + 2);
+      estimasiDurasiFrame = estimasiDetik * 30;
+      sceneData.durationInFrames = estimasiDurasiFrame;
+    }
+
+    console.log(`✅ Audio VO Base64 siap! (${audioParts.length} bagian digabung, durasi: ${Math.round(estimasiDurasiFrame / 30)} detik)`);
   } catch (error) {
     console.log("⚠️ Gagal membuat TTS:", error.message);
   }
 
-  // Bundle & Render menggunakan komponen baru DynamicMotionVideo
   console.log("🚀 Merender DynamicMotionVideo...");
   const bundled = await bundle({
     entryPoint: path.resolve("./src/index.ts"),
@@ -200,6 +230,7 @@ async function textToMp4() {
 
   const inputPropsData = {
     ...sceneData,
+    durationInFrames: estimasiDurasiFrame,
     audioSrc: audioDataUri,
   };
 
@@ -219,8 +250,9 @@ async function textToMp4() {
     inputProps: inputPropsData,
   });
 
-  console.log(`✅ Selesai! Video dirender: ${outputFileName}`);
-  await sendToTelegram(outputFileName);
+  const durasiFinalDetik = Math.round(estimasiDurasiFrame / 30);
+  console.log(`✅ Selesai! Video (${durasiFinalDetik} detik) dirender: ${outputFileName}`);
+  await sendToTelegram(outputFileName, sceneData.title || ideKonten, durasiFinalDetik);
 }
 
 textToMp4();
