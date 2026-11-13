@@ -4,16 +4,15 @@ on:
   workflow_dispatch:
     inputs:
       ide_konten:
-        description: 'Masukkan Ide Konten / Topik Video'
-        required: false
-        default: 'Konsep Produktivitas Kerja'
+        description: 'Masukkan Ide atau Topik Konten Video'
+        required: true
+        default: 'Konsep Karakuri Kaizen di Lantai Produksi'
+        type: string
 
 jobs:
   render-motion-graphic:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: orion-threat-excellence-v2
+
     steps:
       - name: Tarik Kode dari Repository
         uses: actions/checkout@v4
@@ -24,19 +23,21 @@ jobs:
           node-version: '18'
 
       - name: Install Dependencies
+        working-directory: orion-threat-excellence-v2
         run: npm install
 
       - name: Generate MP4 via Gemini & Remotion
-        run: node scripts/generate.mjs
+        working-directory: orion-threat-excellence-v2
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           IDE_KONTEN: ${{ github.event.inputs.ide_konten }}
+        run: node scripts/generate.mjs
 
       - name: Upload Video Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Hasil-Video-AI
+          name: hasil-video-motion-graphic
           path: orion-threat-excellence-v2/out/*.mp4
-          retention-days: 7
+          if-no-files-found: error
