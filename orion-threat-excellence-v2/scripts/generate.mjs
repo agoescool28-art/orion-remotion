@@ -189,7 +189,7 @@ async function textToMp4() {
     }
   }
 
-  // Generate Voiceover TTS Multi-Kalimat (Mendukung narasi panjang > 200 karakter)
+  // Generate Voiceover TTS Multi-Kalimat & Sinkronisasi Durasi Otomatis
   console.log("🎙️ Membuat Voiceover Text-to-Speech (TTS)...");
   let audioDataUri = "";
   let estimasiDurasiFrame = sceneData.durationInFrames || 540;
@@ -200,7 +200,7 @@ async function textToMp4() {
       lang: "id",
       slow: false,
       host: "https://translate.google.com",
-      timeout: 15000,
+      timeout: 30000,
     });
 
     const combinedBuffer = Buffer.concat(
@@ -210,14 +210,19 @@ async function textToMp4() {
     fs.writeFileSync(path.resolve("./public/audio/voiceover.mp3"), combinedBuffer);
     audioDataUri = `data:audio/mp3;base64,${combinedBuffer.toString("base64")}`;
 
-    // Sesuaikan durasi video otomatis jika mode AI aktif (rata-rata ~14 karakter per detik + 2 detik jeda)
-    if (!ideKonten.trim().startsWith("{")) {
-      const estimasiDetik = Math.max(15, Math.ceil(teksNarasi.length / 13) + 2);
-      estimasiDurasiFrame = estimasiDetik * 30;
-      sceneData.durationInFrames = estimasiDurasiFrame;
-    }
+    // Hitung durasi bicara aktual (~10.5 karakter/detik + 3 detik buffer penutup)
+    const detikBicaraAktual = Math.ceil(teksNarasi.length / 10.5) + 3;
+    const frameBicaraAktual = detikBicaraAktual * 30;
 
-    console.log(`✅ Audio VO Base64 siap! (${audioParts.length} bagian digabung, durasi: ${Math.round(estimasiDurasiFrame / 30)} detik)`);
+    // Ambil durasi terpanjang agar suara tidak pernah terpotong
+    estimasiDurasiFrame = Math.max(estimasiDurasiFrame, frameBicaraAktual);
+    sceneData.durationInFrames = estimasiDurasiFrame;
+
+    console.log(
+      `✅ Audio VO Base64 siap! (${audioParts.length} bagian digabung, durasi final: ${Math.round(
+        estimasiDurasiFrame / 30
+      )} detik)`
+    );
   } catch (error) {
     console.log("⚠️ Gagal membuat TTS:", error.message);
   }
