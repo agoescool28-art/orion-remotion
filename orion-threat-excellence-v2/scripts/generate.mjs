@@ -8,7 +8,6 @@ import * as googleTTS from "google-tts-api";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const ideKonten = process.env.IDE_KONTEN || "Konsep Karakuri Kaizen di Lantai Produksi";
 
-// Fungsi pembatas waktu agar request ke Gemini tidak menggantung
 async function generateWithTimeout(model, prompt, timeoutMs = 20000) {
   return Promise.race([
     model.generateContent(prompt),
@@ -77,10 +76,8 @@ async function textToMp4() {
   Keluarkan hasilnya dalam format JSON murni tanpa teks lain.
   `;
 
-  // Daftar model terbaru yang aktif untuk estafet otomatis
   const daftarModel = [
     "gemini-3.8-flash",
-    "gemini-3.8-flash-lite",
     "gemini-3.5-flash",
   ];
 
@@ -125,8 +122,9 @@ async function textToMp4() {
 
   console.log("💡 Data Skenario Aktif:", sceneData);
 
-  // Generate Voiceover TTS Audio
+  // Generate Voiceover TTS Audio & Konversi langsung ke Base64 Data URI
   console.log("🎙️ Membuat Voiceover Text-to-Speech (TTS)...");
+  let audioDataUri = "";
   try {
     let teksNarasi = sceneData.insight || "Proses perbaikan berkelanjutan di area kerja";
     if (teksNarasi.length > 180) {
@@ -141,21 +139,28 @@ async function textToMp4() {
 
     const fetch = globalThis.fetch || (await import("node-fetch")).default;
     const response = await fetch(audioUrl);
-    const buffer = await response.arrayBuffer();
-    fs.writeFileSync(path.resolve("./public/audio/voiceover.mp3"), Buffer.from(buffer));
-    console.log("✅ File voiceover.mp3 berhasil disimpan!");
+    const arrayBuffer = await response.arrayBuffer();
+    const audioBuffer = Buffer.from(arrayBuffer);
+
+    fs.writeFileSync(path.resolve("./public/audio/voiceover.mp3"), audioBuffer);
+    audioDataUri = `data:audio/mp3;base64,${audioBuffer.toString("base64")}`;
+    console.log("✅ File voiceover.mp3 & Base64 Audio berhasil disiapkan!");
   } catch (error) {
     console.log("⚠️ Gagal membuat TTS:", error.message);
   }
 
-  // Remotion Bundling dengan publicDir agar audio terbaca tanpa ECONNREFUSED
+  // Remotion Bundling & Render
   console.log("🚀 Memulai proses Remotion Bundle & Render...");
   const bundled = await bundle({
     entryPoint: path.resolve("./src/index.ts"),
     publicDir: path.resolve("./public"),
   });
 
-  const inputPropsData = { ...sceneData, data: sceneData };
+  const inputPropsData = {
+    ...sceneData,
+    data: sceneData,
+    audioSrc: audioDataUri,
+  };
 
   const composition = await selectComposition({
     serveUrl: bundled,
