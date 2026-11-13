@@ -6,7 +6,20 @@ import fs from "fs";
 import * as googleTTS from "google-tts-api";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const ideKonten = process.env.IDE_KONTEN || "Konsep Kaizen dan Manfaatnya di Industri";
+const ideKonten = process.env.IDE_KONTEN || "Konsep Karakuri Kaizen di Lantai Produksi";
+
+// Fungsi pembatas waktu agar request ke Gemini tidak menggantung ber menit-menit
+async function generateWithTimeout(model, prompt, timeoutMs = 20000) {
+  return Promise.race([
+    model.generateContent(prompt),
+    new Promise((_, reject) =>
+      setTimeout(
+        () => reject(new Error(`Timeout: Server tidak merespons dalam ${timeoutMs / 1000} detik`)),
+        timeoutMs
+      )
+    ),
+  ]);
+}
 
 async function sendToTelegram(videoPath) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -46,16 +59,10 @@ async function sendToTelegram(videoPath) {
 async function textToMp4() {
   console.log(`🧠 AI Director memproses ide secara dinamis: "${ideKonten}"...`);
 
-  // Pastikan direktori tempat penyimpanan ada
   if (!fs.existsSync("out")) fs.mkdirSync("out");
   if (!fs.existsSync("public")) fs.mkdirSync("public");
   if (!fs.existsSync("public/audio")) fs.mkdirSync("public/audio");
   if (!fs.existsSync("src")) fs.mkdirSync("src");
-
-  const model = genAI.getGenerativeModel({
-    model: "gemini-3.8-flash",
-    generationConfig: { responseMimeType: "application/json" }
-  });
 
   const prompt = `
   Bertindaklah sebagai Senior Motion Designer dan AI Director. Analisis ide konten berikut: "${ideKonten}".
@@ -70,45 +77,68 @@ async function textToMp4() {
   Keluarkan hasilnya dalam format JSON murni tanpa teks lain.
   `;
 
-  let result;
-  let attempts = 0;
-  const maxAttempts = 5;
+  // Urutan prioritas model: 3.8-flash tetap utama, otomatis estafet jika macet/limit
+  const daftarModel = [
+    "gemini-3.8-flash",
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+  ];
 
-  // 1. Logika Auto-Retry jika Server Gemini 503
-  while (attempts < maxAttempts) {
-    try {
-      attempts++;
-      result = await model.generateContent(prompt);
+  let result = null;
+  let modelTerpakai = "";
+
+  for (const namaModel of daftarModel) {
+    console.log(`🤖 Mencoba model AI: ${namaModel}...`);
+    const model = genAI.getGenerativeModel({
+      model: namaModel,
+      generationConfig: { responseMimeType: "application/json" },
+    });
+
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        result = await generateWithTimeout(model, prompt, 20000);
+        modelTerpakai = namaModel;
+        break;
+      } catch (err) {
+        console.log(`⚠️ ${namaModel} gagal (Percobaan ${attempt}/2): ${err.message}`);
+        // Jika kuota habis (429) atau model tidak ditemukan (404), langsung pindah model
+        if (err.status === 429 || err.status === 404) break;
+        if (attempt < 2) await new Promise((res) => setTimeout(res, 3000));
+      }
+    }
+
+    if (result) {
+      console.log(`✅ Skenario berhasil dibuat menggunakan: ${modelTerpakai}`);
       break;
-    } catch (err) {
-      console.log(`⚠️ Server Gemini sibuk (Percobaan ${attempts}/${maxAttempts}). Menunggu 10 detik...`);
-      if (attempts >= maxAttempts) throw err;
-      await new Promise(res => setTimeout(res, 10000));
     }
   }
 
-  // 2. Parse Hasil JSON
-  const rawText = result.response.text();
-  const jsonString = rawText.replace(/```json|```/g, "").trim();
-  const sceneData = JSON.parse(jsonString);
+  let sceneData;
+  if (result) {
+    const rawText = result.response.text();
+    const jsonString = rawText.replace(/```json|```/g, "").trim();
+    sceneData = JSON.parse(jsonString);
+    fs.writeFileSync("./src/materi.json", JSON.stringify(sceneData, null, 2));
+  } else {
+    console.log("⚠️ Semua server API Gemini sedang tidak merespons. Menggunakan cadangan src/materi.json...");
+    sceneData = JSON.parse(fs.readFileSync("./src/materi.json", "utf-8"));
+  }
 
-  console.log("💡 Data Dinamis dari Gemini:", sceneData);
+  console.log("💡 Data Skenario Aktif:", sceneData);
 
-  // 3. Simpan materi.json sebagai fallback
-  fs.writeFileSync("./src/materi.json", JSON.stringify(sceneData, null, 2));
-
-  // 4. Generate Voiceover TTS Audio
+  // Generate Voiceover TTS Audio
   console.log("🎙️ Membuat Voiceover Text-to-Speech (TTS)...");
   try {
-    let teksNarasi = sceneData.insight || "Proses perbaikan berkelanjutan";
+    let teksNarasi = sceneData.insight || "Proses perbaikan berkelanjutan di area kerja";
     if (teksNarasi.length > 180) {
       teksNarasi = teksNarasi.substring(0, 175) + "...";
     }
 
     const audioUrl = googleTTS.getAudioUrl(teksNarasi, {
-      lang: 'id',
+      lang: "id",
       slow: false,
-      host: 'https://translate.google.com',
+      host: "https://translate.google.com",
     });
 
     const fetch = globalThis.fetch || (await import("node-fetch")).default;
@@ -120,10 +150,9 @@ async function textToMp4() {
     console.log("⚠️ Gagal membuat TTS:", error.message);
   }
 
-  // 5. Remotion Bundling & Composition Selection
+  // Remotion Bundling & Rendering
   console.log("🚀 Memulai proses Remotion Bundle & Render...");
   const bundled = await bundle(path.resolve("./src/index.ts"));
-
   const inputPropsData = { ...sceneData, data: sceneData };
 
   const composition = await selectComposition({
@@ -134,7 +163,6 @@ async function textToMp4() {
 
   const outputFileName = `out/Video_${Date.now()}.mp4`;
 
-  // 6. Render Video MP4
   await renderMedia({
     composition,
     serveUrl: bundled,
@@ -144,8 +172,6 @@ async function textToMp4() {
   });
 
   console.log(`✅ Selesai! Video dirender: ${outputFileName}`);
-
-  // 7. Kirim ke Telegram
   await sendToTelegram(outputFileName);
 }
 
