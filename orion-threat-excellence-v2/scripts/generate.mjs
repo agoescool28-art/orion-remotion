@@ -8,7 +8,7 @@ import * as googleTTS from "google-tts-api";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const ideKonten = process.env.IDE_KONTEN || "Konsep Karakuri Kaizen di Lantai Produksi";
 
-// Fungsi pembatas waktu agar request ke Gemini tidak menggantung ber menit-menit
+// Fungsi pembatas waktu agar request ke Gemini tidak menggantung
 async function generateWithTimeout(model, prompt, timeoutMs = 20000) {
   return Promise.race([
     model.generateContent(prompt),
@@ -77,12 +77,11 @@ async function textToMp4() {
   Keluarkan hasilnya dalam format JSON murni tanpa teks lain.
   `;
 
-  // Urutan prioritas model: 3.8-flash tetap utama, otomatis estafet jika macet/limit
+  // Daftar model terbaru yang aktif untuk estafet otomatis
   const daftarModel = [
     "gemini-3.8-flash",
-    "gemini-2.5-flash",
-    "gemini-2.0-flash",
-    "gemini-1.5-flash",
+    "gemini-3.8-flash-lite",
+    "gemini-3.5-flash",
   ];
 
   let result = null;
@@ -102,7 +101,6 @@ async function textToMp4() {
         break;
       } catch (err) {
         console.log(`⚠️ ${namaModel} gagal (Percobaan ${attempt}/2): ${err.message}`);
-        // Jika kuota habis (429) atau model tidak ditemukan (404), langsung pindah model
         if (err.status === 429 || err.status === 404) break;
         if (attempt < 2) await new Promise((res) => setTimeout(res, 3000));
       }
@@ -150,9 +148,13 @@ async function textToMp4() {
     console.log("⚠️ Gagal membuat TTS:", error.message);
   }
 
-  // Remotion Bundling & Rendering
+  // Remotion Bundling dengan publicDir agar audio terbaca tanpa ECONNREFUSED
   console.log("🚀 Memulai proses Remotion Bundle & Render...");
-  const bundled = await bundle(path.resolve("./src/index.ts"));
+  const bundled = await bundle({
+    entryPoint: path.resolve("./src/index.ts"),
+    publicDir: path.resolve("./public"),
+  });
+
   const inputPropsData = { ...sceneData, data: sceneData };
 
   const composition = await selectComposition({
