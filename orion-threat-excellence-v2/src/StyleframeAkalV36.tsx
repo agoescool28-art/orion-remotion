@@ -445,7 +445,9 @@ const insightText = data.insight;
 
   return (
   <AbsoluteFill style={{ backgroundColor: C.bg }}>
-    <Audio src={staticFile("audio/voiceover.mp3")} />
+    {(getInputProps() as any)?.audioSrc ? (
+        <Audio src={(getInputProps() as any).audioSrc} />
+      ) : null}
     <svg
       width="100%"
       height="100%"
