@@ -8,6 +8,7 @@ import * as googleTTS from "google-tts-api";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const ideKonten = process.env.IDE_KONTEN || "Konsep Karakuri Kaizen di Lantai Produksi";
 
+// Pembatas waktu 20 detik agar koneksi API tidak menggantung
 async function generateWithTimeout(model, prompt, timeoutMs = 20000) {
   return Promise.race([
     model.generateContent(prompt),
@@ -20,24 +21,28 @@ async function generateWithTimeout(model, prompt, timeoutMs = 20000) {
   ]);
 }
 
+// Pengiriman video MP4 ke Telegram menggunakan Blob & FormData bawaan Node.js 18
 async function sendToTelegram(videoPath) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
 
   if (!token || !chatId) {
-    console.log("⚠️ Token atau Chat ID Telegram belum diset di GitHub Secrets. Lewatkan pengiriman Telegram.");
+    console.log("⚠️ TELEGRAM_BOT_TOKEN atau TELEGRAM_CHAT_ID belum diset di GitHub Secrets.");
     return;
   }
 
   console.log("📤 Mengirim video hasil render ke Telegram...");
   try {
-    const FormData = (await import("form-data")).default;
-    const fetch = globalThis.fetch || (await import("node-fetch")).default;
+    const fileBuffer = fs.readFileSync(videoPath);
+    const videoBlob = new Blob([fileBuffer], { type: "video/mp4" });
 
     const form = new FormData();
     form.append("chat_id", chatId);
-    form.append("video", fs.createReadStream(videoPath));
-    form.append("caption", `🎬 Video Motion Graphic Selesai Dirender!\n\nTopik: "${ideKonten}"`);
+    form.append("video", videoBlob, path.basename(videoPath));
+    form.append(
+      "caption",
+      `🎬 Video Motion Graphic Selesai Dirender!\n\nTopik: "${ideKonten}"`
+    );
 
     const response = await fetch(`https://api.telegram.org/bot${token}/sendVideo`, {
       method: "POST",
@@ -48,7 +53,7 @@ async function sendToTelegram(videoPath) {
     if (result.ok) {
       console.log("✅ Video berhasil dikirim ke Telegram!");
     } else {
-      console.log("❌ Gagal mengirim ke Telegram:", result);
+      console.log("❌ Gagal mengirim ke Telegram:", JSON.stringify(result));
     }
   } catch (err) {
     console.log("❌ Error saat kirim Telegram:", err.message);
@@ -58,10 +63,9 @@ async function sendToTelegram(videoPath) {
 async function textToMp4() {
   console.log(`🧠 AI Director memproses ide secara dinamis: "${ideKonten}"...`);
 
-  if (!fs.existsSync("out")) fs.mkdirSync("out");
-  if (!fs.existsSync("public")) fs.mkdirSync("public");
-  if (!fs.existsSync("public/audio")) fs.mkdirSync("public/audio");
-  if (!fs.existsSync("src")) fs.mkdirSync("src");
+  if (!fs.existsSync("out")) fs.mkdirSync("out", { recursive: true });
+  if (!fs.existsSync("public/audio")) fs.mkdirSync("public/audio", { recursive: true });
+  if (!fs.existsSync("src")) fs.mkdirSync("src", { recursive: true });
 
   const prompt = `
   Bertindaklah sebagai Senior Motion Designer dan AI Director. Analisis ide konten berikut: "${ideKonten}".
@@ -116,7 +120,7 @@ async function textToMp4() {
     sceneData = JSON.parse(jsonString);
     fs.writeFileSync("./src/materi.json", JSON.stringify(sceneData, null, 2));
   } else {
-    console.log("⚠️ Semua server API Gemini sedang tidak merespons. Menggunakan cadangan src/materi.json...");
+    console.log("⚠️ Server API Gemini sedang sibuk. Menggunakan cadangan src/materi.json...");
     sceneData = JSON.parse(fs.readFileSync("./src/materi.json", "utf-8"));
   }
 
@@ -137,7 +141,6 @@ async function textToMp4() {
       host: "https://translate.google.com",
     });
 
-    const fetch = globalThis.fetch || (await import("node-fetch")).default;
     const response = await fetch(audioUrl);
     const arrayBuffer = await response.arrayBuffer();
     const audioBuffer = Buffer.from(arrayBuffer);
