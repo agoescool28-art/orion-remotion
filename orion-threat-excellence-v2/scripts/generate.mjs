@@ -189,44 +189,45 @@ async function textToMp4() {
     }
   }
 
-  // Generate Voiceover TTS Multi-Kalimat & Sinkronisasi Durasi Otomatis
-  console.log("🎙️ Membuat Voiceover Text-to-Speech (TTS)...");
+  // Generate Voiceover TTS (Hanya jika tidak melampirkan audioFile sendiri)
   let audioDataUri = "";
   let estimasiDurasiFrame = sceneData.durationInFrames || 540;
 
-  try {
-    const teksNarasi = sceneData.insight || sceneData.subtitle || "Video edukasi motion graphic";
-    const audioParts = await googleTTS.getAllAudioBase64(teksNarasi, {
-      lang: "id",
-      slow: false,
-      host: "https://translate.google.com",
-      timeout: 30000,
-    });
+  if (sceneData.audioFile) {
+    console.log(`🎧 Menggunakan file audio kustom: ${sceneData.audioFile}`);
+  } else {
+    console.log("🎙️ Membuat Voiceover Text-to-Speech (TTS)...");
+    try {
+      const teksNarasi = sceneData.insight || sceneData.subtitle || "Video edukasi motion graphic";
+      const audioParts = await googleTTS.getAllAudioBase64(teksNarasi, {
+        lang: "id",
+        slow: false,
+        host: "https://translate.google.com",
+        timeout: 30000,
+      });
 
-    const combinedBuffer = Buffer.concat(
-      audioParts.map((part) => Buffer.from(part.base64, "base64"))
-    );
+      const combinedBuffer = Buffer.concat(
+        audioParts.map((part) => Buffer.from(part.base64, "base64"))
+      );
 
-    fs.writeFileSync(path.resolve("./public/audio/voiceover.mp3"), combinedBuffer);
-    audioDataUri = `data:audio/mp3;base64,${combinedBuffer.toString("base64")}`;
+      fs.writeFileSync(path.resolve("./public/audio/voiceover.mp3"), combinedBuffer);
+      audioDataUri = `data:audio/mp3;base64,${combinedBuffer.toString("base64")}`;
 
-    // Hitung durasi bicara aktual (~10.5 karakter/detik + 3 detik buffer penutup)
-    const detikBicaraAktual = Math.ceil(teksNarasi.length / 10.5) + 3;
-    const frameBicaraAktual = detikBicaraAktual * 30;
+      const detikBicaraAktual = Math.ceil(teksNarasi.length / 10.5) + 3;
+      const frameBicaraAktual = detikBicaraAktual * 30;
 
-    // Ambil durasi terpanjang agar suara tidak pernah terpotong
-    estimasiDurasiFrame = Math.max(estimasiDurasiFrame, frameBicaraAktual);
-    sceneData.durationInFrames = estimasiDurasiFrame;
+      estimasiDurasiFrame = Math.max(estimasiDurasiFrame, frameBicaraAktual);
+      sceneData.durationInFrames = estimasiDurasiFrame;
 
-    console.log(
-      `✅ Audio VO Base64 siap! (${audioParts.length} bagian digabung, durasi final: ${Math.round(
-        estimasiDurasiFrame / 30
-      )} detik)`
-    );
-  } catch (error) {
-    console.log("⚠️ Gagal membuat TTS:", error.message);
+      console.log(
+        `✅ Audio VO Base64 siap! (${audioParts.length} bagian digabung, durasi final: ${Math.round(
+          estimasiDurasiFrame / 30
+        )} detik)`
+      );
+    } catch (error) {
+      console.log("⚠️ Gagal membuat TTS:", error.message);
+    }
   }
-
   console.log("🚀 Merender DynamicMotionVideo...");
   const bundled = await bundle({
     entryPoint: path.resolve("./src/index.ts"),
