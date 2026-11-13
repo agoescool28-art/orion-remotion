@@ -8,7 +8,6 @@ import * as googleTTS from "google-tts-api";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const ideKonten = process.env.IDE_KONTEN || "Konsep Karakuri Kaizen di Lantai Produksi";
 
-// Pembatas waktu 20 detik agar koneksi API tidak menggantung
 async function generateWithTimeout(model, prompt, timeoutMs = 20000) {
   return Promise.race([
     model.generateContent(prompt),
@@ -21,7 +20,6 @@ async function generateWithTimeout(model, prompt, timeoutMs = 20000) {
   ]);
 }
 
-// Pengiriman video MP4 ke Telegram menggunakan Blob & FormData bawaan Node.js 18
 async function sendToTelegram(videoPath) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
@@ -61,30 +59,45 @@ async function sendToTelegram(videoPath) {
 }
 
 async function textToMp4() {
-  console.log(`🧠 AI Director memproses ide secara dinamis: "${ideKonten}"...`);
+  console.log(`🧠 AI Director merancang 3 adegan untuk topik: "${ideKonten}"...`);
 
   if (!fs.existsSync("out")) fs.mkdirSync("out", { recursive: true });
   if (!fs.existsSync("public/audio")) fs.mkdirSync("public/audio", { recursive: true });
-  if (!fs.existsSync("src")) fs.mkdirSync("src", { recursive: true });
 
   const prompt = `
-  Bertindaklah sebagai Senior Motion Designer dan AI Director. Analisis ide konten berikut: "${ideKonten}".
-  Tentukan secara cerdas dan dinamis:
-  1. title: Judul singkat yang kuat (maks 4 kata).
-  2. subtitle: Penjelas atau poin utama yang tajam.
-  3. insight: Narasi voiceover yang mengalir natural dalam Bahasa Indonesia (WAJIB di bawah 170 karakter agar aman di TTS).
-  4. themeStyle: Pilih salah satu gaya visual ("industrial", "corporate", "creative", atau "clean").
-  5. accentColor: Kode HEX warna aksen yang cocok (misal: #10b981, #3b82f6, #f59e0b).
-  6. durationInFrames: Angka durasi antara 120 sampai 180.
-
-  Keluarkan hasilnya dalam format JSON murni tanpa teks lain.
+  Bertindaklah sebagai Senior Motion Designer dan Industrial Engineer. Buat skenario video motion graphic vertikal 3 adegan untuk topik: "${ideKonten}".
+  Keluarkan JSON murni dengan struktur persis seperti ini:
+  {
+    "title": "Judul utama singkat maks 4 kata",
+    "subtitle": "Subjudul ringkas",
+    "insight": "Narasi voiceover Bahasa Indonesia yang jelas dan mengalir (WAJIB di bawah 165 karakter)",
+    "accentColor": "#10b981",
+    "durationInFrames": 180,
+    "scenes": [
+      {
+        "tag": "01 • PENGENALAN",
+        "heading": "Judul Adegan 1 (maks 3 kata)",
+        "body": "Penjelasan inti adegan 1 (maks 12 kata)",
+        "visualType": "gear"
+      },
+      {
+        "tag": "02 • MEKANISME / DATA",
+        "heading": "Judul Adegan 2 (maks 3 kata)",
+        "body": "Penjelasan cara kerja atau dampak nyata (maks 12 kata)",
+        "visualType": "chart"
+      },
+      {
+        "tag": "03 • PENERAPAN",
+        "heading": "Judul Adegan 3 (maks 3 kata)",
+        "body": "Kesimpulan atau langkah aksi (maks 12 kata)",
+        "visualType": "shield"
+      }
+    ]
+  }
+  Catatan visualType hanya boleh berisi salah satu dari: "gear", "chart", "shield", atau "flow".
   `;
 
-  const daftarModel = [
-    "gemini-3.8-flash",
-    "gemini-3.5-flash",
-  ];
-
+  const daftarModel = ["gemini-3.8-flash", "gemini-3.5-flash"];
   let result = null;
   let modelTerpakai = "";
 
@@ -108,7 +121,7 @@ async function textToMp4() {
     }
 
     if (result) {
-      console.log(`✅ Skenario berhasil dibuat menggunakan: ${modelTerpakai}`);
+      console.log(`✅ Skenario 3 adegan dibuat oleh: ${modelTerpakai}`);
       break;
     }
   }
@@ -118,21 +131,47 @@ async function textToMp4() {
     const rawText = result.response.text();
     const jsonString = rawText.replace(/```json|```/g, "").trim();
     sceneData = JSON.parse(jsonString);
-    fs.writeFileSync("./src/materi.json", JSON.stringify(sceneData, null, 2));
   } else {
-    console.log("⚠️ Server API Gemini sedang sibuk. Menggunakan cadangan src/materi.json...");
-    sceneData = JSON.parse(fs.readFileSync("./src/materi.json", "utf-8"));
+    console.log("⚠️ API Gemini sibuk. Menyusun 3 adegan dinamis otomatis dari topik input...");
+    const judulSingkat = ideKonten.split(" ").slice(0, 4).join(" ").toUpperCase();
+    sceneData = {
+      title: judulSingkat,
+      subtitle: ideKonten,
+      insight: `Mari pelajari penerapan ${ideKonten} untuk meningkatkan efisiensi dan kualitas kerja.`,
+      accentColor: "#10b981",
+      durationInFrames: 180,
+      scenes: [
+        {
+          tag: "01 • KONSEP UTAMA",
+          heading: judulSingkat,
+          body: `Memahami prinsip dasar ${ideKonten}.`,
+          visualType: "gear",
+        },
+        {
+          tag: "02 • DAMPAK PROSES",
+          heading: "EFISIENSI OPTIMAL",
+          body: "Mengurangi pemborosan waktu dan tenaga kerja secara terukur.",
+          visualType: "chart",
+        },
+        {
+          tag: "03 • IMPLEMENTASI",
+          heading: "SIAP DITERAPKAN",
+          body: "Langkah praktis yang konsisten dan aman di area kerja.",
+          visualType: "shield",
+        },
+      ],
+    };
   }
 
-  console.log("💡 Data Skenario Aktif:", sceneData);
+  console.log("💡 Skenario Video Aktif:", JSON.stringify(sceneData, null, 2));
 
-  // Generate Voiceover TTS Audio & Konversi langsung ke Base64 Data URI
+  // Generate Voiceover TTS
   console.log("🎙️ Membuat Voiceover Text-to-Speech (TTS)...");
   let audioDataUri = "";
   try {
-    let teksNarasi = sceneData.insight || "Proses perbaikan berkelanjutan di area kerja";
-    if (teksNarasi.length > 180) {
-      teksNarasi = teksNarasi.substring(0, 175) + "...";
+    let teksNarasi = sceneData.insight || ideKonten;
+    if (teksNarasi.length > 175) {
+      teksNarasi = teksNarasi.substring(0, 170) + "...";
     }
 
     const audioUrl = googleTTS.getAudioUrl(teksNarasi, {
@@ -147,13 +186,13 @@ async function textToMp4() {
 
     fs.writeFileSync(path.resolve("./public/audio/voiceover.mp3"), audioBuffer);
     audioDataUri = `data:audio/mp3;base64,${audioBuffer.toString("base64")}`;
-    console.log("✅ File voiceover.mp3 & Base64 Audio berhasil disiapkan!");
+    console.log("✅ Audio VO Base64 siap!");
   } catch (error) {
     console.log("⚠️ Gagal membuat TTS:", error.message);
   }
 
-  // Remotion Bundling & Render
-  console.log("🚀 Memulai proses Remotion Bundle & Render...");
+  // Bundle & Render menggunakan komponen baru DynamicMotionVideo
+  console.log("🚀 Merender DynamicMotionVideo...");
   const bundled = await bundle({
     entryPoint: path.resolve("./src/index.ts"),
     publicDir: path.resolve("./public"),
@@ -161,13 +200,12 @@ async function textToMp4() {
 
   const inputPropsData = {
     ...sceneData,
-    data: sceneData,
     audioSrc: audioDataUri,
   };
 
   const composition = await selectComposition({
     serveUrl: bundled,
-    id: "StyleframeAkalV36",
+    id: "DynamicMotionVideo",
     inputProps: inputPropsData,
   });
 
