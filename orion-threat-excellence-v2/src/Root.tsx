@@ -24,6 +24,7 @@ import { OrionV70MotionTest } from "./OrionV70MotionTest";
 import {
   OrionV70MotionTestRevision3
 } from "./OrionV70MotionTest-REVISION3";
+import { DynamicMotionVideo } from "./DynamicMotionVideo";
 export const RemotionRoot: React.FC = () => {
   return (
     <>
@@ -190,6 +191,14 @@ export const RemotionRoot: React.FC = () => {
   width={1080}
   height={1920}
 />
+<Composition
+  id="DynamicMotionVideo"
+  component={DynamicMotionVideo}
+  durationInFrames={180}
+  fps={30}
+  width={1080}
+  height={1920}
+/>      
     </>
   );
 };
