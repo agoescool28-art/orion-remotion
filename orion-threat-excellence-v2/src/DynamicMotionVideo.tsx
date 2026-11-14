@@ -41,19 +41,16 @@ export interface DynamicVideoProps {
   audioFile?: string;
   durationInFrames?: number;
   styleConfig?: StyleConfig;
-  const resolveMediaPath = (src: string) => {
+  scenes?: SceneItem[];
+}
+
+const resolveMediaPath = (src: string) => {
   if (src.startsWith("http://") || src.startsWith("https://") || src.startsWith("data:")) {
     return src;
   }
   const cleanPath = src.replace(/^\/+/, "").replace(/^public\//, "");
   return staticFile(cleanPath);
-};
-  }
-  return staticFile(src.replace(/^\/+/, ""));
-};
-
-const DynamicVectorIcon: React.FC<{
-  type: "gear" | "chart" | "shield" | "flow";
+};  type: "gear" | "chart" | "shield" | "flow";
   color: string;
   frame: number;
 }> = ({ type, color, frame }) => {
