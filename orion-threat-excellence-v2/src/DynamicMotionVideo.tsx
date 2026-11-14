@@ -50,10 +50,13 @@ const resolveMediaPath = (src: string) => {
   }
   const cleanPath = src.replace(/^\/+/, "").replace(/^public\//, "");
   return staticFile(cleanPath);
-};  type: "gear" | "chart" | "shield" | "flow";
+};
+
+const DynamicVectorIcon: React.FC<{
+  type: "gear" | "chart" | "shield" | "flow";
   color: string;
   frame: number;
-> = ({ type, color, frame }) => {
+}> = ({ type, color, frame }) => {
   const pulse = Math.sin(frame * 0.08) * 6;
   const spin = (frame * 1.5) % 360;
 
