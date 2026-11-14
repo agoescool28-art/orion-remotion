@@ -207,7 +207,10 @@ async function textToMp4() {
   } else {
     console.log("🎙️ Membuat Voiceover Text-to-Speech (TTS)...");
     try {
-      const teksNarasi = sceneData.insight || sceneData.subtitle || "Video edukasi motion graphic";
+      const teksNarasi =
+        sceneData.scenes && sceneData.scenes.length > 0
+          ? sceneData.scenes.map((s) => s.body).join(" ")
+          : sceneData.insight || sceneData.subtitle || "Video edukasi motion graphic";
       const audioParts = await googleTTS.getAllAudioBase64(teksNarasi, {
         lang: "id",
         slow: false,
