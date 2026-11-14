@@ -24,6 +24,7 @@ export interface SceneItem {
   heading: string;
   headingTone?: "gold" | "red" | "green";
   body: string;
+  startTime?: number;
   durationSeconds?: number;
   overlayType?: "pills" | "bars" | "checklist";
   points?: OverlayPoint[];
@@ -167,7 +168,6 @@ const DynamicKineticSubtitle: React.FC<{
   const words = text.trim().split(/\s+/);
   if (words.length === 0) return null;
 
-  // Hitung bobot waktu tiap kata berdasarkan panjang karakter + jeda tanda baca
   const weights = words.map((w) => {
     let weight = Math.max(3, w.length);
     if (w.endsWith(",")) weight += 4;
@@ -176,7 +176,6 @@ const DynamicKineticSubtitle: React.FC<{
   });
 
   const totalWeight = weights.reduce((acc, w) => acc + w, 0);
-  // Sisakan sedikit buffer 6% di akhir adegan untuk jeda napas antar paragraf
   const effectiveDuration = sceneDurationFrames * 0.94;
   const clampedFrame = Math.min(effectiveDuration - 0.1, Math.max(0, localFrame));
   const targetWeight = (clampedFrame / effectiveDuration) * totalWeight;
@@ -260,16 +259,16 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
           },
         ];
 
- // Kalkulasi timeline presisi per adegan (Prioritas: startTime absolut -> durationSeconds -> panjang naskah)
+  // Kalkulasi timeline presisi per adegan (Prioritas: startTime absolut -> durationSeconds -> panjang naskah)
   const sceneRanges: { start: number; end: number; duration: number }[] = [];
-  const hasExplicitStartTimes = scenes.some((s) => typeof (s as any).startTime === "number");
+  const hasExplicitStartTimes = scenes.some((s) => typeof s.startTime === "number");
 
   if (hasExplicitStartTimes) {
     for (let i = 0; i < scenes.length; i++) {
-      const startSec = (scenes[i] as any).startTime ?? 0;
+      const startSec = scenes[i].startTime ?? 0;
       const nextStartSec =
         i < scenes.length - 1
-          ? (scenes[i + 1] as any).startTime ?? durationInFrames / fps
+          ? scenes[i + 1].startTime ?? durationInFrames / fps
           : durationInFrames / fps;
       const startFrame = Math.round(startSec * fps);
       const endFrame = Math.max(startFrame + 15, Math.round(nextStartSec * fps));
@@ -296,11 +295,6 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
       sceneRanges.push({ start: cursor, end: cursor + dur, duration: dur });
       cursor += dur;
     }
-  }      i === scenes.length - 1
-        ? Math.max(30, durationInFrames - cursor)
-        : Math.max(30, Math.round((rawWeights[i] / totalRawWeight) * durationInFrames));
-    sceneRanges.push({ start: cursor, end: cursor + dur, duration: dur });
-    cursor += dur;
   }
 
   let currentSceneIndex = scenes.length - 1;
@@ -471,7 +465,7 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
               height: activeScene.points && activeScene.points.length > 0 ? 490 : 610,
               borderRadius: 26,
               overflow: "hidden",
-              border: `2px solid rgba(255,255,255,0.2)`,
+              border: "2px solid rgba(255,255,255,0.2)",
               boxShadow: "0 24px 60px rgba(0,0,0,0.6)",
             }}
           >
