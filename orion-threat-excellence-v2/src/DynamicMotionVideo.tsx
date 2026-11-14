@@ -260,19 +260,43 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
           },
         ];
 
-  // Kalkulasi timeline presisi per adegan (mendukung durationSeconds atau bobot panjang naskah otomatis)
-  const rawWeights = scenes.map((s) =>
-    s.durationSeconds && s.durationSeconds > 0
-      ? s.durationSeconds
-      : Math.max(15, s.body.length)
-  );
-  const totalRawWeight = rawWeights.reduce((a, b) => a + b, 0);
-
+ // Kalkulasi timeline presisi per adegan (Prioritas: startTime absolut -> durationSeconds -> panjang naskah)
   const sceneRanges: { start: number; end: number; duration: number }[] = [];
-  let cursor = 0;
-  for (let i = 0; i < scenes.length; i++) {
-    const dur =
-      i === scenes.length - 1
+  const hasExplicitStartTimes = scenes.some((s) => typeof (s as any).startTime === "number");
+
+  if (hasExplicitStartTimes) {
+    for (let i = 0; i < scenes.length; i++) {
+      const startSec = (scenes[i] as any).startTime ?? 0;
+      const nextStartSec =
+        i < scenes.length - 1
+          ? (scenes[i + 1] as any).startTime ?? durationInFrames / fps
+          : durationInFrames / fps;
+      const startFrame = Math.round(startSec * fps);
+      const endFrame = Math.max(startFrame + 15, Math.round(nextStartSec * fps));
+      sceneRanges.push({
+        start: startFrame,
+        end: endFrame,
+        duration: endFrame - startFrame,
+      });
+    }
+  } else {
+    const rawWeights = scenes.map((s) =>
+      s.durationSeconds && s.durationSeconds > 0
+        ? s.durationSeconds
+        : Math.max(15, s.body.length)
+    );
+    const totalRawWeight = rawWeights.reduce((a, b) => a + b, 0);
+
+    let cursor = 0;
+    for (let i = 0; i < scenes.length; i++) {
+      const dur =
+        i === scenes.length - 1
+          ? Math.max(30, durationInFrames - cursor)
+          : Math.max(30, Math.round((rawWeights[i] / totalRawWeight) * durationInFrames));
+      sceneRanges.push({ start: cursor, end: cursor + dur, duration: dur });
+      cursor += dur;
+    }
+  }      i === scenes.length - 1
         ? Math.max(30, durationInFrames - cursor)
         : Math.max(30, Math.round((rawWeights[i] / totalRawWeight) * durationInFrames));
     sceneRanges.push({ start: cursor, end: cursor + dur, duration: dur });
