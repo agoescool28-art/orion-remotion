@@ -131,17 +131,20 @@ Aturan wajib:
 
     const candidateModels = [
       "gemini-3.8-flash",
-      "gemini-3.8-flash-lite",
-      "gemini-3.8-pro",
+      "gemini-3.8-flash",
+      "gemini-2.0-flash",
+      "gemini-2.0-flash-lite",
+      "gemini-3.8-flash",
     ];
     let rawText = "";
 
-    for (let attempt = 0; attempt < 4; attempt++) {
-      const modelName = candidateModels[attempt % candidateModels.length];
+    for (let attempt = 0; attempt < candidateModels.length; attempt++) {
+      const modelName = candidateModels[attempt];
       try {
         if (attempt > 0) {
-          console.log(`🔄 Percobaan ke-${attempt + 1} menggunakan model ${modelName}...`);
-          await new Promise((r) => setTimeout(r, 4000));
+          const waitMs = attempt * 6000;
+          console.log(`🔄 Percobaan ke-${attempt + 1} (${modelName}) dalam ${waitMs / 1000} detik...`);
+          await new Promise((r) => setTimeout(r, waitMs));
         }
         const model = genAI.getGenerativeModel({
           model: modelName,
@@ -152,7 +155,7 @@ Aturan wajib:
         if (rawText) break;
       } catch (err) {
         console.warn(`⚠️ ${modelName} sibuk (${err.status || err.message}), mencoba ulang...`);
-        if (attempt === 3) throw err;
+        if (attempt === candidateModels.length - 1) throw err;
       }
     }
     sceneData = JSON.parse(rawText);
