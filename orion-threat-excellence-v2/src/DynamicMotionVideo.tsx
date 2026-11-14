@@ -53,7 +53,7 @@ const resolveMediaPath = (src: string) => {
 };  type: "gear" | "chart" | "shield" | "flow";
   color: string;
   frame: number;
-}> = ({ type, color, frame }) => {
+> = ({ type, color, frame }) => {
   const pulse = Math.sin(frame * 0.08) * 6;
   const spin = (frame * 1.5) % 360;
 
