@@ -24,6 +24,7 @@ export interface SceneItem {
   heading: string;
   headingTone?: "gold" | "red" | "green";
   body: string;
+  durationSeconds?: number;
   overlayType?: "pills" | "bars" | "checklist";
   points?: OverlayPoint[];
   pointerLabel?: string;
@@ -82,7 +83,7 @@ const DynamicVectorIcon: React.FC<{
 
   if (type === "gear") {
     return (
-      <svg width="260" height="260" viewBox="0 0 200 200">
+      <svg width="250" height="250" viewBox="0 0 200 200">
         <circle cx="100" cy="100" r="88" fill={color} fillOpacity="0.12" />
         <g transform={`rotate(${spin} 100 100)`}>
           <circle
@@ -107,7 +108,7 @@ const DynamicVectorIcon: React.FC<{
     const h2 = 85 + Math.cos(frame * 0.06) * 15;
     const h3 = 115 + Math.sin(frame * 0.08) * 10;
     return (
-      <svg width="260" height="260" viewBox="0 0 200 200">
+      <svg width="250" height="250" viewBox="0 0 200 200">
         <circle cx="100" cy="100" r="88" fill={color} fillOpacity="0.12" />
         <rect x="45" y={150 - h1} width="26" height={h1} rx="6" fill="#64748b" />
         <rect x="87" y={150 - h2} width="26" height={h2} rx="6" fill={color} />
@@ -119,7 +120,7 @@ const DynamicVectorIcon: React.FC<{
 
   if (type === "shield") {
     return (
-      <svg width="260" height="260" viewBox="0 0 200 200">
+      <svg width="250" height="250" viewBox="0 0 200 200">
         <circle cx="100" cy="100" r="88" fill={color} fillOpacity="0.12" />
         <path
           d="M100 35 L152 56 V102 C152 136 128 160 100 170 C72 160 48 136 48 102 V56 Z"
@@ -140,7 +141,7 @@ const DynamicVectorIcon: React.FC<{
   }
 
   return (
-    <svg width="260" height="260" viewBox="0 0 200 200">
+    <svg width="250" height="250" viewBox="0 0 200 200">
       <circle cx="100" cy="100" r="88" fill={color} fillOpacity="0.12" />
       <circle cx="52" cy="100" r="18" fill={color} />
       <circle cx="100" cy="62" r="18" fill="#ffffff" />
@@ -156,18 +157,40 @@ const DynamicVectorIcon: React.FC<{
   );
 };
 
-// Subtitle Dinamis Ala Video Referensi (4-5 kata per tampilan dengan kata aktif menyala kuning)
+// Subtitle Dinamis dengan Bobot Suku Kata & Jeda Tanda Baca agar Sinkron dengan Ucapan VO
 const DynamicKineticSubtitle: React.FC<{
   text: string;
   localFrame: number;
-  framesPerScene: number;
+  sceneDurationFrames: number;
   highlightColor: string;
-}> = ({ text, localFrame, framesPerScene, highlightColor }) => {
+}> = ({ text, localFrame, sceneDurationFrames, highlightColor }) => {
   const words = text.trim().split(/\s+/);
   if (words.length === 0) return null;
 
-  const progress = Math.min(0.999, Math.max(0, localFrame / framesPerScene));
-  const activeWordGlobalIndex = Math.floor(progress * words.length);
+  // Hitung bobot waktu tiap kata berdasarkan panjang karakter + jeda tanda baca
+  const weights = words.map((w) => {
+    let weight = Math.max(3, w.length);
+    if (w.endsWith(",")) weight += 4;
+    if (w.endsWith(".") || w.endsWith("?") || w.endsWith("!")) weight += 7;
+    return weight;
+  });
+
+  const totalWeight = weights.reduce((acc, w) => acc + w, 0);
+  // Sisakan sedikit buffer 6% di akhir adegan untuk jeda napas antar paragraf
+  const effectiveDuration = sceneDurationFrames * 0.94;
+  const clampedFrame = Math.min(effectiveDuration - 0.1, Math.max(0, localFrame));
+  const targetWeight = (clampedFrame / effectiveDuration) * totalWeight;
+
+  let cumulative = 0;
+  let activeWordGlobalIndex = words.length - 1;
+  for (let i = 0; i < weights.length; i++) {
+    cumulative += weights[i];
+    if (targetWeight <= cumulative) {
+      activeWordGlobalIndex = i;
+      break;
+    }
+  }
+
   const chunkSize = 5;
   const chunkIndex = Math.floor(activeWordGlobalIndex / chunkSize);
   const startIdx = chunkIndex * chunkSize;
@@ -182,7 +205,7 @@ const DynamicKineticSubtitle: React.FC<{
         justifyContent: "center",
         alignItems: "center",
         gap: "8px 14px",
-        padding: "0 24px",
+        padding: "0 20px",
         textAlign: "center",
       }}
     >
@@ -216,8 +239,8 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
   const props = { ...directProps, ...inputProps };
 
   const style = props.styleConfig || {};
-  const bg = style.bgColor || props.bgColor || "#061338"; // Deep Navy ala video referensi
-  const accent = style.accentColor || props.accentColor || "#facc15"; // Kuning Emas ala referensi
+  const bg = style.bgColor || props.bgColor || "#061338";
+  const accent = style.accentColor || props.accentColor || "#facc15";
   const textColor = style.textColor || "#ffffff";
   const watermark = style.watermark || "orionmotion";
   const damping = style.springDamping ?? 14;
@@ -237,12 +260,36 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
           },
         ];
 
-  const framesPerScene = Math.max(30, Math.floor(durationInFrames / scenes.length));
-  const currentSceneIndex = Math.min(
-    scenes.length - 1,
-    Math.floor(frame / framesPerScene)
+  // Kalkulasi timeline presisi per adegan (mendukung durationSeconds atau bobot panjang naskah otomatis)
+  const rawWeights = scenes.map((s) =>
+    s.durationSeconds && s.durationSeconds > 0
+      ? s.durationSeconds
+      : Math.max(15, s.body.length)
   );
-  const localFrame = frame - currentSceneIndex * framesPerScene;
+  const totalRawWeight = rawWeights.reduce((a, b) => a + b, 0);
+
+  const sceneRanges: { start: number; end: number; duration: number }[] = [];
+  let cursor = 0;
+  for (let i = 0; i < scenes.length; i++) {
+    const dur =
+      i === scenes.length - 1
+        ? Math.max(30, durationInFrames - cursor)
+        : Math.max(30, Math.round((rawWeights[i] / totalRawWeight) * durationInFrames));
+    sceneRanges.push({ start: cursor, end: cursor + dur, duration: dur });
+    cursor += dur;
+  }
+
+  let currentSceneIndex = scenes.length - 1;
+  for (let i = 0; i < sceneRanges.length; i++) {
+    if (frame >= sceneRanges[i].start && frame < sceneRanges[i].end) {
+      currentSceneIndex = i;
+      break;
+    }
+  }
+
+  const activeRange = sceneRanges[currentSceneIndex];
+  const localFrame = Math.max(0, frame - activeRange.start);
+  const sceneDurationFrames = activeRange.duration;
   const activeScene = scenes[currentSceneIndex];
 
   const headToneColor =
@@ -259,13 +306,13 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
   });
   const exitFade = interpolate(
     localFrame,
-    [framesPerScene - 10, framesPerScene],
+    [sceneDurationFrames - 8, sceneDurationFrames],
     [1, 0],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
 
   // Gerak kamera foto (Ken Burns)
-  const mediaProgress = Math.min(1, localFrame / framesPerScene);
+  const mediaProgress = Math.min(1, localFrame / sceneDurationFrames);
   let mediaScale = 1.02;
   let mediaTranslateX = 0;
   if (activeScene.motion === "zoom-in") {
@@ -299,7 +346,7 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
     >
       {resolvedAudio ? <Audio src={resolvedAudio} /> : null}
 
-      {/* Vignette Halus di Tepi Layar */}
+      {/* Vignette Halus */}
       <div
         style={{
           position: "absolute",
@@ -310,14 +357,14 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
         }}
       />
 
-      {/* Top Watermark & Chapter Heading (Gaya Khas Video Referensi) */}
+      {/* Top Watermark & Chapter Heading */}
       <div style={{ zIndex: 2, opacity: exitFade }}>
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: 26,
+            marginBottom: 24,
           }}
         >
           <span
@@ -348,7 +395,7 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
           )}
         </div>
 
-        {/* Judul Bab Besar 2 Warna (Kata Terakhir Disorot) */}
+        {/* Judul Bab Besar 2 Warna */}
         <div
           style={{
             display: "flex",
@@ -356,7 +403,7 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
             justifyContent: "center",
             gap: "8px 16px",
             textAlign: "center",
-            transform: `translateY(${interpolate(entrance, [0, 1], [-24, 0])}px)`,
+            transform: `translateY(${interpolate(entrance, [0, 1], [-22, 0])}px)`,
           }}
         >
           {headingWords.map((w, i) => {
@@ -365,7 +412,7 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
               <span
                 key={i}
                 style={{
-                  fontSize: 64,
+                  fontSize: 62,
                   fontWeight: 900,
                   lineHeight: 1.1,
                   textTransform: "uppercase",
@@ -389,16 +436,15 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
           alignItems: "center",
           width: "100%",
           opacity: exitFade,
-          transform: `scale(${interpolate(entrance, [0, 1], [0.94, 1])})`,
+          transform: `scale(${interpolate(entrance, [0, 1], [0.95, 1])})`,
         }}
       >
-        {/* Bingkai Media Utama + Pointer Garis Putih Ala Referensi */}
         {hasMedia ? (
           <div
             style={{
               position: "relative",
               width: "100%",
-              height: activeScene.points && activeScene.points.length > 0 ? 500 : 620,
+              height: activeScene.points && activeScene.points.length > 0 ? 490 : 610,
               borderRadius: 26,
               overflow: "hidden",
               border: `2px solid rgba(255,255,255,0.2)`,
@@ -436,7 +482,6 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
               )}
             </div>
 
-            {/* Label Pointer Garis Putih (Seperti label "WF utuh" / "PIPA" di video contoh) */}
             {activeScene.pointerLabel && (
               <div
                 style={{
@@ -483,13 +528,13 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
           </div>
         )}
 
-        {/* Interactive Overlay Panel (Muncul Bertahap Mengikuti VO) */}
+        {/* Interactive Overlay Panel */}
         {activeScene.points && activeScene.points.length > 0 && (
           <div
             style={{
               width: "100%",
-              marginTop: 26,
-              padding: activeScene.overlayType === "pills" ? 0 : "22px 26px",
+              marginTop: 24,
+              padding: activeScene.overlayType === "pills" ? 0 : "20px 26px",
               borderRadius: 22,
               backgroundColor:
                 activeScene.overlayType === "pills"
@@ -505,7 +550,9 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
             }}
           >
             {activeScene.points.map((pt, idx) => {
-              const stepDelay = Math.floor((framesPerScene / (activeScene.points!.length + 1)) * idx);
+              const stepDelay = Math.floor(
+                (sceneDurationFrames / (activeScene.points!.length + 1)) * idx
+              );
               const ptSpring = spring({
                 frame: Math.max(0, localFrame - stepDelay),
                 fps,
@@ -517,7 +564,6 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
               });
               const toneCol = TONE_COLORS[pt.tone || "gold"];
 
-              // Mode 1: Callout Pills Bertingkat (00:04 & 00:14 di video contoh)
               if (activeScene.overlayType === "pills") {
                 return (
                   <div
@@ -541,7 +587,6 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
                 );
               }
 
-              // Mode 2: Animated Progress Bars (01:02 di video contoh)
               if (activeScene.overlayType === "bars") {
                 const barWidth = interpolate(ptSpring, [0, 1], [0, pt.percent || 75]);
                 return (
@@ -580,7 +625,6 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
                 );
               }
 
-              // Mode 3: Checklist Centang/Silang (01:34 di video contoh)
               const isCross = pt.tone === "red";
               return (
                 <div
@@ -607,12 +651,12 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
         )}
       </div>
 
-      {/* Bottom Dynamic Karaoke Subtitle (Persis Gaya Video Contoh) */}
+      {/* Bottom Dynamic Karaoke Subtitle */}
       <div style={{ zIndex: 2 }}>
         <DynamicKineticSubtitle
           text={activeScene.body}
           localFrame={localFrame}
-          framesPerScene={framesPerScene}
+          sceneDurationFrames={sceneDurationFrames}
           highlightColor={accent}
         />
       </div>
