@@ -195,6 +195,15 @@ async function textToMp4() {
 
   if (sceneData.audioFile) {
     console.log(`🎧 Menggunakan file audio kustom: ${sceneData.audioFile}`);
+    const cleanAudioPath = sceneData.audioFile.replace(/^\/+/, "").replace(/^public\//, "");
+    const fullAudioPath = path.resolve("./public", cleanAudioPath);
+    if (fs.existsSync(fullAudioPath)) {
+      const audioBuffer = fs.readFileSync(fullAudioPath);
+      audioDataUri = `data:audio/mp3;base64,${audioBuffer.toString("base64")}`;
+      console.log(`✅ File audio kustom berhasil dimuat (${Math.round(audioBuffer.length / 1024)} KB)`);
+    } else {
+      console.log(`⚠️ File audio tidak ditemukan di: ${fullAudioPath}`);
+    }
   } else {
     console.log("🎙️ Membuat Voiceover Text-to-Speech (TTS)...");
     try {
