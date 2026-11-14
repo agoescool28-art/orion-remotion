@@ -16,15 +16,19 @@ export interface SceneItem {
   tag: string;
   heading: string;
   body: string;
+  statNumber?: string;
+  statLabel?: string;
   visualType?: "gear" | "chart" | "shield" | "flow";
   media?: string;
   mediaType?: "image" | "video";
+  mediaFocus?: string;
   motion?: "zoom-in" | "zoom-out" | "pan-right" | "none";
 }
 
 export interface StyleConfig {
   bgColor?: string;
   accentColor?: string;
+  secondaryAccent?: string;
   textColor?: string;
   layout?: "center" | "left" | "split-top";
   overlayOpacity?: number;
@@ -52,6 +56,63 @@ const resolveMediaPath = (src: string) => {
   return staticFile(cleanPath);
 };
 
+const KineticHeading: React.FC<{
+  text: string;
+  accent: string;
+  textColor: string;
+  localFrame: number;
+  fps: number;
+  align: "center" | "left";
+}> = ({ text, accent, textColor, localFrame, fps, align }) => {
+  const words = text.split(" ");
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        justifyContent: align === "center" ? "center" : "flex-start",
+        gap: "12px 18px",
+      }}
+    >
+      {words.map((word, idx) => {
+        const delay = idx * 4;
+        const spr = spring({
+          frame: Math.max(0, localFrame - delay),
+          fps,
+          config: { damping: 13, stiffness: 140 },
+        });
+        const y = interpolate(spr, [0, 1], [48, 0]);
+        const scale = interpolate(spr, [0, 1], [0.85, 1]);
+        const op = interpolate(localFrame - delay, [0, 8], [0, 1], {
+          extrapolateLeft: "clamp",
+          extrapolateRight: "clamp",
+        });
+        const isLastWord = idx === words.length - 1 && words.length > 1;
+
+        return (
+          <span
+            key={idx}
+            style={{
+              display: "inline-block",
+              fontSize: 64,
+              fontWeight: 900,
+              lineHeight: 1.08,
+              letterSpacing: -1,
+              textTransform: "uppercase",
+              color: isLastWord ? accent : textColor,
+              transform: `translateY(${y}px) scale(${scale})`,
+              opacity: op,
+              textShadow: isLastWord ? `0 0 32px ${accent}55` : "none",
+            }}
+          >
+            {word}
+          </span>
+        );
+      })}
+    </div>
+  );
+};
+
 const DynamicVectorIcon: React.FC<{
   type: "gear" | "chart" | "shield" | "flow";
   color: string;
@@ -62,7 +123,7 @@ const DynamicVectorIcon: React.FC<{
 
   if (type === "gear") {
     return (
-      <svg width="240" height="240" viewBox="0 0 200 200">
+      <svg width="210" height="210" viewBox="0 0 200 200">
         <circle cx="100" cy="100" r="88" fill={color} fillOpacity="0.14" />
         <g transform={`rotate(${spin} 100 100)`}>
           <circle
@@ -87,7 +148,7 @@ const DynamicVectorIcon: React.FC<{
     const h2 = 85 + Math.cos(frame * 0.06) * 15;
     const h3 = 115 + Math.sin(frame * 0.08) * 10;
     return (
-      <svg width="240" height="240" viewBox="0 0 200 200">
+      <svg width="210" height="210" viewBox="0 0 200 200">
         <circle cx="100" cy="100" r="88" fill={color} fillOpacity="0.14" />
         <rect x="45" y={150 - h1} width="26" height={h1} rx="6" fill="#64748b" />
         <rect x="87" y={150 - h2} width="26" height={h2} rx="6" fill={color} />
@@ -99,7 +160,7 @@ const DynamicVectorIcon: React.FC<{
 
   if (type === "shield") {
     return (
-      <svg width="240" height="240" viewBox="0 0 200 200">
+      <svg width="210" height="210" viewBox="0 0 200 200">
         <circle cx="100" cy="100" r="88" fill={color} fillOpacity="0.14" />
         <path
           d="M100 35 L152 56 V102 C152 136 128 160 100 170 C72 160 48 136 48 102 V56 Z"
@@ -120,7 +181,7 @@ const DynamicVectorIcon: React.FC<{
   }
 
   return (
-    <svg width="240" height="240" viewBox="0 0 200 200">
+    <svg width="210" height="210" viewBox="0 0 200 200">
       <circle cx="100" cy="100" r="88" fill={color} fillOpacity="0.14" />
       <circle cx="52" cy="100" r="18" fill={color} />
       <circle cx="100" cy="62" r="18" fill="#ffffff" />
@@ -138,16 +199,16 @@ const DynamicVectorIcon: React.FC<{
 
 export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => {
   const frame = useCurrentFrame();
-  const { fps, durationInFrames, width } = useVideoConfig();
+  const { fps, durationInFrames } = useVideoConfig();
   const inputProps = (getInputProps() as DynamicVideoProps) || {};
   const props = { ...directProps, ...inputProps };
 
   const style = props.styleConfig || {};
   const accent = style.accentColor || props.accentColor || "#10b981";
-  const bg = style.bgColor || props.bgColor || "#090d16";
+  const secondaryAccent = style.secondaryAccent || "#3b82f6";
+  const bg = style.bgColor || props.bgColor || "#07090f";
   const textColor = style.textColor || "#ffffff";
-  const layout = style.layout || "center";
-  const overlayOpacity = style.overlayOpacity ?? 0.65;
+  const layout = style.layout || "split-top";
   const damping = style.springDamping ?? 14;
 
   const mainTitle = props.title || "MOTION GRAPHIC";
@@ -173,29 +234,45 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
   const localFrame = frame - currentSceneIndex * framesPerScene;
   const activeScene = scenes[currentSceneIndex];
 
-  const entrance = spring({
+  // Transisi keluar-masuk antar adegan (Morph wipe & scale)
+  const cardSpring = spring({
     frame: localFrame,
     fps,
-    config: { damping, stiffness: 110 },
+    config: { damping, stiffness: 120 },
   });
+  const exitProgress = interpolate(
+    localFrame,
+    [framesPerScene - 12, framesPerScene],
+    [1, 0],
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+  );
 
-  const slideY = interpolate(entrance, [0, 1], [45, 0]);
-  const opacity = interpolate(localFrame, [0, 10], [0, 1], {
+  const cardScale = interpolate(cardSpring, [0, 1], [0.9, 1]) * interpolate(exitProgress, [0, 1], [0.95, 1]);
+  const cardY = interpolate(cardSpring, [0, 1], [60, 0]);
+  const bodyOpacity = interpolate(localFrame, [10, 22], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  }) * exitProgress;
+  const bodyY = interpolate(localFrame, [10, 22], [24, 0], {
+    extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-  const progressPct = Math.min(100, (frame / durationInFrames) * 100);
 
-  // Kalkulasi animasi kamera (Ken Burns) untuk foto/footage
+  // Gerak Ambient Glow Orb
+  const orbX = Math.sin(frame * 0.02) * 120;
+  const orbY = Math.cos(frame * 0.015) * 90;
+
+  // Gerak kamera foto (Ken Burns)
   const mediaProgress = Math.min(1, localFrame / framesPerScene);
-  let mediaScale = 1;
+  let mediaScale = 1.02;
   let mediaTranslateX = 0;
   if (activeScene.motion === "zoom-in") {
-    mediaScale = interpolate(mediaProgress, [0, 1], [1.0, 1.15]);
+    mediaScale = interpolate(mediaProgress, [0, 1], [1.0, 1.14]);
   } else if (activeScene.motion === "zoom-out") {
-    mediaScale = interpolate(mediaProgress, [0, 1], [1.15, 1.0]);
+    mediaScale = interpolate(mediaProgress, [0, 1], [1.14, 1.0]);
   } else if (activeScene.motion === "pan-right") {
     mediaScale = 1.12;
-    mediaTranslateX = interpolate(mediaProgress, [0, 1], [-25, 25]);
+    mediaTranslateX = interpolate(mediaProgress, [0, 1], [-22, 22]);
   }
 
   const resolvedAudio = props.audioSrc
@@ -205,6 +282,7 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
     : "";
 
   const hasMedia = Boolean(activeScene.media);
+  const progressPct = Math.min(100, (frame / durationInFrames) * 100);
 
   return (
     <AbsoluteFill
@@ -212,91 +290,92 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
         backgroundColor: bg,
         fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
         color: textColor,
-        padding: 64,
+        padding: "56px 52px",
         justifyContent: "space-between",
         overflow: "hidden",
       }}
     >
       {resolvedAudio ? <Audio src={resolvedAudio} /> : null}
 
-      {/* Lapisan Media Latar Belakang (Jika layout bukan split-top) */}
-      {hasMedia && layout !== "split-top" && (
-        <AbsoluteFill style={{ zIndex: 0 }}>
-          <div
-            style={{
-              width: "100%",
-              height: "100%",
-              transform: `scale(${mediaScale}) translateX(${mediaTranslateX}px)`,
-            }}
-          >
-            {activeScene.mediaType === "video" ? (
-              <OffthreadVideo
-                src={resolveMediaPath(activeScene.media!)}
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                muted
-              />
-            ) : (
-              <Img
-                src={resolveMediaPath(activeScene.media!)}
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
-            )}
-          </div>
-          <AbsoluteFill
-            style={{
-              backgroundColor: bg,
-              opacity: overlayOpacity,
-            }}
-          />
-        </AbsoluteFill>
-      )}
+      {/* Ambient Glowing Orbs (Latar Belakang Dinamis Ala Claude/Apple) */}
+      <div
+        style={{
+          position: "absolute",
+          top: 140 + orbY,
+          left: -120 + orbX,
+          width: 620,
+          height: 620,
+          borderRadius: "50%",
+          background: `radial-gradient(circle, ${accent}33 0%, transparent 70%)`,
+          filter: "blur(40px)",
+          zIndex: 0,
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          bottom: 180 - orbY,
+          right: -140 - orbX,
+          width: 580,
+          height: 580,
+          borderRadius: "50%",
+          background: `radial-gradient(circle, ${secondaryAccent}28 0%, transparent 70%)`,
+          filter: "blur(50px)",
+          zIndex: 0,
+        }}
+      />
 
-      {/* Grid Dekoratif (Jika tidak memakai media penuh) */}
-      {(!hasMedia || layout === "split-top") && (
+      {/* Grid Halus */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)`,
+          backgroundSize: "64px 64px",
+          zIndex: 0,
+        }}
+      />
+
+      {/* Top Glass Header Bar */}
+      <div
+        style={{
+          zIndex: 2,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "16px 24px",
+          borderRadius: 24,
+          backgroundColor: "rgba(255,255,255,0.05)",
+          border: "1px solid rgba(255,255,255,0.12)",
+        }}
+      >
         <div
           style={{
-            position: "absolute",
-            inset: 0,
-            backgroundImage: `radial-gradient(${accent}22 2px, transparent 2px)`,
-            backgroundSize: "48px 48px",
-            opacity: 0.5,
-            zIndex: 0,
-          }}
-        />
-      )}
-
-      {/* Header Atas */}
-      <div style={{ zIndex: 2 }}>
-        <div
-          style={{
-            display: "inline-block",
-            padding: "10px 22px",
+            padding: "8px 18px",
             borderRadius: 999,
-            backgroundColor: `${accent}26`,
-            border: `2px solid ${accent}`,
+            backgroundColor: `${accent}24`,
+            border: `1.5px solid ${accent}`,
             color: accent,
-            fontSize: 24,
+            fontSize: 21,
             fontWeight: 800,
-            letterSpacing: 2,
+            letterSpacing: 1.5,
           }}
         >
           {activeScene.tag}
         </div>
         <div
           style={{
-            marginTop: 20,
-            fontSize: 26,
-            color: "#cbd5e1",
+            fontSize: 20,
+            color: "#94a3b8",
             fontWeight: 700,
-            textTransform: "uppercase",
-            letterSpacing: 1.5,
+            letterSpacing: 1,
           }}
         >
-          {mainTitle}
+          {currentSceneIndex + 1} / {scenes.length}
         </div>
       </div>
 
-      {/* Konten Utama Tengah */}
+      {/* Main Glassmorphism UI Stage */}
       <div
         style={{
           zIndex: 2,
@@ -304,119 +383,259 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
           flexDirection: "column",
           alignItems: layout === "left" ? "flex-start" : "center",
           textAlign: layout === "left" ? "left" : "center",
-          transform: `translateY(${slideY}px)`,
-          opacity,
+          transform: `translateY(${cardY}px) scale(${cardScale})`,
+          opacity: exitProgress,
         }}
       >
-        {/* Bingkai Media Split-Top (Jika memakai foto/footage dengan gaya frame kartu) */}
-        {hasMedia && layout === "split-top" && (
+        {/* UI Media Card dengan Stat Pill Melayang */}
+        {hasMedia ? (
           <div
             style={{
+              position: "relative",
               width: "100%",
-              height: 620,
-              borderRadius: 28,
-              overflow: "hidden",
-              border: `3px solid ${accent}`,
-              marginBottom: 42,
-              boxShadow: "0 20px 50px rgba(0,0,0,0.5)",
+              height: 640,
+              borderRadius: 34,
+              padding: 12,
+              background: "linear-gradient(145deg, rgba(255,255,255,0.16), rgba(255,255,255,0.03))",
+              border: `1.5px solid ${accent}66`,
+              boxShadow: `0 28px 70px rgba(0,0,0,0.65), 0 0 40px ${accent}22`,
+              marginBottom: 40,
             }}
           >
             <div
               style={{
                 width: "100%",
                 height: "100%",
-                transform: `scale(${mediaScale}) translateX(${mediaTranslateX}px)`,
+                borderRadius: 24,
+                overflow: "hidden",
+                position: "relative",
               }}
             >
-              {activeScene.mediaType === "video" ? (
-                <OffthreadVideo
-                  src={resolveMediaPath(activeScene.media!)}
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                  muted
-                />
-              ) : (
-                <Img
-                  src={resolveMediaPath(activeScene.media!)}
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                />
-              )}
-            </div>
-          </div>
-        )}
+              <div
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  transform: `scale(${mediaScale}) translateX(${mediaTranslateX}px)`,
+                }}
+              >
+                {activeScene.mediaType === "video" ? (
+                  <OffthreadVideo
+                    src={resolveMediaPath(activeScene.media!)}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      objectPosition: activeScene.mediaFocus || "center 18%",
+                    }}
+                    muted
+                  />
+                ) : (
+                  <Img
+                    src={resolveMediaPath(activeScene.media!)}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      objectPosition: activeScene.mediaFocus || "center 18%",
+                    }}
+                  />
+                )}
+              </div>
 
-        {/* Ikon Vektor Otomatis (Jika adegan tidak memakai foto/footage) */}
-        {!hasMedia && (
-          <div style={{ marginBottom: 40 }}>
+              {/* Vignette Bawah pada Foto agar Teks Overlay Kontras */}
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background: "linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 45%)",
+                }}
+              />
+            </div>
+
+            {/* Floating Stat / Year Morph Pill */}
+            {activeScene.statNumber && (
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: -22,
+                  right: 28,
+                  padding: "14px 28px",
+                  borderRadius: 22,
+                  backgroundColor: "#0f172a",
+                  border: `2px solid ${accent}`,
+                  boxShadow: "0 14px 30px rgba(0,0,0,0.6)",
+                  display: "flex",
+                  alignItems: "baseline",
+                  gap: 12,
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 42,
+                    fontWeight: 900,
+                    color: accent,
+                    letterSpacing: -1,
+                  }}
+                >
+                  {activeScene.statNumber}
+                </span>
+                {activeScene.statLabel && (
+                  <span
+                    style={{
+                      fontSize: 20,
+                      fontWeight: 700,
+                      color: "#e2e8f0",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {activeScene.statLabel}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Glass Card untuk Adegan Tanpa Foto (Ikon Vektor + Stat Besar) */
+          <div
+            style={{
+              width: "100%",
+              padding: "44px 32px",
+              borderRadius: 34,
+              background: "linear-gradient(145deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02))",
+              border: `1.5px solid ${accent}55`,
+              marginBottom: 40,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
             <DynamicVectorIcon
               type={activeScene.visualType || "gear"}
               color={accent}
               frame={frame}
             />
+            {activeScene.statNumber && (
+              <div
+                style={{
+                  marginTop: 18,
+                  fontSize: 56,
+                  fontWeight: 900,
+                  color: accent,
+                  letterSpacing: -1,
+                }}
+              >
+                {activeScene.statNumber}
+              </div>
+            )}
           </div>
         )}
 
-        <h1
-          style={{
-            fontSize: 62,
-            fontWeight: 900,
-            lineHeight: 1.15,
-            margin: 0,
-            color: textColor,
-            textTransform: "uppercase",
-            textShadow: hasMedia && layout !== "split-top" ? "0 4px 20px rgba(0,0,0,0.8)" : "none",
-          }}
-        >
-          {activeScene.heading}
-        </h1>
+        {/* Kinetic Word-by-Word Heading */}
+        <KineticHeading
+          text={activeScene.heading}
+          accent={accent}
+          textColor={textColor}
+          localFrame={localFrame}
+          fps={fps}
+          align={layout === "left" ? "left" : "center"}
+        />
 
-        <p
+        {/* Glass Caption Box */}
+        <div
           style={{
             marginTop: 26,
-            fontSize: 36,
-            lineHeight: 1.45,
-            color: "#e2e8f0",
-            maxWidth: width - 130,
-            fontWeight: 500,
-            textShadow: hasMedia && layout !== "split-top" ? "0 2px 12px rgba(0,0,0,0.8)" : "none",
+            padding: "22px 28px",
+            borderRadius: 24,
+            backgroundColor: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            opacity: bodyOpacity,
+            transform: `translateY(${bodyY}px)`,
           }}
         >
-          {activeScene.body}
-        </p>
+          <p
+            style={{
+              margin: 0,
+              fontSize: 33,
+              lineHeight: 1.45,
+              color: "#e2e8f0",
+              fontWeight: 500,
+            }}
+          >
+            {activeScene.body}
+          </p>
+        </div>
       </div>
 
-      {/* Footer & Progress Bar */}
+      {/* Bottom Audio Waveform & Timeline Bar */}
       <div style={{ zIndex: 2 }}>
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
-            fontSize: 22,
-            color: "#cbd5e1",
+            alignItems: "center",
             marginBottom: 14,
-            fontWeight: 700,
           }}
         >
-          <span>
-            ADEGAN {currentSceneIndex + 1} / {scenes.length}
-          </span>
-          <span style={{ color: accent }}>ORION MOTION ENGINE</span>
-        </div>
-        <div
-          style={{
-            width: "100%",
-            height: 12,
-            backgroundColor: "rgba(255,255,255,0.18)",
-            borderRadius: 999,
-            overflow: "hidden",
-          }}
-        >
-          <div
+          <span
             style={{
-              width: `${progressPct}%`,
-              height: "100%",
-              backgroundColor: accent,
+              fontSize: 20,
+              color: "#94a3b8",
+              fontWeight: 700,
+              letterSpacing: 1,
             }}
-          />
+          >
+            {mainTitle}
+          </span>
+
+          {/* Animated Audio Equalizer Bars */}
+          <div style={{ display: "flex", alignItems: "center", gap: 5, height: 26 }}>
+            {[0, 1, 2, 3, 4, 5, 6].map((bar) => {
+              const barH = 8 + Math.abs(Math.sin(frame * 0.22 + bar * 1.1)) * 18;
+              return (
+                <div
+                  key={bar}
+                  style={{
+                    width: 5,
+                    height: barH,
+                    borderRadius: 99,
+                    backgroundColor: accent,
+                  }}
+                />
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Segmented Timeline Progress */}
+        <div style={{ display: "flex", gap: 8 }}>
+          {scenes.map((_, i) => {
+            const segFill =
+              i < currentSceneIndex
+                ? 100
+                : i === currentSceneIndex
+                ? Math.min(100, (localFrame / framesPerScene) * 100)
+                : 0;
+            return (
+              <div
+                key={i}
+                style={{
+                  flex: 1,
+                  height: 8,
+                  borderRadius: 99,
+                  backgroundColor: "rgba(255,255,255,0.14)",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    width: `${segFill}%`,
+                    height: "100%",
+                    backgroundColor: accent,
+                  }}
+                />
+              </div>
+            );
+          })}
         </div>
       </div>
     </AbsoluteFill>
