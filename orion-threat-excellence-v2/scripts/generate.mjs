@@ -180,31 +180,7 @@ Aturan wajib:
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     },
   });
-// Kirim otomatis ke Telegram jika Secrets tersedia
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
 
-  if (botToken && chatId) {
-    console.log("📲 Mengirim video ke Telegram...");
-    const videoBuffer = fs.readFileSync("./out/video_1.mp4");
-    const formData = new FormData();
-    formData.append("chat_id", chatId);
-    formData.append("caption", `🎬 ${sceneData.title || "Video Motion Graphic"}`);
-    formData.append("video", new Blob([videoBuffer], { type: "video/mp4" }), "video_1.mp4");
-
-    const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendVideo`, {
-      method: "POST",
-      body: formData,
-    });
-    const tgJson = await tgRes.json();
-    if (tgJson.ok) {
-      console.log("✅ Video berhasil terkirim ke Telegram!");
-    } else {
-      console.error("⚠️ Gagal kirim ke Telegram:", tgJson);
-    }
-  } else {
-    console.log("ℹ️ TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID belum diset di environment.");
-  }
   console.log("✅ SUKSES! Video MP4 tersimpan di ./out/video_1.mp4");
 }
 
