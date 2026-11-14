@@ -129,13 +129,32 @@ Aturan wajib:
   ]
 }`;
 
-    const model = genAI.getGenerativeModel({
-      model: "gemini-3.8-flash",
-      generationConfig: { responseMimeType: "application/json" },
-    });
+    const candidateModels = [
+      "gemini-3.8-flash",
+      "gemini-3.8-flash-lite",
+      "gemini-3.8-pro",
+    ];
+    let rawText = "";
 
-    const aiResponse = await model.generateContent(prompt);
-    const rawText = aiResponse.response.text();
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const modelName = candidateModels[attempt % candidateModels.length];
+      try {
+        if (attempt > 0) {
+          console.log(`🔄 Percobaan ke-${attempt + 1} menggunakan model ${modelName}...`);
+          await new Promise((r) => setTimeout(r, 4000));
+        }
+        const model = genAI.getGenerativeModel({
+          model: modelName,
+          generationConfig: { responseMimeType: "application/json" },
+        });
+        const aiResponse = await model.generateContent(prompt);
+        rawText = aiResponse.response.text();
+        if (rawText) break;
+      } catch (err) {
+        console.warn(`⚠️ ${modelName} sibuk (${err.status || err.message}), mencoba ulang...`);
+        if (attempt === 3) throw err;
+      }
+    }
     sceneData = JSON.parse(rawText);
     sceneData.audioSrc = "";
 
