@@ -12,6 +12,16 @@ import {
   getInputProps,
 } from "remotion";
 
+export type VisualCategory =
+  | "gear"
+  | "chart"
+  | "shield"
+  | "flow"
+  | "medical"
+  | "history"
+  | "globe"
+  | "bulb";
+
 export interface OverlayPoint {
   text: string;
   value?: string;
@@ -24,12 +34,14 @@ export interface SceneItem {
   heading: string;
   headingTone?: "gold" | "red" | "green";
   body: string;
+  heroStat?: string;
+  heroLabel?: string;
   startTime?: number;
   durationSeconds?: number;
   overlayType?: "pills" | "bars" | "checklist";
   points?: OverlayPoint[];
   pointerLabel?: string;
-  visualType?: "gear" | "chart" | "shield" | "flow";
+  visualType?: VisualCategory;
   media?: string;
   mediaType?: "image" | "video";
   mediaFocus?: string;
@@ -74,66 +86,179 @@ const TONE_COLORS = {
   neutral: "#e2e8f0",
 };
 
-const DynamicVectorIcon: React.FC<{
-  type: "gear" | "chart" | "shield" | "flow";
+const DynamicVectorIllustration: React.FC<{
+  type: VisualCategory;
   color: string;
   frame: number;
 }> = ({ type, color, frame }) => {
-  const pulse = Math.sin(frame * 0.08) * 6;
-  const spin = (frame * 1.5) % 360;
+  const pulse = Math.sin(frame * 0.08) * 8;
+  const spin = (frame * 1.4) % 360;
+  const reverseSpin = (-frame * 0.9) % 360;
+
+  if (type === "medical") {
+    const beat = 1 + Math.sin(frame * 0.14) * 0.06;
+    return (
+      <svg width="340" height="340" viewBox="0 0 240 240">
+        <circle cx="120" cy="120" r="108" fill={color} fillOpacity="0.08" />
+        <g transform={`translate(120 120) scale(${beat}) translate(-120 -120)`}>
+          <rect x="102" y="54" width="36" height="132" rx="10" fill={color} />
+          <rect x="54" y="102" width="132" height="36" rx="10" fill={color} />
+          <circle cx="120" cy="120" r="14" fill="#ffffff" />
+        </g>
+        <path
+          d="M36 176 L76 176 L92 152 L112 198 L132 144 L148 176 L204 176"
+          fill="none"
+          stroke="#ffffff"
+          strokeWidth="5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+
+  if (type === "history") {
+    return (
+      <svg width="340" height="340" viewBox="0 0 240 240">
+        <circle cx="120" cy="120" r="108" fill={color} fillOpacity="0.08" />
+        <polygon points="120,44 48,82 192,82" fill={color} />
+        <rect x="56" y="88" width="128" height="10" rx="4" fill="#ffffff" />
+        <rect x="68" y="104" width="18" height="66" rx="4" fill="#e2e8f0" />
+        <rect x="111" y="104" width="18" height="66" rx="4" fill={color} />
+        <rect x="154" y="104" width="18" height="66" rx="4" fill="#e2e8f0" />
+        <rect x="48" y="176" width="144" height="14" rx="6" fill="#ffffff" />
+      </svg>
+    );
+  }
+
+  if (type === "globe") {
+    return (
+      <svg width="340" height="340" viewBox="0 0 240 240">
+        <circle cx="120" cy="120" r="108" fill={color} fillOpacity="0.08" />
+        <circle cx="120" cy="120" r="72" fill="none" stroke={color} strokeWidth="7" />
+        <ellipse cx="120" cy="120" rx="34" ry="72" fill="none" stroke="#ffffff" strokeWidth="5" />
+        <line x1="48" y1="120" x2="192" y2="120" stroke="#ffffff" strokeWidth="5" />
+        <path d="M58 88 Q120 102 182 88" fill="none" stroke={color} strokeWidth="4" />
+        <path d="M58 152 Q120 138 182 152" fill="none" stroke={color} strokeWidth="4" />
+        <circle
+          cx={120 + Math.cos(frame * 0.06) * 72}
+          cy={120 + Math.sin(frame * 0.06) * 28}
+          r="10"
+          fill={color}
+        />
+      </svg>
+    );
+  }
+
+  if (type === "bulb") {
+    const glow = 0.25 + Math.abs(Math.sin(frame * 0.08)) * 0.35;
+    return (
+      <svg width="340" height="340" viewBox="0 0 240 240">
+        <circle cx="120" cy="120" r="108" fill={color} fillOpacity="0.08" />
+        <circle cx="120" cy="105" r="64" fill={color} fillOpacity={glow} />
+        <path
+          d="M120 50 C88 50 66 74 66 104 C66 124 78 140 92 152 L96 168 H144 L148 152 C162 140 174 124 174 104 C174 74 152 50 120 50 Z"
+          fill="none"
+          stroke={color}
+          strokeWidth="9"
+        />
+        <rect x="98" y="176" width="44" height="12" rx="6" fill="#ffffff" />
+        <path
+          d="M106 112 L118 124 L138 96"
+          fill="none"
+          stroke="#ffffff"
+          strokeWidth="8"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
 
   if (type === "gear") {
     return (
-      <svg width="250" height="250" viewBox="0 0 200 200">
-        <circle cx="100" cy="100" r="88" fill={color} fillOpacity="0.12" />
-        <g transform={`rotate(${spin} 100 100)`}>
+      <svg width="340" height="340" viewBox="0 0 240 240">
+        <circle cx="120" cy="120" r="108" fill={color} fillOpacity="0.08" />
+        <g transform={`rotate(${reverseSpin} 120 120)`}>
           <circle
-            cx="100"
-            cy="100"
-            r="48"
+            cx="120"
+            cy="120"
+            r="96"
             fill="none"
             stroke={color}
-            strokeWidth="12"
-            strokeDasharray="18 12"
+            strokeOpacity="0.35"
+            strokeWidth="2"
+            strokeDasharray="10 14"
           />
-          <circle cx="100" cy="100" r="24" fill="none" stroke="#ffffff" strokeWidth="6" />
         </g>
-        <path d="M36 156 L164 130" stroke={color} strokeWidth="8" strokeLinecap="round" />
-        <circle cx={75 + pulse * 1.5} cy={135 - pulse * 0.3} r="14" fill="#ffffff" />
+        <g transform={`rotate(${spin} 120 120)`}>
+          <circle
+            cx="120"
+            cy="120"
+            r="56"
+            fill="none"
+            stroke={color}
+            strokeWidth="14"
+            strokeDasharray="22 14"
+          />
+          <circle cx="120" cy="120" r="28" fill="none" stroke="#ffffff" strokeWidth="6" />
+        </g>
+        <path d="M42 184 L198 152" stroke={color} strokeWidth="9" strokeLinecap="round" />
+        <circle cx={90 + pulse * 2} cy={160 - pulse * 0.4} r="16" fill="#ffffff" />
       </svg>
     );
   }
 
   if (type === "chart") {
-    const h1 = 50 + Math.sin(frame * 0.06) * 15;
-    const h2 = 85 + Math.cos(frame * 0.06) * 15;
-    const h3 = 115 + Math.sin(frame * 0.08) * 10;
+    const h1 = 62 + Math.sin(frame * 0.06) * 16;
+    const h2 = 104 + Math.cos(frame * 0.06) * 16;
+    const h3 = 142 + Math.sin(frame * 0.08) * 12;
     return (
-      <svg width="250" height="250" viewBox="0 0 200 200">
-        <circle cx="100" cy="100" r="88" fill={color} fillOpacity="0.12" />
-        <rect x="45" y={150 - h1} width="26" height={h1} rx="6" fill="#64748b" />
-        <rect x="87" y={150 - h2} width="26" height={h2} rx="6" fill={color} />
-        <rect x="129" y={150 - h3} width="26" height={h3} rx="6" fill="#ffffff" />
-        <line x1="35" y1="152" x2="165" y2="152" stroke="#94a3b8" strokeWidth="4" />
+      <svg width="340" height="340" viewBox="0 0 240 240">
+        <circle cx="120" cy="120" r="108" fill={color} fillOpacity="0.08" />
+        <line x1="40" y1="65" x2="200" y2="65" stroke="rgba(255,255,255,0.12)" strokeWidth="2" />
+        <line x1="40" y1="115" x2="200" y2="115" stroke="rgba(255,255,255,0.12)" strokeWidth="2" />
+        <rect x="52" y={182 - h1} width="34" height={h1} rx="8" fill="#64748b" />
+        <rect x="103" y={182 - h2} width="34" height={h2} rx="8" fill={color} />
+        <rect x="154" y={182 - h3} width="34" height={h3} rx="8" fill="#ffffff" />
+        <path
+          d={`M69 ${172 - h1} L120 ${172 - h2} L171 ${172 - h3}`}
+          fill="none"
+          stroke={color}
+          strokeWidth="5"
+          strokeLinecap="round"
+        />
+        <line x1="38" y1="184" x2="202" y2="184" stroke="#94a3b8" strokeWidth="4" />
       </svg>
     );
   }
 
   if (type === "shield") {
     return (
-      <svg width="250" height="250" viewBox="0 0 200 200">
-        <circle cx="100" cy="100" r="88" fill={color} fillOpacity="0.12" />
+      <svg width="340" height="340" viewBox="0 0 240 240">
+        <circle cx="120" cy="120" r="108" fill={color} fillOpacity="0.08" />
+        <g transform={`rotate(${spin} 120 120)`}>
+          <circle
+            cx="120"
+            cy="120"
+            r="95"
+            fill="none"
+            stroke={color}
+            strokeOpacity="0.3"
+            strokeWidth="3"
+            strokeDasharray="16 12"
+          />
+        </g>
         <path
-          d="M100 35 L152 56 V102 C152 136 128 160 100 170 C72 160 48 136 48 102 V56 Z"
-          fill="none"
+          d="M120 40 L182 66 V122 C182 162 154 190 120 202 C86 190 58 162 58 122 V66 Z"
+          fill={`${color}18`}
           stroke={color}
-          strokeWidth="9"
+          strokeWidth="10"
         />
         <path
-          d="M76 102 L93 119 L126 84"
+          d="M90 122 L111 143 L152 98"
           fill="none"
           stroke="#ffffff"
-          strokeWidth="10"
+          strokeWidth="12"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
@@ -142,30 +267,30 @@ const DynamicVectorIcon: React.FC<{
   }
 
   return (
-    <svg width="250" height="250" viewBox="0 0 200 200">
-      <circle cx="100" cy="100" r="88" fill={color} fillOpacity="0.12" />
-      <circle cx="52" cy="100" r="18" fill={color} />
-      <circle cx="100" cy="62" r="18" fill="#ffffff" />
-      <circle cx="148" cy="100" r="18" fill={color} />
-      <circle cx="100" cy="138" r="18" fill="#ffffff" />
+    <svg width="340" height="340" viewBox="0 0 240 240">
+      <circle cx="120" cy="120" r="108" fill={color} fillOpacity="0.08" />
       <path
-        d="M68 88 L85 73 M115 73 L132 88 M132 112 L115 127 M85 127 L68 112"
+        d="M64 120 L120 68 L176 120 L120 172 Z"
+        fill="none"
         stroke={color}
-        strokeWidth="5"
-        strokeLinecap="round"
+        strokeWidth="6"
+        strokeDasharray="10 8"
       />
+      <circle cx="64" cy="120" r="22" fill={color} />
+      <circle cx="120" cy="68" r="22" fill="#ffffff" />
+      <circle cx="176" cy="120" r="22" fill={color} />
+      <circle cx="120" cy="172" r="22" fill="#ffffff" />
     </svg>
   );
 };
 
-// Subtitle Dinamis dengan Bobot Suku Kata & Jeda Tanda Baca agar Sinkron dengan Ucapan VO
 const DynamicKineticSubtitle: React.FC<{
   text: string;
   localFrame: number;
   sceneDurationFrames: number;
   highlightColor: string;
 }> = ({ text, localFrame, sceneDurationFrames, highlightColor }) => {
-  const words = text.trim().split(/\s+/);
+  const words = text.trim().split(/\s+/).filter(Boolean);
   if (words.length === 0) return null;
 
   const weights = words.map((w) => {
@@ -198,33 +323,35 @@ const DynamicKineticSubtitle: React.FC<{
   return (
     <div
       style={{
-        minHeight: 110,
+        minHeight: 115,
         display: "flex",
         flexWrap: "wrap",
         justifyContent: "center",
         alignItems: "center",
-        gap: "8px 14px",
         padding: "0 20px",
         textAlign: "center",
+        lineHeight: 1.3,
       }}
     >
       {visibleWords.map((word, idx) => {
         const globalIdx = startIdx + idx;
         const isActive = globalIdx === activeWordGlobalIndex;
         return (
-          <span
-            key={globalIdx}
-            style={{
-              fontSize: 42,
-              fontWeight: 900,
-              lineHeight: 1.25,
-              color: isActive ? highlightColor : "#ffffff",
-              transform: isActive ? "scale(1.06)" : "scale(1)",
-              textShadow: "0 4px 16px rgba(0,0,0,0.85)",
-            }}
-          >
-            {word}
-          </span>
+          <React.Fragment key={globalIdx}>
+            <span
+              style={{
+                display: "inline-block",
+                fontSize: 42,
+                fontWeight: 900,
+                color: isActive ? highlightColor : "#ffffff",
+                transform: isActive ? "scale(1.06)" : "scale(1)",
+                textShadow: "0 4px 16px rgba(0,0,0,0.85)",
+              }}
+            >
+              {word}
+            </span>
+            {idx < visibleWords.length - 1 ? <span>{"\u00A0\u00A0"}</span> : null}
+          </React.Fragment>
         );
       })}
     </div>
@@ -255,11 +382,10 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
             tag: "01 • KONSEP",
             heading: mainTitle,
             body: subTitle,
-            visualType: "gear",
+            visualType: "bulb",
           },
         ];
 
-  // Kalkulasi timeline presisi per adegan (Prioritas: startTime absolut -> durationSeconds -> panjang naskah)
   const sceneRanges: { start: number; end: number; duration: number }[] = [];
   const hasExplicitStartTimes = scenes.some((s) => typeof s.startTime === "number");
 
@@ -329,7 +455,21 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
 
-  // Gerak kamera foto (Ken Burns)
+  const effectivePoints: OverlayPoint[] =
+    activeScene.points && activeScene.points.length > 0
+      ? activeScene.points
+      : activeScene.body
+          .split(/[,.;]+/)
+          .map((part) => part.trim())
+          .filter((part) => part.length > 4)
+          .slice(0, 3)
+          .map((part, idx) => ({
+            text: part.charAt(0).toUpperCase() + part.slice(1),
+            tone: idx === 0 ? "neutral" : activeScene.headingTone || "gold",
+          }));
+
+  const effectiveOverlayType = activeScene.overlayType || "pills";
+
   const mediaProgress = Math.min(1, localFrame / sceneDurationFrames);
   let mediaScale = 1.02;
   let mediaTranslateX = 0;
@@ -364,13 +504,21 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
     >
       {resolvedAudio ? <Audio src={resolvedAudio} /> : null}
 
-      {/* Vignette Halus */}
       <div
         style={{
           position: "absolute",
           inset: 0,
-          background:
-            "radial-gradient(circle at 50% 45%, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.45) 100%)",
+          background: `radial-gradient(circle at 50% 42%, ${headToneColor}22 0%, rgba(0,0,0,0.5) 75%)`,
+          zIndex: 0,
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px)",
+          backgroundSize: "64px 64px",
           zIndex: 0,
         }}
       />
@@ -413,7 +561,6 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
           )}
         </div>
 
-        {/* Judul Bab Besar 2 Warna */}
         <div
           style={{
             display: "flex",
@@ -445,7 +592,7 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
         </div>
       </div>
 
-      {/* Center Stage: Foto / Diagram + Interactive Infographic Overlays */}
+      {/* Center Stage */}
       <div
         style={{
           zIndex: 2,
@@ -462,7 +609,7 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
             style={{
               position: "relative",
               width: "100%",
-              height: activeScene.points && activeScene.points.length > 0 ? 490 : 610,
+              height: effectivePoints.length > 0 ? 490 : 610,
               borderRadius: 26,
               overflow: "hidden",
               border: "2px solid rgba(255,255,255,0.2)",
@@ -537,29 +684,76 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
             )}
           </div>
         ) : (
-          <div style={{ margin: "20px 0" }}>
-            <DynamicVectorIcon
-              type={activeScene.visualType || "gear"}
+          <div
+            style={{
+              width: "100%",
+              padding: "32px 28px",
+              borderRadius: 30,
+              background:
+                "linear-gradient(155deg, rgba(255,255,255,0.09) 0%, rgba(10,25,68,0.75) 100%)",
+              border: `2px solid ${headToneColor}55`,
+              boxShadow: `0 24px 60px rgba(0,0,0,0.55), 0 0 36px ${headToneColor}18`,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              position: "relative",
+            }}
+          >
+            <DynamicVectorIllustration
+              type={activeScene.visualType || "bulb"}
               color={headToneColor}
               frame={frame}
             />
+            {activeScene.heroStat && (
+              <div
+                style={{
+                  marginTop: 8,
+                  display: "flex",
+                  alignItems: "baseline",
+                  gap: 12,
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 58,
+                    fontWeight: 900,
+                    color: headToneColor,
+                    letterSpacing: -1,
+                  }}
+                >
+                  {activeScene.heroStat}
+                </span>
+                {activeScene.heroLabel && (
+                  <span
+                    style={{
+                      fontSize: 24,
+                      fontWeight: 800,
+                      color: "#e2e8f0",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    {activeScene.heroLabel}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         )}
 
         {/* Interactive Overlay Panel */}
-        {activeScene.points && activeScene.points.length > 0 && (
+        {effectivePoints.length > 0 && (
           <div
             style={{
               width: "100%",
-              marginTop: 24,
-              padding: activeScene.overlayType === "pills" ? 0 : "20px 26px",
+              marginTop: 26,
+              padding: effectiveOverlayType === "pills" ? 0 : "22px 26px",
               borderRadius: 22,
               backgroundColor:
-                activeScene.overlayType === "pills"
+                effectiveOverlayType === "pills"
                   ? "transparent"
-                  : "rgba(10, 25, 68, 0.88)",
+                  : "rgba(10, 25, 68, 0.9)",
               border:
-                activeScene.overlayType === "pills"
+                effectiveOverlayType === "pills"
                   ? "none"
                   : "1.5px solid rgba(255,255,255,0.18)",
               display: "flex",
@@ -567,9 +761,9 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
               gap: 14,
             }}
           >
-            {activeScene.points.map((pt, idx) => {
+            {effectivePoints.map((pt, idx) => {
               const stepDelay = Math.floor(
-                (sceneDurationFrames / (activeScene.points!.length + 1)) * idx
+                (sceneDurationFrames / (effectivePoints.length + 1)) * idx
               );
               const ptSpring = spring({
                 frame: Math.max(0, localFrame - stepDelay),
@@ -582,18 +776,20 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
               });
               const toneCol = TONE_COLORS[pt.tone || "gold"];
 
-              if (activeScene.overlayType === "pills") {
+              if (effectiveOverlayType === "pills") {
                 return (
                   <div
                     key={idx}
                     style={{
                       alignSelf: "center",
-                      padding: "12px 28px",
+                      maxWidth: "94%",
+                      textAlign: "center",
+                      padding: "13px 28px",
                       borderRadius: 16,
-                      backgroundColor: "rgba(15, 23, 42, 0.92)",
+                      backgroundColor: "rgba(15, 23, 42, 0.94)",
                       border: `2px solid ${toneCol}`,
                       color: toneCol,
-                      fontSize: 28,
+                      fontSize: 27,
                       fontWeight: 800,
                       opacity: ptOpacity,
                       transform: `translateY(${interpolate(ptSpring, [0, 1], [24, 0])}px)`,
@@ -605,7 +801,7 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
                 );
               }
 
-              if (activeScene.overlayType === "bars") {
+              if (effectiveOverlayType === "bars") {
                 const barWidth = interpolate(ptSpring, [0, 1], [0, pt.percent || 75]);
                 return (
                   <div key={idx} style={{ opacity: ptOpacity }}>
