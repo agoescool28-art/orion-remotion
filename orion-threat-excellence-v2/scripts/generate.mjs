@@ -1,24 +1,12 @@
 import { bundle } from "@remotion/bundler";
 import { renderMedia, selectComposition } from "@remotion/renderer";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import textToSpeech from "@google-cloud/text-to-speech";
 import path from "path";
 import fs from "fs";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const ttsClient = new textToSpeech.TextToSpeechClient();
-
-async function getMp3DurationSeconds(buffer) {
-  try {
-    const tmpFile = path.resolve("./out/temp_check.mp3");
-    fs.writeFileSync(tmpFile, buffer);
-    const stats = fs.statSync(tmpFile);
-    // Estimasi akurat untuk MP3 32kbps-64kbps standar Google TTS
-    return Math.max(10, Math.ceil(stats.size / 4000));
-  } catch {
-    return 35;
-  }
-}
 
 async function textToMp4() {
   const ideKonten = process.env.IDE_KONTEN || "Cara kerja mesin efisiensi produksi modern";
@@ -129,13 +117,14 @@ Aturan wajib:
   ]
 }`;
 
-    const aiResponse = await ai.models.generateContent({
+    const model = genAI.getGenerativeModel({
       model: "gemini-2.5-flash",
-      contents: prompt,
-      config: { responseMimeType: "application/json" },
+      generationConfig: { responseMimeType: "application/json" },
     });
 
-    sceneData = JSON.parse(aiResponse.text);
+    const aiResponse = await model.generateContent(prompt);
+    const rawText = aiResponse.response.text();
+    sceneData = JSON.parse(rawText);
     sceneData.audioSrc = "";
 
     console.log("🎙️ Membuat suara narator bahasa Indonesia (Google TTS)...");
@@ -153,7 +142,6 @@ Aturan wajib:
     const audioBuffer = Buffer.from(ttsResponse.audioContent);
     audioDataUri = `data:audio/mp3;base64,${audioBuffer.toString("base64")}`;
 
-    // Hitung durasi total frame otomatis dari panjang kata (~2.3 kata/detik + buffer 2 detik)
     const wordCount = teksNarasi.split(/\s+/).filter(Boolean).length;
     const estimatedSec = Math.max(25, Math.ceil(wordCount / 2.2) + 2);
     sceneData.durationInFrames = estimatedSec * 30;
