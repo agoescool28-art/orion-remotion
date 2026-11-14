@@ -1,12 +1,28 @@
 import { bundle } from "@remotion/bundler";
 import { renderMedia, selectComposition } from "@remotion/renderer";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import textToSpeech from "@google-cloud/text-to-speech";
+import googleTTS from "google-tts-api";
 import path from "path";
 import fs from "fs";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const ttsClient = new textToSpeech.TextToSpeechClient();
+
+async function generateIndonesianTtsBase64(text) {
+  const cleanText = text.replace(/\s+/g, " ").trim();
+  const segments = await googleTTS.getAllAudioBase64(cleanText, {
+    lang: "id",
+    slow: false,
+    host: "https://translate.google.com",
+    timeout: 15000,
+    splitPunct: ",.?!",
+  });
+  const buffers = segments.map((seg) => Buffer.from(seg.base64, "base64"));
+  const combinedBuffer = Buffer.concat(buffers);
+  return {
+    dataUri: `data:audio/mp3;base64,${combinedBuffer.toString("base64")}`,
+    byteLength: combinedBuffer.length,
+  };
+}
 
 async function textToMp4() {
   const ideKonten = process.env.IDE_KONTEN || "Cara kerja mesin efisiensi produksi modern";
@@ -49,12 +65,8 @@ async function textToMp4() {
         sceneData.scenes && sceneData.scenes.length > 0
           ? sceneData.scenes.map((s) => s.body).join(" ")
           : sceneData.insight || sceneData.subtitle || "Video edukasi motion graphic";
-      const [ttsResponse] = await ttsClient.synthesizeSpeech({
-        input: { text: teksNarasi },
-        voice: { languageCode: "id-ID", name: "id-ID-Standard-B" },
-        audioConfig: { audioEncoding: "MP3", speakingRate: 1.0 },
-      });
-      audioDataUri = `data:audio/mp3;base64,${ttsResponse.audioContent.toString("base64")}`;
+      const ttsResult = await generateIndonesianTtsBase64(teksNarasi);
+      audioDataUri = ttsResult.dataUri;
     }
   } else {
     console.log(`🧠 Meracik skenario visual infografis dari ide: "${ideKonten}"...`);
@@ -133,14 +145,8 @@ Aturan wajib:
         ? sceneData.scenes.map((s) => s.body).join(" ")
         : sceneData.insight || sceneData.subtitle || "Video edukasi motion graphic";
 
-    const [ttsResponse] = await ttsClient.synthesizeSpeech({
-      input: { text: teksNarasi },
-      voice: { languageCode: "id-ID", name: "id-ID-Standard-B" },
-      audioConfig: { audioEncoding: "MP3", speakingRate: 1.0 },
-    });
-
-    const audioBuffer = Buffer.from(ttsResponse.audioContent);
-    audioDataUri = `data:audio/mp3;base64,${audioBuffer.toString("base64")}`;
+    const ttsResult = await generateIndonesianTtsBase64(teksNarasi);
+    audioDataUri = ttsResult.dataUri;
 
     const wordCount = teksNarasi.split(/\s+/).filter(Boolean).length;
     const estimatedSec = Math.max(25, Math.ceil(wordCount / 2.2) + 2);
