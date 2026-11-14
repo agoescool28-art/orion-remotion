@@ -171,7 +171,7 @@ Aturan wajib:
     audioDataUri = ttsResult.dataUri;
 
     const wordCount = teksNarasi.split(/\s+/).filter(Boolean).length;
-    const estimatedSec = Math.max(25, Math.ceil(wordCount / 2.2) + 2);
+    const estimatedSec = Math.max(25, Math.ceil(wordCount / 1.85) + 2);
     sceneData.durationInFrames = estimatedSec * 30;
   }
 
