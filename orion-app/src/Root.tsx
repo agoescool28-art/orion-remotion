@@ -1,22 +1,23 @@
 
+import React from "react";
 import { Composition } from "remotion";
 import { MyComponent } from "./Composition";
-import { orionTemplate } from "./orionTemplate";
 
-const durationInFrames =
-  orionTemplate.scenes *
-  orionTemplate.sceneDurationSeconds *
-  orionTemplate.fps;
+const FPS = 30;
+const DURATION_IN_FRAMES = 2237;
 
 export const RemotionRoot: React.FC = () => {
   return (
     <Composition
       id="MyComp"
       component={MyComponent}
-      durationInFrames={durationInFrames}
-      fps={orionTemplate.fps}
-      width={orionTemplate.width}
-      height={orionTemplate.height}
+      durationInFrames={DURATION_IN_FRAMES}
+      fps={FPS}
+      width={1080}
+      height={1920}
+      defaultProps={{
+        voiceoverSrc: "dua toko.mp3",
+      }}
     />
   );
 };
