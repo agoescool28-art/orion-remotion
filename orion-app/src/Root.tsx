@@ -4,7 +4,7 @@ import { Composition } from "remotion";
 import { MyComponent } from "./Composition";
 
 const FPS = 30;
-const DURATION_IN_FRAMES = 2237;
+const DURATION_IN_FRAMES = 3084;
 
 export const RemotionRoot: React.FC = () => {
   return (
