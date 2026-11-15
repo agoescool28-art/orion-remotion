@@ -600,7 +600,7 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
         </div>
       </div>
 
-      {/* Center Stage */}
+{/* Center Stage */}
       <div
         style={{
           zIndex: 2,
@@ -612,264 +612,399 @@ export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => 
           transform: `scale(${interpolate(entrance, [0, 1], [0.95, 1])})`,
         }}
       >
-        {hasMedia ? (
+        {effectiveOverlayType === "compare" &&
+        activeScene.compareLeft &&
+        activeScene.compareRight ? (
+          /* Mode Duel Perbandingan 2 Kolom (Kiri VS Kanan) */
           <div
             style={{
               position: "relative",
               width: "100%",
-              height: effectivePoints.length > 0 ? 490 : 610,
-              borderRadius: 26,
-              overflow: "hidden",
-              border: "2px solid rgba(255,255,255,0.2)",
-              boxShadow: "0 24px 60px rgba(0,0,0,0.6)",
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 18,
+              alignItems: "stretch",
             }}
           >
-            <div
-              style={{
-                width: "100%",
-                height: "100%",
-                transform: `scale(${mediaScale}) translateX(${mediaTranslateX}px)`,
-              }}
-            >
-              {activeScene.mediaType === "video" ? (
-                <OffthreadVideo
-                  src={resolveMediaPath(activeScene.media!)}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    objectPosition: activeScene.mediaFocus || "center 18%",
-                  }}
-                  muted
-                />
-              ) : (
-                <Img
-                  src={resolveMediaPath(activeScene.media!)}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    objectPosition: activeScene.mediaFocus || "center 18%",
-                  }}
-                />
-              )}
-            </div>
-
-            {activeScene.pointerLabel && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: 28,
-                  left: 28,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  backgroundColor: "rgba(6, 19, 56, 0.85)",
-                  padding: "8px 18px",
-                  borderRadius: 12,
-                  border: "1.5px solid rgba(255,255,255,0.6)",
-                }}
-              >
-                <div
-                  style={{
-                    width: 12,
-                    height: 12,
-                    borderRadius: "50%",
-                    backgroundColor: headToneColor,
-                  }}
-                />
-                <span
-                  style={{
-                    fontSize: 22,
-                    fontWeight: 800,
-                    color: "#ffffff",
-                    letterSpacing: 1,
-                  }}
-                >
-                  {activeScene.pointerLabel}
-                </span>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div
-            style={{
-              width: "100%",
-              padding: "32px 28px",
-              borderRadius: 30,
-              background:
-                "linear-gradient(155deg, rgba(255,255,255,0.09) 0%, rgba(10,25,68,0.75) 100%)",
-              border: `2px solid ${headToneColor}55`,
-              boxShadow: `0 24px 60px rgba(0,0,0,0.55), 0 0 36px ${headToneColor}18`,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              position: "relative",
-            }}
-          >
-            <DynamicVectorIllustration
-              type={activeScene.visualType || "bulb"}
-              color={headToneColor}
-              frame={frame}
-            />
-            {activeScene.heroStat && (
-              <div
-                style={{
-                  marginTop: 8,
-                  display: "flex",
-                  alignItems: "baseline",
-                  gap: 12,
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: 58,
-                    fontWeight: 900,
-                    color: headToneColor,
-                    letterSpacing: -1,
-                  }}
-                >
-                  {activeScene.heroStat}
-                </span>
-                {activeScene.heroLabel && (
-                  <span
-                    style={{
-                      fontSize: 24,
-                      fontWeight: 800,
-                      color: "#e2e8f0",
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    {activeScene.heroLabel}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Interactive Overlay Panel */}
-        {effectivePoints.length > 0 && (
-          <div
-            style={{
-              width: "100%",
-              marginTop: 26,
-              padding: effectiveOverlayType === "pills" ? 0 : "22px 26px",
-              borderRadius: 22,
-              backgroundColor:
-                effectiveOverlayType === "pills"
-                  ? "transparent"
-                  : "rgba(10, 25, 68, 0.9)",
-              border:
-                effectiveOverlayType === "pills"
-                  ? "none"
-                  : "1.5px solid rgba(255,255,255,0.18)",
-              display: "flex",
-              flexDirection: "column",
-              gap: 14,
-            }}
-          >
-            {effectivePoints.map((pt, idx) => {
-              const stepDelay = Math.floor(
-                (sceneDurationFrames / (effectivePoints.length + 1)) * idx
-              );
-              const ptSpring = spring({
-                frame: Math.max(0, localFrame - stepDelay),
+            {[
+              { side: activeScene.compareLeft, delay: 0, defaultTone: "red" as const },
+              {
+                side: activeScene.compareRight,
+                delay: Math.floor(sceneDurationFrames * 0.35),
+                defaultTone: "green" as const,
+              },
+            ].map(({ side, delay, defaultTone }, colIdx) => {
+              const colSpring = spring({
+                frame: Math.max(0, localFrame - delay),
                 fps,
                 config: { damping: 14, stiffness: 130 },
               });
-              const ptOpacity = interpolate(localFrame - stepDelay, [0, 8], [0, 1], {
+              const colOpacity = interpolate(localFrame - delay, [0, 10], [0, 1], {
                 extrapolateLeft: "clamp",
                 extrapolateRight: "clamp",
               });
-              const toneCol = TONE_COLORS[pt.tone || "gold"];
+              const colColor = TONE_COLORS[side.tone || defaultTone];
 
-              if (effectiveOverlayType === "pills") {
-                return (
-                  <div
-                    key={idx}
-                    style={{
-                      alignSelf: "center",
-                      maxWidth: "94%",
-                      textAlign: "center",
-                      padding: "13px 28px",
-                      borderRadius: 16,
-                      backgroundColor: "rgba(15, 23, 42, 0.94)",
-                      border: `2px solid ${toneCol}`,
-                      color: toneCol,
-                      fontSize: 27,
-                      fontWeight: 800,
-                      opacity: ptOpacity,
-                      transform: `translateY(${interpolate(ptSpring, [0, 1], [24, 0])}px)`,
-                      boxShadow: "0 10px 25px rgba(0,0,0,0.45)",
-                    }}
-                  >
-                    {pt.text}
-                  </div>
-                );
-              }
-
-              if (effectiveOverlayType === "bars") {
-                const barWidth = interpolate(ptSpring, [0, 1], [0, pt.percent || 75]);
-                return (
-                  <div key={idx} style={{ opacity: ptOpacity }}>
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        fontSize: 24,
-                        fontWeight: 800,
-                        marginBottom: 8,
-                      }}
-                    >
-                      <span style={{ color: "#ffffff" }}>{pt.text}</span>
-                      <span style={{ color: toneCol }}>{pt.value}</span>
-                    </div>
-                    <div
-                      style={{
-                        width: "100%",
-                        height: 16,
-                        borderRadius: 99,
-                        backgroundColor: "rgba(255,255,255,0.12)",
-                        overflow: "hidden",
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: `${barWidth}%`,
-                          height: "100%",
-                          borderRadius: 99,
-                          backgroundColor: toneCol,
-                        }}
-                      />
-                    </div>
-                  </div>
-                );
-              }
-
-              const isCross = pt.tone === "red";
               return (
                 <div
-                  key={idx}
+                  key={colIdx}
                   style={{
+                    padding: "28px 22px",
+                    borderRadius: 26,
+                    background: `linear-gradient(165deg, ${colColor}18 0%, rgba(10,25,68,0.88) 100%)`,
+                    border: `2px solid ${colColor}88`,
+                    boxShadow: `0 20px 50px rgba(0,0,0,0.5), 0 0 28px ${colColor}15`,
                     display: "flex",
-                    alignItems: "center",
-                    gap: 14,
-                    fontSize: 27,
-                    fontWeight: 800,
-                    color: isCross ? "#fca5a5" : "#86efac",
-                    opacity: ptOpacity,
-                    transform: `translateX(${interpolate(ptSpring, [0, 1], [-20, 0])}px)`,
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    opacity: colOpacity,
+                    transform: `translateY(${interpolate(colSpring, [0, 1], [32, 0])}px)`,
                   }}
                 >
-                  <span style={{ color: toneCol, fontSize: 30 }}>
-                    {isCross ? "✕" : "✓"}
-                  </span>
-                  <span>{pt.text}</span>
+                  <div>
+                    {side.badge && (
+                      <div
+                        style={{
+                          display: "inline-block",
+                          fontSize: 18,
+                          fontWeight: 800,
+                          color: "#061338",
+                          backgroundColor: colColor,
+                          padding: "4px 12px",
+                          borderRadius: 999,
+                          marginBottom: 14,
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        {side.badge}
+                      </div>
+                    )}
+                    <div
+                      style={{
+                        fontSize: 34,
+                        fontWeight: 900,
+                        color: colColor,
+                        lineHeight: 1.15,
+                        marginBottom: 20,
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      {side.title}
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                      {side.items.map((item, itemIdx) => (
+                        <div
+                          key={itemIdx}
+                          style={{
+                            display: "flex",
+                            alignItems: "flex-start",
+                            gap: 10,
+                            fontSize: 24,
+                            fontWeight: 700,
+                            color: "#f1f5f9",
+                            lineHeight: 1.3,
+                            backgroundColor: "rgba(15, 23, 42, 0.65)",
+                            padding: "12px 14px",
+                            borderRadius: 14,
+                            borderLeft: `4px solid ${colColor}`,
+                          }}
+                        >
+                          <span>{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               );
             })}
+
+            {/* Lencana VS Bercahaya di Tengah */}
+            <div
+              style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                width: 68,
+                height: 68,
+                borderRadius: "50%",
+                backgroundColor: "#061338",
+                border: `3px solid ${accent}`,
+                boxShadow: `0 0 24px ${accent}88`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 26,
+                fontWeight: 900,
+                color: accent,
+                zIndex: 5,
+              }}
+            >
+              VS
+            </div>
           </div>
+        ) : (
+          <>
+            {hasMedia ? (
+              <div
+                style={{
+                  position: "relative",
+                  width: "100%",
+                  height: effectivePoints.length > 0 ? 490 : 610,
+                  borderRadius: 26,
+                  overflow: "hidden",
+                  border: "2px solid rgba(255,255,255,0.2)",
+                  boxShadow: "0 24px 60px rgba(0,0,0,0.6)",
+                }}
+              >
+                <div
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    transform: `scale(${mediaScale}) translateX(${mediaTranslateX}px)`,
+                  }}
+                >
+                  {activeScene.mediaType === "video" ? (
+                    <OffthreadVideo
+                      src={resolveMediaPath(activeScene.media!)}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        objectPosition: activeScene.mediaFocus || "center 18%",
+                      }}
+                      muted
+                    />
+                  ) : (
+                    <Img
+                      src={resolveMediaPath(activeScene.media!)}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        objectPosition: activeScene.mediaFocus || "center 18%",
+                      }}
+                    />
+                  )}
+                </div>
+
+                {activeScene.pointerLabel && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 28,
+                      left: 28,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      backgroundColor: "rgba(6, 19, 56, 0.85)",
+                      padding: "8px 18px",
+                      borderRadius: 12,
+                      border: "1.5px solid rgba(255,255,255,0.6)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 12,
+                        height: 12,
+                        borderRadius: "50%",
+                        backgroundColor: headToneColor,
+                      }}
+                    />
+                    <span
+                      style={{
+                        fontSize: 22,
+                        fontWeight: 800,
+                        color: "#ffffff",
+                        letterSpacing: 1,
+                      }}
+                    >
+                      {activeScene.pointerLabel}
+                    </span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div
+                style={{
+                  width: "100%",
+                  padding: "42px 30px",
+                  borderRadius: 30,
+                  background:
+                    "linear-gradient(155deg, rgba(255,255,255,0.09) 0%, rgba(10,25,68,0.75) 100%)",
+                  border: `2px solid ${headToneColor}55`,
+                  boxShadow: `0 24px 60px rgba(0,0,0,0.55), 0 0 36px ${headToneColor}18`,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  position: "relative",
+                }}
+              >
+                <DynamicVectorIllustration
+                  type={activeScene.visualType || "bulb"}
+                  color={headToneColor}
+                  frame={frame}
+                />
+                {activeScene.heroStat && (
+                  <div
+                    style={{
+                      marginTop: 10,
+                      display: "flex",
+                      alignItems: "baseline",
+                      gap: 12,
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: 58,
+                        fontWeight: 900,
+                        color: headToneColor,
+                        letterSpacing: -1,
+                      }}
+                    >
+                      {activeScene.heroStat}
+                    </span>
+                    {activeScene.heroLabel && (
+                      <span
+                        style={{
+                          fontSize: 24,
+                          fontWeight: 800,
+                          color: "#e2e8f0",
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        {activeScene.heroLabel}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Interactive Overlay Panel */}
+            {effectivePoints.length > 0 && (
+              <div
+                style={{
+                  width: "100%",
+                  marginTop: 26,
+                  padding: effectiveOverlayType === "pills" ? 0 : "22px 26px",
+                  borderRadius: 22,
+                  backgroundColor:
+                    effectiveOverlayType === "pills"
+                      ? "transparent"
+                      : "rgba(10, 25, 68, 0.9)",
+                  border:
+                    effectiveOverlayType === "pills"
+                      ? "none"
+                      : "1.5px solid rgba(255,255,255,0.18)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 16,
+                }}
+              >
+                {effectivePoints.map((pt, idx) => {
+                  const stepDelay = Math.floor(
+                    (sceneDurationFrames / (effectivePoints.length + 1)) * idx
+                  );
+                  const ptSpring = spring({
+                    frame: Math.max(0, localFrame - stepDelay),
+                    fps,
+                    config: { damping: 14, stiffness: 130 },
+                  });
+                  const ptOpacity = interpolate(localFrame - stepDelay, [0, 8], [0, 1], {
+                    extrapolateLeft: "clamp",
+                    extrapolateRight: "clamp",
+                  });
+                  const toneCol = TONE_COLORS[pt.tone || "gold"];
+
+                  if (effectiveOverlayType === "pills") {
+                    return (
+                      <div
+                        key={idx}
+                        style={{
+                          alignSelf: "center",
+                          maxWidth: "94%",
+                          textAlign: "center",
+                          padding: "13px 28px",
+                          borderRadius: 16,
+                          backgroundColor: "rgba(15, 23, 42, 0.94)",
+                          border: `2px solid ${toneCol}`,
+                          color: toneCol,
+                          fontSize: 27,
+                          fontWeight: 800,
+                          opacity: ptOpacity,
+                          transform: `translateY(${interpolate(ptSpring, [0, 1], [24, 0])}px)`,
+                          boxShadow: "0 10px 25px rgba(0,0,0,0.45)",
+                        }}
+                      >
+                        {pt.text}
+                      </div>
+                    );
+                  }
+
+                  if (effectiveOverlayType === "bars") {
+                    const barWidth = interpolate(ptSpring, [0, 1], [0, pt.percent || 75]);
+                    return (
+                      <div key={idx} style={{ opacity: ptOpacity }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            fontSize: 24,
+                            fontWeight: 800,
+                            marginBottom: 8,
+                          }}
+                        >
+                          <span style={{ color: "#ffffff" }}>{pt.text}</span>
+                          <span style={{ color: toneCol }}>{pt.value}</span>
+                        </div>
+                        <div
+                          style={{
+                            width: "100%",
+                            height: 16,
+                            borderRadius: 99,
+                            backgroundColor: "rgba(255,255,255,0.12)",
+                            overflow: "hidden",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: `${barWidth}%`,
+                              height: "100%",
+                              borderRadius: 99,
+                              backgroundColor: toneCol,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  const isCross = pt.tone === "red";
+                  return (
+                    <div
+                      key={idx}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 14,
+                        fontSize: 27,
+                        fontWeight: 800,
+                        color: isCross ? "#fca5a5" : "#86efac",
+                        opacity: ptOpacity,
+                        transform: `translateX(${interpolate(ptSpring, [0, 1], [-20, 0])}px)`,
+                      }}
+                    >
+                      <span style={{ color: toneCol, fontSize: 30 }}>
+                        {isCross ? "✕" : "✓"}
+                      </span>
+                      <span>{pt.text}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
         )}
       </div>
 
