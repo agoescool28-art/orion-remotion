@@ -1,20 +1,22 @@
 
 import { Composition } from "remotion";
 import { MyComponent } from "./Composition";
-import {
-  COMPOSITION_DURATION_IN_FRAMES,
-  ORION_TEMPLATE,
-} from "./orionTemplate";
+import { orionTemplate } from "./orionTemplate";
+
+const durationInFrames =
+  orionTemplate.scenes *
+  orionTemplate.sceneDurationSeconds *
+  orionTemplate.fps;
 
 export const RemotionRoot: React.FC = () => {
   return (
     <Composition
       id="MyComp"
       component={MyComponent}
-      durationInFrames={COMPOSITION_DURATION_IN_FRAMES}
-      fps={ORION_TEMPLATE.fps}
-      width={ORION_TEMPLATE.width}
-      height={ORION_TEMPLATE.height}
+      durationInFrames={durationInFrames}
+      fps={orionTemplate.fps}
+      width={orionTemplate.width}
+      height={orionTemplate.height}
     />
   );
 };
