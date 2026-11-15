@@ -75,19 +75,12 @@ const prompt = `Kamu adalah sutradara video motion graphic edukasi vertikal (9:1
 Buat skenario video dari ide berikut: "${ideKonten}"
 
 Aturan wajib:
-1. Buat tepat 4 adegan (scenes) yang runtut, informatif, dan mengalir (total sekitar 55-70 kata).
-2. Pilih "visualType" yang PALING SESUAI dengan topik dari daftar ini:
-   - "medical" (kesehatan, gigi, tubuh, penyakit)
-   - "history" (sejarah, biografi, hukum)
-   - "globe" (geografi, perjalanan, dunia, ekonomi)
-   - "bulb" (edukasi umum, psikologi, tips, inovasi)
-   - "gear" (mesin, otomotif, teknik, manufaktur)
-   - "chart" (data, keuangan, statistik, pertumbuhan)
-   - "shield" (keamanan, pencegahan, perlindungan)
-   - "flow" (proses, sistem, tahapan kerja)
-3. Jika topik mengandung perbandingan ("vs", "perbedaan", "dibanding", "mana lebih baik"), WAJIB gunakan "overlayType": "compare" pada adegan ke-2 dengan mengisi "compareLeft" dan "compareRight" (masing-masing punya "title", "badge", "tone", dan 3 string singkat di "items"). Untuk adegan lainnya gunakan "pills", "bars", atau "checklist" beserta "points" dan "heroStat" + "heroLabel".
-4. Keluarkan HANYA JSON murni tanpa markdown/backticks:
-{
+1. Buat tepat 4 adegan (scenes) yang tuntas dari awal sampai kesimpulan (total 55-75 kata, maks 18 kata per adegan):
+   - Adegan 01: Pengenalan topik & konteks utama.
+   - Adegan 02: Perbandingan / inti perbedaan (gunakan "overlayType": "compare" jika topik membandingkan 2 hal).
+   - Adegan 03: Data, fakta lapangan, atau dampak utama ("bars" atau "pills").
+   - Adegan 04: Kesimpulan praktis & rekomendasi penutup yang tuntas ("checklist").
+   {
   "title": "JUDUL UTAMA SINGKAT",
   "subtitle": "Subjudul singkat",
   "styleConfig": {
