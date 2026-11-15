@@ -66,6 +66,31 @@ async function textToMp4() {
           ? sceneData.scenes.map((s) => s.body).join(" ")
           : sceneData.insight || sceneData.subtitle || "Video edukasi motion graphic";
       const ttsResult = await generateIndonesianTtsBase64(teksNarasi);
+      async function fetchPixabayMedia(query, index) {
+  const apiKey = process.env.PIXABAY_API_KEY;
+  if (!apiKey || !query) return null;
+
+  try {
+    const url = `https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(query)}&image_type=all&orientation=vertical&safesearch=true&per_page=3`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    const hit = data.hits?.[0];
+    if (!hit?.largeImageURL) return null;
+
+    const imgRes = await fetch(hit.largeImageURL);
+    if (!imgRes.ok) return null;
+
+    const buffer = Buffer.from(await imgRes.arrayBuffer());
+    const fileName = `pixabay_scene_${index + 1}.jpg`;
+    fs.writeFileSync(`./public/${fileName}`, buffer);
+    return fileName;
+  } catch (err) {
+    console.warn(`⚠️ Gagal ambil visual Pixabay untuk "${query}":`, err.message);
+    return null;
+  }
+}
       audioDataUri = ttsResult.dataUri;
     }
   } else {
@@ -80,6 +105,7 @@ Aturan wajib:
    - Adegan 02: Perbandingan / inti perbedaan (gunakan "overlayType": "compare" jika topik membandingkan 2 hal).
    - Adegan 03: Data, fakta lapangan, atau dampak utama ("bars" atau "pills").
    - Adegan 04: Kesimpulan praktis & rekomendasi penutup yang tuntas ("checklist").
+   5. Setiap adegan wajib menyertakan "visualQuery": "2-3 kata kunci bahasa Inggris untuk mencari foto atau ilustrasi vertikal di Pixabay".
    {
   "title": "JUDUL UTAMA SINGKAT",
   "subtitle": "Subjudul singkat",
