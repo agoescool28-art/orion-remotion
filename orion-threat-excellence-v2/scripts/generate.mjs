@@ -131,9 +131,7 @@ Aturan wajib:
 
     const candidateModels = [
       "gemini-3.8-flash",
-      "gemini-3.8-flash",
-      "gemini-2.0-flash",
-      "gemini-2.0-flash-lite",
+      "gemini-3-flash-preview",
       "gemini-3.8-flash",
     ];
     let rawText = "";
@@ -142,7 +140,7 @@ Aturan wajib:
       const modelName = candidateModels[attempt];
       try {
         if (attempt > 0) {
-          const waitMs = attempt * 6000;
+          const waitMs = attempt * 5000;
           console.log(`🔄 Percobaan ke-${attempt + 1} (${modelName}) dalam ${waitMs / 1000} detik...`);
           await new Promise((r) => setTimeout(r, waitMs));
         }
@@ -150,14 +148,62 @@ Aturan wajib:
           model: modelName,
           generationConfig: { responseMimeType: "application/json" },
         });
-        const aiResponse = await model.generateContent(prompt);
+        const aiResponse = await model.generateContent(prompt, { timeout: 30000 });
         rawText = aiResponse.response.text();
         if (rawText) break;
       } catch (err) {
-        console.warn(`⚠️ ${modelName} sibuk (${err.status || err.message}), mencoba ulang...`);
-        if (attempt === candidateModels.length - 1) throw err;
+        console.warn(`⚠️ ${modelName} gagal (${err.status || err.message}), mencoba ulang...`);
       }
     }
+
+    if (rawText) {
+      sceneData = JSON.parse(rawText);
+    } else {
+      console.log("🛡️ Menggunakan struktur cadangan otomatis agar render tetap lanjut...");
+      const cleanTopic = ideKonten.toUpperCase().slice(0, 32);
+      sceneData = {
+        title: cleanTopic,
+        subtitle: "Visualisasi Edukasi Terstruktur",
+        styleConfig: {
+          bgColor: "#061338",
+          accentColor: "#facc15",
+          dangerColor: "#ef4444",
+          successColor: "#22c55e",
+          watermark: "orionmotion",
+        },
+        scenes: [
+          {
+            tag: "01 • KONSEP UTAMA",
+            heading: cleanTopic,
+            headingTone: "gold",
+            heroStat: "100%",
+            heroLabel: "FOKUS SISTEM",
+            body: `Mari kita pahami konsep dasar mengenai ${ideKonten} secara terstruktur dan mudah diterapkan.`,
+            overlayType: "pills",
+            points: [
+              { text: "Fondasi Prinsip Kerja", tone: "neutral" },
+              { text: "Penerapan Konsisten di Lapangan", tone: "gold" },
+            ],
+            visualType: "flow",
+          },
+          {
+            tag: "02 • DAMPAK & HASIL",
+            heading: "MANFAAT PENERAPAN",
+            headingTone: "green",
+            heroStat: "+40%",
+            heroLabel: "EFISIENSI KERJA",
+            body: `Dengan memahami ${ideKonten}, proses kerja menjadi lebih stabil, efisien, dan terukur setiap hari.`,
+            overlayType: "bars",
+            points: [
+              { text: "Stabilitas Proses", value: "95%", percent: 95, tone: "green" },
+              { text: "Efisiensi Operasional", value: "85%", percent: 85, tone: "gold" },
+            ],
+            visualType: "chart",
+          },
+        ],
+      };
+    }
+    sceneData.audioSrc = "";
     sceneData = JSON.parse(rawText);
     sceneData.audioSrc = "";
 
