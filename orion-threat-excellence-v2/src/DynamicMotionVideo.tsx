@@ -29,6 +29,13 @@ export interface OverlayPoint {
   tone?: "gold" | "green" | "red" | "neutral";
 }
 
+export interface CompareSide {
+  title: string;
+  badge?: string;
+  tone?: "gold" | "green" | "red" | "neutral";
+  items: string[];
+}
+
 export interface SceneItem {
   tag?: string;
   heading: string;
@@ -38,8 +45,10 @@ export interface SceneItem {
   heroLabel?: string;
   startTime?: number;
   durationSeconds?: number;
-  overlayType?: "pills" | "bars" | "checklist";
+  overlayType?: "pills" | "bars" | "checklist" | "compare";
   points?: OverlayPoint[];
+  compareLeft?: CompareSide;
+  compareRight?: CompareSide;
   pointerLabel?: string;
   visualType?: VisualCategory;
   media?: string;
@@ -47,7 +56,6 @@ export interface SceneItem {
   mediaFocus?: string;
   motion?: "zoom-in" | "zoom-out" | "pan-right" | "none";
 }
-
 export interface StyleConfig {
   bgColor?: string;
   accentColor?: string;
