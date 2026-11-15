@@ -117,7 +117,7 @@ Aturan wajib:
    - Adegan 02: Perbandingan / inti perbedaan (gunakan "overlayType": "compare" jika topik membandingkan 2 hal).
    - Adegan 03: Data, fakta lapangan, atau dampak utama ("bars" atau "pills").
   - Adegan 04: Kesimpulan praktis & rekomendasi penutup yang tuntas ("checklist").
-2. Setiap adegan wajib menyertakan "visualQuery": "2-3 kata kunci bahasa Inggris untuk mencari foto atau ilustrasi vertikal di Pixabay".
+2. Setiap adegan wajib menyertakan "visualQuery": "2 kata kunci bahasa Inggris umum dan populer untuk foto di Pixabay (contoh: 'factory warehouse', 'business chart', 'teamwork office', 'modern technology')".
 {
 "title": "JUDUL UTAMA SINGKAT",
   "styleConfig": {
