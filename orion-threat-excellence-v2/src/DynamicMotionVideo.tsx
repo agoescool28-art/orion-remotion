@@ -341,6 +341,7 @@ const DynamicKineticSubtitle: React.FC<{
             <span
               style={{
                 display: "inline-block",
+                margin: "0 10px",
                 fontSize: 42,
                 fontWeight: 900,
                 color: isActive ? highlightColor : "#ffffff",
@@ -350,7 +351,6 @@ const DynamicKineticSubtitle: React.FC<{
             >
               {word}
             </span>
-            {idx < visibleWords.length - 1 ? <span>{"\u00A0\u00A0"}</span> : null}
           </React.Fragment>
         );
       })}
