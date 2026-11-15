@@ -32,6 +32,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
           IDE_KONTEN: ${{ github.event.inputs.ide_konten }}
         run: node scripts/generate.mjs
 
