@@ -71,21 +71,21 @@ async function textToMp4() {
   } else {
     console.log(`🧠 Meracik skenario visual infografis dari ide: "${ideKonten}"...`);
 
-    const prompt = `Kamu adalah sutradara video motion graphic edukasi vertikal (9:16) bergaya Technical Explainer modern (latar biru gelap #061338, sorotan emas #facc15, merah #ef4444 untuk masalah/risiko, hijau #22c55e untuk solusi).
+const prompt = `Kamu adalah sutradara video motion graphic edukasi vertikal (9:16) bergaya Technical Explainer modern (latar biru gelap #061338, sorotan emas #facc15, merah #ef4444 untuk masalah/risiko, hijau #22c55e untuk solusi).
 Buat skenario video dari ide berikut: "${ideKonten}"
 
 Aturan wajib:
 1. Buat tepat 4 adegan (scenes) yang runtut, informatif, dan mengalir (total sekitar 55-70 kata).
 2. Pilih "visualType" yang PALING SESUAI dengan topik dari daftar ini:
-   - "medical" (untuk kesehatan, gigi, tubuh, penyakit, obat)
-   - "history" (untuk sejarah, biografi, hukum, pemerintahan)
-   - "globe" (untuk geografi, perjalanan, dunia, lingkungan, ekonomi)
-   - "bulb" (untuk edukasi umum, psikologi, tips, inovasi, ide)
-   - "gear" (untuk mesin, otomotif, teknik, manufaktur)
-   - "chart" (untuk data, keuangan, statistik, pertumbuhan)
-   - "shield" (untuk keamanan, pencegahan, perlindungan)
-   - "flow" (untuk proses, sistem, tahapan kerja)
-3. Setiap adegan WAJIB memiliki "overlayType" ("pills", "bars", atau "checklist") dan 2-3 item "points", serta "heroStat" + "heroLabel" singkat agar tampilan visual sangat kaya.
+   - "medical" (kesehatan, gigi, tubuh, penyakit)
+   - "history" (sejarah, biografi, hukum)
+   - "globe" (geografi, perjalanan, dunia, ekonomi)
+   - "bulb" (edukasi umum, psikologi, tips, inovasi)
+   - "gear" (mesin, otomotif, teknik, manufaktur)
+   - "chart" (data, keuangan, statistik, pertumbuhan)
+   - "shield" (keamanan, pencegahan, perlindungan)
+   - "flow" (proses, sistem, tahapan kerja)
+3. Jika topik mengandung perbandingan ("vs", "perbedaan", "dibanding", "mana lebih baik"), WAJIB gunakan "overlayType": "compare" pada adegan ke-2 dengan mengisi "compareLeft" dan "compareRight" (masing-masing punya "title", "badge", "tone", dan 3 string singkat di "items"). Untuk adegan lainnya gunakan "pills", "bars", atau "checklist" beserta "points" dan "heroStat" + "heroLabel".
 4. Keluarkan HANYA JSON murni tanpa markdown/backticks:
 {
   "title": "JUDUL UTAMA SINGKAT",
@@ -100,31 +100,37 @@ Aturan wajib:
   "scenes": [
     {
       "tag": "01 • PENGENALAN",
-      "heading": "JUDUL BAB DUA KATA",
+      "heading": "JUDUL BAB SINGKAT",
       "headingTone": "gold",
-      "heroStat": "24 JAM",
-      "heroLabel": "PROSES AWAL",
-      "body": "Kalimat narasi adegan pertama yang jelas dan komunikatif.",
+      "heroStat": "2 OPSI",
+      "heroLabel": "PERBANDINGAN UTAMA",
+      "body": "Kalimat pembuka yang menarik tentang topik yang dibahas.",
       "overlayType": "pills",
       "points": [
-        { "text": "Fakta penting pertama", "tone": "neutral" },
-        { "text": "Dampak utama yang terjadi", "tone": "gold" }
+        { "text": "Poin pengantar pertama", "tone": "neutral" },
+        { "text": "Poin pengantar kedua", "tone": "gold" }
       ],
       "visualType": "bulb"
     },
     {
-      "tag": "02 • PENYEBAB UTAMA",
-      "heading": "KENAPA INI TERJADI?",
-      "headingTone": "red",
-      "heroStat": "80%",
-      "heroLabel": "FAKTOR RISIKO",
-      "body": "Kalimat narasi adegan kedua yang menjelaskan akar masalah.",
-      "overlayType": "bars",
-      "points": [
-        { "text": "Faktor Pemicu Utama", "value": "80%", "percent": 80, "tone": "red" },
-        { "text": "Faktor Pendukung", "value": "45%", "percent": 45, "tone": "gold" }
-      ],
-      "visualType": "chart"
+      "tag": "02 • PERBANDINGAN",
+      "heading": "DUEL KARAKTERISTIK",
+      "headingTone": "gold",
+      "body": "Kalimat yang membandingkan sisi kiri dan sisi kanan secara jelas.",
+      "overlayType": "compare",
+      "compareLeft": {
+        "title": "OPSI A",
+        "badge": "SISI KIRI",
+        "tone": "red",
+        "items": ["Ciri utama pertama", "Kelebihan atau batasannya", "Kondisi pemakaian"]
+      },
+      "compareRight": {
+        "title": "OPSI B",
+        "badge": "SISI KANAN",
+        "tone": "green",
+        "items": ["Ciri utama pertama", "Keunggulan utamanya", "Kondisi pemakaian"]
+      },
+      "visualType": "flow"
     }
   ]
 }`;
