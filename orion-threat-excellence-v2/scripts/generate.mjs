@@ -68,16 +68,27 @@ async function textToMp4() {
       const ttsResult = await generateIndonesianTtsBase64(teksNarasi);
       async function fetchPixabayMedia(query, index) {
   const apiKey = process.env.PIXABAY_API_KEY;
-  if (!apiKey || !query) return null;
+  if (!apiKey) {
+    console.warn("⚠️ PIXABAY_API_KEY tidak terbaca di environment! Cek GitHub Secrets & render.yml.");
+    return null;
+  }
+  if (!query) return null;
 
   try {
-    const url = `https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(query)}&image_type=all&orientation=vertical&safesearch=true&per_page=3`;
+    // Hapus filter orientation=vertical agar hasil pencarian jauh lebih banyak
+    const url = `https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(query)}&image_type=photo&safesearch=true&per_page=5`;
     const res = await fetch(url);
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.warn(`⚠️ Pixabay API HTTP error: ${res.status}`);
+      return null;
+    }
 
     const data = await res.json();
     const hit = data.hits?.[0];
-    if (!hit?.largeImageURL) return null;
+    if (!hit?.largeImageURL) {
+      console.warn(`⚠️ Tidak ada gambar Pixabay untuk kata kunci: "${query}"`);
+      return null;
+    }
 
     const imgRes = await fetch(hit.largeImageURL);
     if (!imgRes.ok) return null;
@@ -85,6 +96,7 @@ async function textToMp4() {
     const buffer = Buffer.from(await imgRes.arrayBuffer());
     const fileName = `pixabay_scene_${index + 1}.jpg`;
     fs.writeFileSync(`./public/${fileName}`, buffer);
+    console.log(`✅ Berhasil unduh visual Pixabay: ${fileName} (${hit.tags})`);
     return fileName;
   } catch (err) {
     console.warn(`⚠️ Gagal ambil visual Pixabay untuk "${query}":`, err.message);
