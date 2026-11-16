@@ -24,7 +24,7 @@ export const project = {
   sceneDurationSeconds: 9,
 
   // Isi nama file setelah kita pastikan audio yang benar.
-  voiceoverSrc: "",
+  voiceoverSrc: "prabowo_vo.mp3.mp3",
   musicSrc: "",
   sfxSrc: "",
 
