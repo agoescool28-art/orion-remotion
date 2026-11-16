@@ -36,15 +36,10 @@ export const project = {
   accent: "#D8B878",
   imageSrc: "1000827929.jpg.jpeg",
   beats: [
-    { text: "SEBUAH PERJALANAN", start: 35, duration: 45 },
-    { text: "MENUJU KEPEMIMPINAN", start: 145, duration: 55 },
-  ],
-},
-      beats: [
-        { text: "SEBUAH PERJALANAN", start: 35, duration: 45 },
-        { text: "MENUJU KEPEMIMPINAN", start: 145, duration: 55 },
-      ],
-    },
+      { text: "SEBUAH PERJALANAN", start: 35, duration: 45 },
+      { text: "MENUJU KEPEMIMPINAN", start: 145, duration: 55 },
+    ],
+  },
     {
       eyebrow: "01 / LATAR BELAKANG",
       title: "AKAR",
