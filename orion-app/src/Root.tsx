@@ -2,26 +2,22 @@
 import React from "react";
 import { Composition } from "remotion";
 import { MyComponent } from "./Composition";
-import { orionTemplate } from "./orionTemplate";
+import { project } from "./project";
 
 export const RemotionRoot: React.FC = () => {
-  const fps = orionTemplate.fps;
   const durationInFrames =
-    orionTemplate.scenes *
-    orionTemplate.sceneDurationSeconds *
-    fps;
+    project.scenes.length *
+    project.sceneDurationSeconds *
+    project.fps;
 
   return (
     <Composition
       id="MyComp"
       component={MyComponent}
       durationInFrames={durationInFrames}
-      fps={fps}
-      width={orionTemplate.width}
-      height={orionTemplate.height}
-      defaultProps={{
-        voiceoverSrc: "prabowo_vo.mp3.mp3",
-      }}
+      fps={project.fps}
+      width={project.width}
+      height={project.height}
     />
   );
 };
