@@ -146,7 +146,7 @@ export const project = {
       title: "PRESIDEN",
       subtitle: "Pada 20 Oktober 2024, Prabowo Subianto dilantik sebagai Presiden ke-8 Republik Indonesia.",
       accent: "#D8B878",
-      imageSrc: "1000827949.jpg.jpeg",
+      imageSrc: "100082746.jpg.jpeg",
       imagePosition: "center 28%",
       kicker: "REPUBLIK INDONESIA · KE-8",
       beats: [
