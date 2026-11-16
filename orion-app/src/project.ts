@@ -29,11 +29,17 @@ export const project = {
   sfxSrc: "",
 
   scenes: [
-    {
-      eyebrow: "BIOGRAFI / INDONESIA",
-      title: "PRABOWO",
-      subtitle: "Sebuah perjalanan panjang menuju kepemimpinan nasional.",
-      accent: "#D8B878",
+      {
+  eyebrow: "BIOGRAFI / INDONESIA",
+  title: "PRABOWO",
+  subtitle: "Sebuah perjalanan panjang menuju kepemimpinan nasional.",
+  accent: "#D8B878",
+  imageSrc: "1000827929.jpg.jpeg",
+  beats: [
+    { text: "SEBUAH PERJALANAN", start: 35, duration: 45 },
+    { text: "MENUJU KEPEMIMPINAN", start: 145, duration: 55 },
+  ],
+},
       beats: [
         { text: "SEBUAH PERJALANAN", start: 35, duration: 45 },
         { text: "MENUJU KEPEMIMPINAN", start: 145, duration: 55 },
