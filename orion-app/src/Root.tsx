@@ -20,7 +20,7 @@ export const RemotionRoot: React.FC = () => {
       width={orionTemplate.width}
       height={orionTemplate.height}
       defaultProps={{
-        voiceoverSrc: "dua toko.mp3",
+        voiceoverSrc: "prabowo_vo.mp3.mp3",
       }}
     />
   );
