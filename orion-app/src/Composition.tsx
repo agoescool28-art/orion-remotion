@@ -1,4 +1,4 @@
-import React, { FC } from "react";
+import type React from "react";
 import {
   AbsoluteFill,
   Audio,
