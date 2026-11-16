@@ -10,99 +10,8 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { orionTemplate } from "./orionTemplate";
 
-type WordBeat = {
-  text: string;
-  start: number;
-  duration: number;
-};
-
-type SceneData = {
-  eyebrow: string;
-  title: string;
-  subtitle: string;
-  number: string;
-  accent: string;
-  beats: WordBeat[];
-};
-
-type Props = {
-  voiceoverSrc?: string;
-  musicSrc?: string;
-  sfxSrc?: string;
-};
-
-const scenes: SceneData[] = [
-  {
-    eyebrow: "ORION CREATIVE / INTRO",
-    title: "IDEA",
-    subtitle: "Semua karya besar dimulai dari satu gagasan.",
-    number: "01",
-    accent: "#B8D99A",
-    beats: [
-      { text: "SEMUA KARYA", start: 35, duration: 24 },
-      { text: "DIMULAI", start: 65, duration: 20 },
-      { text: "DARI GAGASAN", start: 95, duration: 30 },
-    ],
-  },
-  {
-    eyebrow: "01 / DISCOVER",
-    title: "TEMUKAN",
-    subtitle: "Gali inti pesan. Kenali siapa yang perlu mendengarnya.",
-    number: "02",
-    accent: "#E5C58B",
-    beats: [
-      { text: "GALI INTI PESAN", start: 30, duration: 30 },
-      { text: "KENALI AUDIENS", start: 75, duration: 30 },
-    ],
-  },
-  {
-    eyebrow: "02 / DESIGN",
-    title: "RANCANG",
-    subtitle: "Bangun bahasa visual yang punya karakter dan arah.",
-    number: "03",
-    accent: "#A8C9D9",
-    beats: [
-      { text: "BANGUN VISUAL", start: 35, duration: 28 },
-      { text: "PUNYA KARAKTER", start: 80, duration: 30 },
-    ],
-  },
-  {
-    eyebrow: "03 / MOTION",
-    title: "GERAKKAN",
-    subtitle: "Satukan ritme, tipografi, cahaya, dan suara.",
-    number: "04",
-    accent: "#D9A8B8",
-    beats: [
-      { text: "RITME", start: 25, duration: 20 },
-      { text: "TIPOGRAFI", start: 55, duration: 25 },
-      { text: "SUARA DAN GERAK", start: 95, duration: 30 },
-    ],
-  },
-  {
-    eyebrow: "04 / STORY",
-    title: "HIDUPKAN",
-    subtitle: "Ubah informasi menjadi pengalaman yang berkesan.",
-    number: "05",
-    accent: "#B8D99A",
-    beats: [
-      { text: "UBAH INFORMASI", start: 35, duration: 28 },
-      { text: "JADI PENGALAMAN", start: 80, duration: 35 },
-    ],
-  },
-  {
-    eyebrow: "ORION CREATIVE",
-    title: "MAKE IT MATTER.",
-    subtitle: "Bukan sekadar terlihat. Tetapi punya makna.",
-    number: "06",
-    accent: "#E5C58B",
-    beats: [
-      { text: "BUKAN SEKADAR TERLIHAT", start: 30, duration: 35 },
-      { text: "PUNYA MAKNA", start: 85, duration: 30 },
-    ],
-  },
-];
+import { project, SceneData, WordBeat } from "./project";
 
 const clamp = {
   extrapolateLeft: "clamp" as const,
@@ -117,10 +26,15 @@ const WordBeatView: React.FC<{
   const { fps } = useVideoConfig();
 
   const localFrame = frame - beat.start;
+
   const progress = spring({
     frame: localFrame,
     fps,
-    config: { damping: 14, stiffness: 150, mass: 0.65 },
+    config: {
+      damping: 14,
+      stiffness: 150,
+      mass: 0.65,
+    },
   });
 
   const opacity = interpolate(
@@ -130,22 +44,21 @@ const WordBeatView: React.FC<{
     clamp
   );
 
-  const y = interpolate(progress, [0, 1], [35, 0]);
-  const scale = interpolate(progress, [0, 1], [0.92, 1]);
+  const y = interpolate(progress, [0, 1], [40, 0]);
+  const scale = interpolate(progress, [0, 1], [0.85, 1]);
 
   return (
     <div
       style={{
         position: "absolute",
         left: 0,
-        bottom: 0,
+        top: 0,
         opacity,
         transform: `translateY(${y}px) scale(${scale})`,
-        transformOrigin: "left center",
         color: accent,
         fontFamily: "Arial, sans-serif",
         fontSize: 48,
-        fontWeight: 800,
+        fontWeight: 900,
         letterSpacing: 1,
       }}
     >
@@ -164,7 +77,11 @@ const Scene: React.FC<{
   const enter = spring({
     frame,
     fps,
-    config: { damping: 18, stiffness: 85, mass: 0.9 },
+    config: {
+      damping: 18,
+      stiffness: 85,
+      mass: 0.9,
+    },
   });
 
   const exit = interpolate(
@@ -176,9 +93,16 @@ const Scene: React.FC<{
 
   const titleY = interpolate(enter, [0, 1], [100, 0]);
   const titleScale = interpolate(enter, [0, 1], [0.82, 1]);
-  const titleOpacity = interpolate(frame, [0, 12], [0, 1], clamp);
 
-  const orbitRotation = frame * (index % 2 === 0 ? 0.5 : -0.4);
+  const titleOpacity = interpolate(
+    frame,
+    [0, 12],
+    [0, 1],
+    clamp
+  );
+
+  const rotation = frame * (index % 2 === 0 ? 0.5 : -0.4);
+
   const progress = interpolate(
     frame,
     [0, durationInFrames],
@@ -195,6 +119,7 @@ const Scene: React.FC<{
         opacity: exit,
       }}
     >
+      {/* Background */}
       <AbsoluteFill
         style={{
           background:
@@ -212,7 +137,7 @@ const Scene: React.FC<{
         }}
       />
 
-      {/* Dynamic orbit */}
+      {/* Motion orbit */}
       <div
         style={{
           position: "absolute",
@@ -222,7 +147,7 @@ const Scene: React.FC<{
           top: 180,
           border: `2px solid ${data.accent}35`,
           borderRadius: "50%",
-          transform: `rotate(${orbitRotation}deg)`,
+          transform: `rotate(${rotation}deg)`,
           boxShadow: `0 0 100px ${data.accent}18`,
         }}
       />
@@ -236,11 +161,11 @@ const Scene: React.FC<{
           top: 315,
           border: `1px solid ${data.accent}50`,
           borderRadius: "50%",
-          transform: `rotate(${-orbitRotation * 1.6}deg)`,
+          transform: `rotate(${-rotation * 1.6}deg)`,
         }}
       />
 
-      {/* Editorial frame */}
+      {/* Top line */}
       <div
         style={{
           position: "absolute",
@@ -252,6 +177,7 @@ const Scene: React.FC<{
         }}
       />
 
+      {/* Eyebrow */}
       <div
         style={{
           position: "absolute",
@@ -260,7 +186,6 @@ const Scene: React.FC<{
           fontSize: 21,
           letterSpacing: 5,
           color: data.accent,
-          fontFamily: "Arial, sans-serif",
           opacity: titleOpacity,
         }}
       >
@@ -275,7 +200,7 @@ const Scene: React.FC<{
           top: "32%",
           width: 950,
           fontFamily: "Arial, Helvetica, sans-serif",
-          fontSize: index === 5 ? 105 : 155,
+          fontSize: 145,
           fontWeight: 900,
           lineHeight: 0.95,
           letterSpacing: -6,
@@ -288,7 +213,7 @@ const Scene: React.FC<{
         {data.title}
       </div>
 
-      {/* Animated accent line */}
+      {/* Accent line */}
       <div
         style={{
           position: "absolute",
@@ -302,7 +227,7 @@ const Scene: React.FC<{
         }}
       />
 
-      {/* Timed kinetic phrases */}
+      {/* Kinetic typography */}
       <div
         style={{
           position: "absolute",
@@ -313,18 +238,21 @@ const Scene: React.FC<{
         }}
       >
         {data.beats.map((beat, i) => (
-          <WordBeatView key={`${data.number}-${i}`} beat={beat} accent={data.accent} />
+          <WordBeatView
+            key={`${index}-${i}`}
+            beat={beat}
+            accent={data.accent}
+          />
         ))}
       </div>
 
-      {/* Supporting subtitle */}
+      {/* Subtitle */}
       <div
         style={{
           position: "absolute",
           left: 82,
           top: "70%",
           width: 760,
-          fontFamily: "Arial, sans-serif",
           fontSize: 30,
           lineHeight: 1.4,
           color: "rgba(244,241,232,.72)",
@@ -335,7 +263,7 @@ const Scene: React.FC<{
         {data.subtitle}
       </div>
 
-      {/* Progress indicator */}
+      {/* Progress */}
       <div
         style={{
           position: "absolute",
@@ -378,25 +306,24 @@ const Scene: React.FC<{
           letterSpacing: 3,
         }}
       >
-        {data.number} / {String(scenes.length).padStart(2, "0")}
+        {String(index + 1).padStart(2, "0")} /{" "}
+        {String(project.scenes.length).padStart(2, "0")}
       </div>
     </AbsoluteFill>
   );
 };
 
-export const MyComponent: React.FC<Props> = ({
-  voiceoverSrc,
-  musicSrc,
-  sfxSrc,
-}) => {
+export const MyComponent: React.FC = () => {
   const { fps } = useVideoConfig();
-  const framesPerScene = orionTemplate.sceneDurationSeconds * fps;
+
+  const framesPerScene =
+    project.sceneDurationSeconds * fps;
 
   return (
     <AbsoluteFill style={{ backgroundColor: "#101713" }}>
-      {scenes.map((scene, index) => (
+      {project.scenes.map((scene, index) => (
         <Sequence
-          key={scene.number}
+          key={`${index}-${scene.title}`}
           from={index * framesPerScene}
           durationInFrames={framesPerScene}
         >
@@ -404,16 +331,25 @@ export const MyComponent: React.FC<Props> = ({
         </Sequence>
       ))}
 
-      {voiceoverSrc ? (
-        <Audio src={staticFile(voiceoverSrc)} volume={1} />
+      {project.voiceoverSrc ? (
+        <Audio
+          src={staticFile(project.voiceoverSrc)}
+          volume={1}
+        />
       ) : null}
 
-      {musicSrc ? (
-        <Audio src={staticFile(musicSrc)} volume={0.18} />
+      {project.musicSrc ? (
+        <Audio
+          src={staticFile(project.musicSrc)}
+          volume={0.18}
+        />
       ) : null}
 
-      {sfxSrc ? (
-        <Audio src={staticFile(sfxSrc)} volume={0.55} />
+      {project.sfxSrc ? (
+        <Audio
+          src={staticFile(project.sfxSrc)}
+          volume={0.55}
+        />
       ) : null}
     </AbsoluteFill>
   );
