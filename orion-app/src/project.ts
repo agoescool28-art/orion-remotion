@@ -1,4 +1,3 @@
-
 export type WordBeat = {
   text: string;
   start: number;
@@ -22,136 +21,154 @@ export const project = {
   width: 1080,
   height: 1920,
 
-  // 10 scene x 12,1 detik = 121 detik.
-  // Memberi ruang untuk seluruh VO berdurasi 120,35 detik.
-  sceneDurationSeconds: 12.1,
+  // 301 frame x 12 scene = 3612 frame = 120,4 detik.
+  // VO sumber 120,346 detik; selisih akhir sekitar 0,054 detik.
+  sceneDurationSeconds: 301 / 30,
 
+  // Pertahankan nama aset yang sudah ada di orion-app/public.
   voiceoverSrc: "prabowo_vo.mp3.mp3",
   musicSrc: "",
   sfxSrc: "",
 
   scenes: [
     {
-      eyebrow: "BIOGRAFI / INDONESIA",
-      title: "PRABOWO",
+      eyebrow: "DOKUMENTER / INDONESIA",
+      title: "JEJAK LANGKAH",
       subtitle:
-        "Sebuah perjalanan panjang dari dunia militer menuju panggung kepemimpinan nasional.",
+        "Perjalanan dari dunia militer menuju panggung kepemimpinan nasional.",
       accent: "#D8B878",
       imageSrc: "1000827929.jpg.jpeg",
       beats: [
-        { text: "JEJAK LANGKAH", start: 35, duration: 55 },
-        { text: "PRABOWO SUBIANTO", start: 145, duration: 65 },
-        { text: "KEPEMIMPINAN NASIONAL", start: 265, duration: 65 },
+        { text: "PRABOWO SUBIANTO", start: 25, duration: 65 },
+        { text: "DARI MILITER", start: 115, duration: 55 },
+        { text: "MENUJU KEPEMIMPINAN NASIONAL", start: 205, duration: 80 },
       ],
     },
     {
-      eyebrow: "01 / LATAR BELAKANG",
-      title: "AKAR",
+      eyebrow: "01 / KELAHIRAN",
+      title: "JAKARTA",
       subtitle:
-        "Lahir di Jakarta pada 17 Oktober 1951, putra ekonom dan tokoh pemerintahan Sumitro Djojohadikusumo.",
+        "Prabowo Subianto lahir di Jakarta pada 17 Oktober 1951.",
       accent: "#B8D99A",
       beats: [
-        { text: "17 OKTOBER 1951", start: 25, duration: 55 },
-        { text: "JAKARTA", start: 105, duration: 45 },
-        { text: "SUMITRO DJOJOHADIKUSUMO", start: 205, duration: 90 },
+        { text: "17 OKTOBER 1951", start: 30, duration: 65 },
+        { text: "JAKARTA", start: 125, duration: 55 },
       ],
     },
     {
-      eyebrow: "02 / PENDIDIKAN MILITER",
-      title: "DISIPLIN",
+      eyebrow: "02 / LATAR KELUARGA",
+      title: "KELUARGA",
       subtitle:
-        "Setelah menempuh pendidikan militer, ia lulus dari AKABRI pada tahun 1974.",
-      accent: "#A8C9D9",
-      beats: [
-        { text: "PENDIDIKAN MILITER", start: 35, duration: 65 },
-        { text: "AKABRI", start: 145, duration: 45 },
-        { text: "LULUS TAHUN 1974", start: 235, duration: 65 },
-      ],
-    },
-    {
-      eyebrow: "03 / KARIER MILITER",
-      title: "PENGABDIAN",
-      subtitle:
-        "Kariernya berkembang di lingkungan Angkatan Darat dan pasukan khusus.",
-      accent: "#D9A8B8",
-      beats: [
-        { text: "ANGKATAN DARAT", start: 30, duration: 60 },
-        { text: "PASUKAN KHUSUS", start: 125, duration: 60 },
-        { text: "KARIER MILITER", start: 235, duration: 65 },
-      ],
-    },
-    {
-      eyebrow: "04 / PUNCAK KARIER",
-      title: "STRATEGIS",
-      subtitle:
-        "Pada 1996 dipercaya menjadi Komandan Jenderal Kopassus, lalu menjabat Pangkostrad pada 1998.",
-      accent: "#E5C58B",
-      beats: [
-        { text: "1996", start: 25, duration: 45 },
-        { text: "DANJEN KOPASSUS", start: 95, duration: 65 },
-        { text: "1998", start: 195, duration: 45 },
-        { text: "PANGKOSTRAD", start: 265, duration: 65 },
-      ],
-    },
-    {
-      eyebrow: "05 / TITIK PERUBAHAN",
-      title: "1998",
-      subtitle:
-        "Setelah Soeharto mundur, Prabowo dicopot dari jabatan Pangkostrad. Dewan Kehormatan Perwira merekomendasikan pemberhentiannya dari dinas militer.",
-      accent: "#D9A8B8",
-      beats: [
-        { text: "REFORMASI 1998", start: 25, duration: 65 },
-        { text: "PANGKOSTRAD DICOPOT", start: 115, duration: 75 },
-        { text: "DEWAN KEHORMATAN PERWIRA", start: 225, duration: 100 },
-      ],
-    },
-    {
-      eyebrow: "06 / CATATAN SEJARAH",
-      title: "KONTROVERSI",
-      subtitle:
-        "Periode ini menyisakan kontroversi terkait penculikan aktivis dan dugaan pelanggaran HAM. Prabowo membantah keterlibatannya.",
-      accent: "#D9A8B8",
-      beats: [
-        { text: "PENCULIKAN AKTIVIS", start: 25, duration: 75 },
-        { text: "DUGAAN PELANGGARAN HAM", start: 125, duration: 85 },
-        { text: "PRABOWO MEMBANTAH", start: 245, duration: 75 },
-      ],
-    },
-    {
-      eyebrow: "07 / TRANSISI KEHIDUPAN",
-      title: "TRANSFORMASI",
-      subtitle:
-        "Setelah meninggalkan dinas militer, ia menekuni dunia usaha, kemudian kembali ke Indonesia dan aktif dalam kehidupan publik.",
-      accent: "#B8D99A",
-      beats: [
-        { text: "MENINGGALKAN DINAS MILITER", start: 25, duration: 85 },
-        { text: "DUNIA USAHA", start: 135, duration: 60 },
-        { text: "KEMBALI KE INDONESIA", start: 240, duration: 80 },
-      ],
-    },
-    {
-      eyebrow: "08 / POLITIK NASIONAL",
-      title: "GERINDRA",
-      subtitle:
-        "Pada 2008 ikut mendirikan Partai Gerindra. Ia mengikuti kontestasi politik nasional pada 2009, 2014, dan 2019.",
-      accent: "#A8C9D9",
-      beats: [
-        { text: "2008", start: 25, duration: 45 },
-        { text: "PARTAI GERINDRA", start: 95, duration: 70 },
-        { text: "2009 • 2014 • 2019", start: 205, duration: 85 },
-      ],
-    },
-    {
-      eyebrow: "09 / KEPemIMPINAN NASIONAL",
-      title: "PRESIDEN",
-      subtitle:
-        "Pada 2019 menjadi Menteri Pertahanan. Pada 20 Oktober 2024, Prabowo Subianto dilantik sebagai Presiden ke-8 Republik Indonesia.",
+        "Ia merupakan putra Sumitro Djojohadikusumo, ekonom dan tokoh pemerintahan Indonesia.",
       accent: "#D8B878",
       beats: [
-        { text: "MENTERI PERTAHANAN", start: 20, duration: 75 },
-        { text: "20 OKTOBER 2024", start: 125, duration: 70 },
-        { text: "PRESIDEN KE-8", start: 225, duration: 60 },
-        { text: "REPUBLIK INDONESIA", start: 295, duration: 60 },
+        { text: "SUMITRO DJOJOHADIKUSUMO", start: 35, duration: 90 },
+        { text: "EKONOM & TOKOH PEMERINTAHAN", start: 155, duration: 90 },
+      ],
+    },
+    {
+      eyebrow: "03 / PENDIDIKAN MILITER",
+      title: "AKABRI",
+      subtitle:
+        "Menempuh pendidikan militer dan lulus dari Akademi Angkatan Bersenjata Republik Indonesia pada 1974.",
+      accent: "#A8C9D9",
+      beats: [
+        { text: "PENDIDIKAN MILITER", start: 25, duration: 75 },
+        { text: "LULUS 1974", start: 145, duration: 60 },
+      ],
+    },
+    {
+      eyebrow: "04 / KARIER MILITER",
+      title: "KOPASSUS",
+      subtitle:
+        "Kariernya berkembang di lingkungan Angkatan Darat, termasuk penugasan di pasukan khusus.",
+      accent: "#D9A8B8",
+      beats: [
+        { text: "ANGKATAN DARAT", start: 30, duration: 65 },
+        { text: "PASUKAN KHUSUS", start: 145, duration: 70 },
+      ],
+    },
+    {
+      eyebrow: "05 / JABATAN STRATEGIS",
+      title: "1996 — 1998",
+      subtitle:
+        "Pada 1996 menjabat Danjen Kopassus, kemudian pada 1998 menjadi Pangkostrad.",
+      accent: "#E5C58B",
+      beats: [
+        { text: "1996", start: 20, duration: 45 },
+        { text: "DANJEN KOPASSUS", start: 85, duration: 75 },
+        { text: "1998", start: 185, duration: 45 },
+        { text: "PANGKOSTRAD", start: 245, duration: 55 },
+      ],
+    },
+    {
+      eyebrow: "06 / REFORMASI",
+      title: "TITIK BALIK",
+      subtitle:
+        "Setelah Presiden Soeharto mengundurkan diri pada 1998, Prabowo dicopot dari jabatan Pangkostrad.",
+      accent: "#D9A8B8",
+      beats: [
+        { text: "REFORMASI 1998", start: 25, duration: 75 },
+        { text: "PANGKOSTRAD DICOPOT", start: 145, duration: 90 },
+      ],
+    },
+    {
+      eyebrow: "07 / KONTROVERSI SEJARAH",
+      title: "1998",
+      subtitle:
+        "Dewan Kehormatan Perwira merekomendasikan pemberhentiannya dari dinas militer. Periode ini juga terkait tuduhan penculikan aktivis dan dugaan pelanggaran HAM yang dibantah Prabowo.",
+      accent: "#D9A8B8",
+      beats: [
+        { text: "DEWAN KEHORMATAN PERWIRA", start: 20, duration: 90 },
+        { text: "TUDUHAN PENCULIKAN AKTIVIS", start: 120, duration: 85 },
+        { text: "PRABOWO MEMBANTAH", start: 225, duration: 65 },
+      ],
+    },
+    {
+      eyebrow: "08 / BABAK BARU",
+      title: "TRANSFORMASI",
+      subtitle:
+        "Setelah meninggalkan militer, ia menekuni dunia usaha, kembali ke Indonesia, dan aktif dalam organisasi serta kehidupan publik.",
+      accent: "#B8D99A",
+      beats: [
+        { text: "MENINGGALKAN DINAS MILITER", start: 20, duration: 85 },
+        { text: "DUNIA USAHA", start: 125, duration: 65 },
+        { text: "KEHIDUPAN PUBLIK", start: 220, duration: 70 },
+      ],
+    },
+    {
+      eyebrow: "09 / PERJALANAN POLITIK",
+      title: "GERINDRA",
+      subtitle:
+        "Pada 2008 ikut mendirikan Partai Gerindra. Pada 2009 menjadi calon wakil presiden bersama Megawati, lalu maju dalam pemilihan presiden 2014 dan 2019.",
+      accent: "#A8C9D9",
+      beats: [
+        { text: "2008 — GERINDRA", start: 20, duration: 80 },
+        { text: "2009 — CALON WAKIL PRESIDEN", start: 115, duration: 90 },
+        { text: "2014 • 2019", start: 225, duration: 60 },
+      ],
+    },
+    {
+      eyebrow: "10 / KEMENTERIAN PERTAHANAN",
+      title: "MENTERI",
+      subtitle:
+        "Pada 2019 bergabung dalam pemerintahan sebagai Menteri Pertahanan hingga menjelang Pemilu Presiden 2024.",
+      accent: "#D8B878",
+      beats: [
+        { text: "2019", start: 25, duration: 45 },
+        { text: "MENTERI PERTAHANAN", start: 100, duration: 85 },
+      ],
+    },
+    {
+      eyebrow: "11 / KEPEMIMPINAN NASIONAL",
+      title: "PRESIDEN KE-8",
+      subtitle:
+        "Pada 20 Oktober 2024, Prabowo Subianto dilantik sebagai Presiden ke-8 Republik Indonesia.",
+      accent: "#D8B878",
+      beats: [
+        { text: "20 OKTOBER 2024", start: 25, duration: 75 },
+        { text: "PRESIDEN KE-8", start: 130, duration: 65 },
+        { text: "REPUBLIK INDONESIA", start: 225, duration: 65 },
       ],
     },
   ] satisfies SceneData[],
