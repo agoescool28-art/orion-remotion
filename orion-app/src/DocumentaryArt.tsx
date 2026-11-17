@@ -1,5 +1,5 @@
 import React from "react";
-import { AbsoluteFill, interpolate, staticFile, useCurrentFrame, spring } from "remotion";
+import { AbsoluteFill, interpolate, staticFile, useCurrentFrame, useVideoConfig, spring } from "remotion";
 
 const GOLD = "#D7B77A";
 const PAPER = "#EDE8DC";
@@ -78,11 +78,11 @@ const TimelineArtwork: React.FC<{frame:number}> = ({frame}) => {
     <Line x1={120} y1={365} x2={780} y2={365} progress={p} color={GOLD} width={5}/>
     {[{x:190,y:"1996",t:"DANJEN KOPASSUS"},{x:710,y:"1998",t:"PANGKOSTRAD"}].map((v,i)=><g key={v.y} opacity={p}>
       <circle cx={v.x} cy="365" r="20" fill={GOLD}/><circle cx={v.x} cy="365" r="35" fill="none" stroke={GOLD} strokeWidth="2" opacity=".5"/>
-      <Label x={v.x} y="285" size={42} color={PAPER}>{v.y}</Label>
-      <Label x={v.x} y="445" size={17} color={GOLD}>{v.t}</Label>
+      <Label x={v.x} y={285} size={42} color={PAPER}>{v.y}</Label>
+      <Label x={v.x} y={445} size={17} color={GOLD}>{v.t}</Label>
     </g>)}
     <rect x="220" y="510" width="440" height="100" fill="#252D28" stroke="#6E786F"/>
-    <Label x={440} y="570" size={20} color={MUTED}>DUA JABATAN STRATEGIS</Label>
+    <Label x={440} y={570} size={20} color={MUTED}>DUA JABATAN STRATEGIS</Label>
   </g>;
 };
 
@@ -137,7 +137,7 @@ const PoliticsArtwork: React.FC<{frame:number}> = ({frame}) => {
     <Line x1={120} y1={350} x2={780} y2={350} progress={p} color={BLUE} width={5}/>
     {[{x:180,y:"2008",t:"GERINDRA"},{x:385,y:"2009",t:"WAPRES"},{x:590,y:"2014",t:"PILPRES"},{x:790,y:"2019",t:"PILPRES"}].map((v,i)=><g key={v.y} opacity={p}>
       <circle cx={v.x} cy="350" r="15" fill={i===3?GOLD:BLUE}/><circle cx={v.x} cy="350" r="28" fill="none" stroke={i===3?GOLD:BLUE} opacity=".5"/>
-      <Label x={v.x} y="285" size={30} color={PAPER}>{v.y}</Label><Label x={v.x} y="420" size={15} color={i===3?GOLD:BLUE}>{v.t}</Label>
+      <Label x={v.x} y={285} size={30} color={PAPER}>{v.y}</Label><Label x={v.x} y={420} size={15} color={i===3?GOLD:BLUE}>{v.t}</Label>
     </g>)}
     <rect x="165" y="510" width="570" height="105" fill="#202B2C" stroke={BLUE}/>
     <Label x={450} y={552} size={18} color={PAPER}>MEMBANGUN JALUR POLITIK</Label><Label x={450} y={583} size={15} color={MUTED}>PARTAI • PEMILU • KONTES DEMOKRASI</Label>
@@ -191,6 +191,7 @@ const OpeningArtwork: React.FC<{frame:number}> = ({frame}) => {
 
 export const DocumentaryArt: React.FC<{sceneIndex:number}> = ({sceneIndex}) => {
   const frame=useCurrentFrame();
+  const {fps}=useVideoConfig();
   const reveal=spring({frame:Math.max(0,frame-4),fps,config:{damping:18,stiffness:80,mass:.9}});
   const artOpacity=interpolate(frame,[0,16],[0,1],clamp);
   const scale=interpolate(reveal,[0,1],[.94,1]);
@@ -217,4 +218,3 @@ export const DocumentaryArt: React.FC<{sceneIndex:number}> = ({sceneIndex}) => {
     </svg>
   </AbsoluteFill>;
 };
-
