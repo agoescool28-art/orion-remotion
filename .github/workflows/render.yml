@@ -1,4 +1,4 @@
-name: ORION Prabowo Documentary Render
+name: ORION Documentary V2 Render
 
 on:
   workflow_dispatch:
@@ -7,54 +7,42 @@ permissions:
   contents: read
 
 jobs:
-  render-prabowo-documentary:
+  render-documentary-v2:
     runs-on: ubuntu-latest
     timeout-minutes: 60
-
     defaults:
       run:
         working-directory: orion-app
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           lfs: true
-
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: orion-app/package-lock.json
-
       - name: Install dependencies
         run: npm ci
-
       - name: Verify source assets
         run: |
           test -s public/prabowo_vo.mp3.mp3
           test -s public/1000827929.jpg.jpeg
-
       - name: TypeScript check
         run: npx tsc --noEmit
-
-      - name: Setup Remotion browser
+      - name: Ensure Remotion browser
         run: npx remotion browser ensure
-
-      - name: Render MP4
+      - name: Render V2 documentary
         run: >
-          npx remotion render
-          src/index.ts
-          MyComp
-          out/prabowo-documentary-v1.mp4
-          --codec h264
-          --crf 23
-
-      - name: Upload MP4 artifact
+          npx remotion render src/index.ts MyComp
+          out/prabowo-documentary-v2.mp4
+          --codec h264 --crf 19 --pixel-format yuv420p
+      - name: Upload MP4
         uses: actions/upload-artifact@v4
         with:
-          name: ORION-Prabowo-Documentary-MP4
-          path: orion-app/out/prabowo-documentary-v1.mp4
+          name: ORION-Prabowo-Documentary-V2-MP4
+          path: orion-app/out/prabowo-documentary-v2.mp4
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 14
