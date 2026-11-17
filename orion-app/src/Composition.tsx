@@ -1,9 +1,7 @@
-
-import type { FC } from "react";
+import React from "react";
 import {
   AbsoluteFill,
   Audio,
-  Img,
   interpolate,
   Sequence,
   spring,
@@ -11,43 +9,30 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-
 import { project, type SceneData, type WordBeat } from "./project";
+import { DocumentaryArt } from "./DocumentaryArt";
 
 const clamp = {
   extrapolateLeft: "clamp" as const,
   extrapolateRight: "clamp" as const,
 };
+const PAPER = "#F1EDE3";
+const GOLD = "#D7B77A";
+const MUTED = "#A5A69B";
 
-const WordBeatView: FC<{
-  beat: WordBeat;
-  accent: string;
-}> = ({ beat, accent }) => {
+const BeatTypography: React.FC<{ beat: WordBeat; accent: string; index: number }> = ({ beat, accent, index }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-
-  const localFrame = frame - beat.start;
-
+  const local = frame - beat.start;
   const enter = spring({
-    frame: Math.max(0, localFrame),
+    frame: Math.max(0, local),
     fps,
-    config: {
-      damping: 13,
-      stiffness: 160,
-      mass: 0.55,
-    },
+    config: { damping: 14, stiffness: 135, mass: 0.55 },
   });
-
-  const opacity = interpolate(
-    localFrame,
-    [0, 5, beat.duration - 6, beat.duration],
-    [0, 1, 1, 0],
-    clamp
-  );
-
-  const translateY = interpolate(enter, [0, 1], [55, 0]);
-  const scale = interpolate(enter, [0, 1], [0.82, 1]);
-
+  const opacity = interpolate(local, [0, 5, beat.duration - 7, beat.duration], [0, 1, 1, 0], clamp);
+  const y = interpolate(enter, [0, 1], [52, 0]);
+  const scale = interpolate(enter, [0, 1], [0.92, 1]);
+  const fontSize = beat.text.length > 25 ? 35 : beat.text.length > 17 ? 42 : 52;
   return (
     <div
       style={{
@@ -56,189 +41,98 @@ const WordBeatView: FC<{
         top: 0,
         width: "100%",
         opacity,
-        transform: `translateY(${translateY}px) scale(${scale})`,
+        transform: `translate3d(0,${y}px,0) scale(${scale})`,
         transformOrigin: "left center",
         color: accent,
-        fontFamily: "Arial, sans-serif",
-        fontSize: 47,
+        fontFamily: "Arial, Helvetica, sans-serif",
+        fontSize,
         fontWeight: 900,
-        letterSpacing: 1,
-        textShadow: "0 5px 25px rgba(0,0,0,.6)",
+        letterSpacing: beat.text.length > 20 ? 0 : 1.2,
+        lineHeight: 1.08,
+        textShadow: "0 5px 28px rgba(0,0,0,.65)",
+        whiteSpace: "normal",
       }}
     >
+      <span style={{ color: "rgba(241,237,227,.42)", fontSize: 18, marginRight: 14, verticalAlign: "middle" }}>
+        {String(index + 1).padStart(2, "0")}
+      </span>
       {beat.text}
     </div>
   );
 };
 
-const Scene: FC<{
-  data: SceneData;
-  index: number;
-}> = ({ data, index }) => {
+const Scene: React.FC<{ data: SceneData; index: number }> = ({ data, index }) => {
   const frame = useCurrentFrame();
-  const { durationInFrames } = useVideoConfig();
-
-  const enter = spring({
-    frame,
-    fps: 30,
-    config: {
-      damping: 18,
-      stiffness: 90,
-      mass: 0.8,
-    },
-  });
-
-  const exit = interpolate(
-    frame,
-    [durationInFrames - 18, durationInFrames],
-    [1, 0],
-    clamp
-  );
-
-  const imageZoom = interpolate(
-    frame,
-    [0, durationInFrames],
-    [1, 1.13],
-    clamp
-  );
-
-  const imagePan = interpolate(
-    frame,
-    [0, durationInFrames],
-    [0, index % 2 === 0 ? -45 : 45],
-    clamp
-  );
-
-  const titleY = interpolate(enter, [0, 1], [100, 0]);
-  const titleScale = interpolate(enter, [0, 1], [0.88, 1]);
-
-  const titleOpacity = interpolate(frame, [0, 12], [0, 1], clamp);
-
-  const progress = interpolate(
-    frame,
-    [0, durationInFrames],
-    [0, 1],
-    clamp
-  );
-
-  const accentLine = interpolate(frame, [8, 30], [0, 1], clamp);
+  const { durationInFrames, fps } = useVideoConfig();
+  const entrance = spring({ frame, fps, config: { damping: 20, stiffness: 72, mass: 0.95 } });
+  const opacity = interpolate(frame, [0, 15, durationInFrames - 18, durationInFrames], [0, 1, 1, 0], clamp);
+  const titleY = interpolate(entrance, [0, 1], [54, 0]);
+  const titleScale = interpolate(entrance, [0, 1], [0.96, 1]);
+  const progress = interpolate(frame, [0, durationInFrames], [0, 1], clamp);
+  const line = interpolate(frame, [8, 34], [0, 1], clamp);
+  const subtitleOpacity = interpolate(frame, [25, 42], [0, 1], clamp);
+  const number = String(index + 1).padStart(2, "0");
+  const titleSize = data.title.length > 16 ? 76 : data.title.length > 10 ? 92 : 118;
 
   return (
-    <AbsoluteFill
-      style={{
-        backgroundColor: "#101713",
-        color: "#F4F1E8",
-        overflow: "hidden",
-        opacity: exit,
-      }}
-    >
-      {data.imageSrc ? (
-        <AbsoluteFill>
-          <Img
-            src={staticFile(data.imageSrc)}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              transform: `scale(${imageZoom}) translateX(${imagePan}px)`,
-              filter: "brightness(0.52) contrast(1.08) saturate(0.78)",
-            }}
-          />
-        </AbsoluteFill>
-      ) : null}
-
+    <AbsoluteFill style={{ backgroundColor: "#101713", color: PAPER, overflow: "hidden", opacity }}>
       <AbsoluteFill
         style={{
-          background:
-            "linear-gradient(180deg, rgba(5,10,8,.35) 0%, rgba(5,10,8,.15) 35%, rgba(5,10,8,.92) 100%)",
-        }}
-      />
-
-      <AbsoluteFill
-        style={{
-          opacity: 0.1,
           backgroundImage:
-            "linear-gradient(rgba(255,255,255,.18) 1px, transparent 1px), linear-gradient(90deg,rgba(255,255,255,.18) 1px, transparent 1px)",
-          backgroundSize: "90px 90px",
+            "radial-gradient(ellipse at 50% 40%, rgba(67,83,68,.22) 0%, rgba(16,23,19,0) 55%), linear-gradient(135deg,#101713 0%,#18221C 52%,#0D1411 100%)",
         }}
       />
-
-      <div
+      <AbsoluteFill
         style={{
-          position: "absolute",
-          left: 76,
-          right: 76,
-          top: 82,
-          height: 2,
-          background: `${data.accent}90`,
-          transform: `scaleX(${accentLine})`,
-          transformOrigin: "left",
+          opacity: 0.09,
+          backgroundImage:
+            "linear-gradient(rgba(229,226,211,.2) 1px, transparent 1px),linear-gradient(90deg,rgba(229,226,211,.2) 1px,transparent 1px)",
+          backgroundSize: "72px 72px",
+          maskImage: "linear-gradient(180deg,black,transparent 90%)",
         }}
       />
+      <div style={{ position: "absolute", left: 72, right: 72, top: 72, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ color: GOLD, fontSize: 17, fontWeight: 800, letterSpacing: 4 }}>ORION / DOCUMENTARY</div>
+        <div style={{ color: MUTED, fontSize: 15, letterSpacing: 2 }}>INDONESIA • BIOGRAPHY</div>
+      </div>
+      <div style={{ position: "absolute", left: 72, right: 72, top: 112, height: 2, background: "rgba(215,183,122,.22)" }}>
+        <div style={{ width: `${line * 100}%`, height: "100%", background: GOLD, transformOrigin: "left" }} />
+      </div>
 
-      <div
-        style={{
-          position: "absolute",
-          left: 80,
-          top: 112,
-          fontSize: 21,
-          fontWeight: 700,
-          letterSpacing: 5,
-          color: data.accent,
-          opacity: titleOpacity,
-        }}
-      >
-        {data.eyebrow}
+      <div style={{ position: "absolute", left: 0, right: 0, top: 180, height: 790 }}>
+        <DocumentaryArt sceneIndex={index} />
+      </div>
+
+      <div style={{ position: "absolute", left: 78, right: 78, top: 1005, display: "flex", alignItems: "center", gap: 18 }}>
+        <div style={{ width: 52, height: 3, background: GOLD, opacity: line }} />
+        <div style={{ color: GOLD, fontSize: 18, fontWeight: 800, letterSpacing: 4 }}>{data.eyebrow}</div>
       </div>
 
       <div
         style={{
           position: "absolute",
-          left: 76,
-          top: "31%",
-          width: 950,
+          left: 72,
+          right: 72,
+          top: 1070,
           fontFamily: "Arial, Helvetica, sans-serif",
-          fontSize: 145,
+          fontSize: titleSize,
+          lineHeight: 0.94,
           fontWeight: 900,
-          lineHeight: 0.95,
-          letterSpacing: -6,
+          letterSpacing: -3.5,
+          color: PAPER,
+          textTransform: "uppercase",
           transform: `translateY(${titleY}px) scale(${titleScale})`,
-          transformOrigin: "left center",
-          opacity: titleOpacity,
-          textShadow: "0 15px 70px rgba(0,0,0,.65)",
+          transformOrigin: "left top",
+          textShadow: "0 12px 50px rgba(0,0,0,.4)",
         }}
       >
         {data.title}
       </div>
 
-      <div
-        style={{
-          position: "absolute",
-          left: 80,
-          top: "52%",
-          width: 800,
-          height: 5,
-          background: `linear-gradient(90deg,${data.accent},transparent)`,
-          transform: `scaleX(${accentLine})`,
-          transformOrigin: "left",
-        }}
-      />
-
-      <div
-        style={{
-          position: "absolute",
-          left: 82,
-          top: "58%",
-          width: 850,
-          height: 120,
-        }}
-      >
+      <div style={{ position: "absolute", left: 78, right: 78, top: 1220, height: 2, background: "rgba(241,237,227,.18)" }} />
+      <div style={{ position: "absolute", left: 82, right: 82, top: 1265, height: 115 }}>
         {data.beats.map((beat, i) => (
-          <WordBeatView
-            key={`${index}-${i}`}
-            beat={beat}
-            accent={data.accent}
-          />
+          <BeatTypography key={`${index}-${i}`} beat={beat} accent={data.accent || GOLD} index={i} />
         ))}
       </div>
 
@@ -246,101 +140,43 @@ const Scene: FC<{
         style={{
           position: "absolute",
           left: 82,
-          top: "70%",
-          width: 820,
-          fontSize: 30,
-          lineHeight: 1.4,
-          color: "rgba(244,241,232,.9)",
-          opacity: interpolate(frame, [25, 45], [0, 1], clamp),
-          transform: `translateY(${interpolate(
-            frame,
-            [25, 45],
-            [25, 0],
-            clamp
-          )}px)`,
-          textShadow: "0 3px 15px rgba(0,0,0,.8)",
+          right: 110,
+          top: 1435,
+          fontSize: 27,
+          lineHeight: 1.38,
+          fontWeight: 400,
+          color: "rgba(241,237,227,.83)",
+          opacity: subtitleOpacity,
+          transform: `translateY(${interpolate(frame, [25, 42], [18, 0], clamp)}px)`,
+          maxHeight: 170,
         }}
       >
         {data.subtitle}
       </div>
 
-      <div
-        style={{
-          position: "absolute",
-          left: 82,
-          right: 82,
-          bottom: 125,
-          height: 3,
-          background: "rgba(255,255,255,.25)",
-        }}
-      >
-        <div
-          style={{
-            width: `${progress * 100}%`,
-            height: "100%",
-            background: data.accent,
-          }}
-        />
+      <div style={{ position: "absolute", left: 82, right: 82, bottom: 132, height: 3, background: "rgba(241,237,227,.18)" }}>
+        <div style={{ width: `${progress * 100}%`, height: "100%", background: GOLD }} />
       </div>
-
-      <div
-        style={{
-          position: "absolute",
-          left: 82,
-          bottom: 82,
-          fontSize: 18,
-          letterSpacing: 4,
-          color: "rgba(244,241,232,.65)",
-        }}
-      >
-        ORION / VISUAL STORYTELLING
-      </div>
-
-      <div
-        style={{
-          position: "absolute",
-          right: 82,
-          bottom: 76,
-          fontSize: 25,
-          fontWeight: 700,
-          color: data.accent,
-          letterSpacing: 3,
-        }}
-      >
-        {String(index + 1).padStart(2, "0")} /{" "}
-        {String(project.scenes.length).padStart(2, "0")}
-      </div>
+      <div style={{ position: "absolute", left: 82, bottom: 82, color: MUTED, fontSize: 16, letterSpacing: 3 }}>JEJAK LANGKAH / PRABOWO SUBIANTO</div>
+      <div style={{ position: "absolute", right: 82, bottom: 75, color: GOLD, fontSize: 23, fontWeight: 800, letterSpacing: 2 }}>{number} / {String(project.scenes.length).padStart(2, "0")}</div>
+      <div style={{ position: "absolute", right: 82, top: 175, color: "rgba(241,237,227,.25)", fontSize: 15, letterSpacing: 3, writingMode: "vertical-rl" as const }}>ARSIP • GARIS WAKTU • KONTEKS</div>
     </AbsoluteFill>
   );
 };
 
-export const MyComponent: FC = () => {
+export const MyComponent: React.FC = () => {
   const { fps } = useVideoConfig();
-  const framesPerScene = project.sceneDurationSeconds * fps;
-
+  const framesPerScene = Math.round(project.sceneDurationSeconds * fps);
   return (
     <AbsoluteFill style={{ backgroundColor: "#101713" }}>
       {project.scenes.map((scene, index) => (
-        <Sequence
-          key={`${index}-${scene.title}`}
-          from={index * framesPerScene}
-          durationInFrames={framesPerScene}
-        >
+        <Sequence key={`${index}-${scene.title}`} from={index * framesPerScene} durationInFrames={framesPerScene}>
           <Scene data={scene} index={index} />
         </Sequence>
       ))}
-
-      {project.voiceoverSrc ? (
-        <Audio src={staticFile(project.voiceoverSrc)} volume={1} />
-      ) : null}
-
-      {project.musicSrc ? (
-        <Audio src={staticFile(project.musicSrc)} volume={0.16} />
-      ) : null}
-
-      {project.sfxSrc ? (
-        <Audio src={staticFile(project.sfxSrc)} volume={0.5} />
-      ) : null}
+      {project.voiceoverSrc ? <Audio src={staticFile(project.voiceoverSrc)} volume={1} /> : null}
+      {project.musicSrc ? <Audio src={staticFile(project.musicSrc)} volume={0.12} /> : null}
+      {project.sfxSrc ? <Audio src={staticFile(project.sfxSrc)} volume={0.42} /> : null}
     </AbsoluteFill>
   );
 };
