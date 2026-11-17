@@ -56,7 +56,24 @@ const BeatTypography: React.FC<{ beat: WordBeat; accent: string; index: number }
       <span style={{ color: "rgba(241,237,227,.42)", fontSize: 18, marginRight: 14, verticalAlign: "middle" }}>
         {String(index + 1).padStart(2, "0")}
       </span>
-      {beat.text}
+      {beat.text.split(" ").map((word, wordIndex) => {
+        const wordFrame = local - wordIndex * 3;
+        const wordOpacity = interpolate(wordFrame, [0, 4], [0, 1], clamp);
+        const wordY = interpolate(wordFrame, [0, 5], [16, 0], clamp);
+        return (
+          <span
+            key={`${word}-${wordIndex}`}
+            style={{
+              display: "inline-block",
+              opacity: wordOpacity,
+              transform: `translateY(${wordY}px)`,
+              marginRight: 9,
+            }}
+          >
+            {word}
+          </span>
+        );
+      })}
     </div>
   );
 };
@@ -99,7 +116,19 @@ const Scene: React.FC<{ data: SceneData; index: number }> = ({ data, index }) =>
         <div style={{ width: `${line * 100}%`, height: "100%", background: GOLD, transformOrigin: "left" }} />
       </div>
 
-      <div style={{ position: "absolute", left: 0, right: 0, top: 180, height: 790 }}>
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          top: 180,
+          height: 790,
+          overflow: "hidden",
+          transform: `translate3d(${interpolate(frame, [0, durationInFrames], [index % 2 === 0 ? 8 : -8, index % 2 === 0 ? -12 : 12], clamp)}px,0,0) scale(${interpolate(frame, [0, durationInFrames], [1.015, 1.075], clamp)})`,
+          transformOrigin: index % 2 === 0 ? "center left" : "center right",
+          willChange: "transform",
+        }}
+      >
         <DocumentaryArt sceneIndex={index} />
       </div>
 
@@ -165,15 +194,19 @@ const Scene: React.FC<{ data: SceneData; index: number }> = ({ data, index }) =>
 };
 
 export const MyComponent: React.FC = () => {
-  const { fps } = useVideoConfig();
-  const framesPerScene = Math.round(project.sceneDurationSeconds * fps);
+  let cursor = 0;
+  const sequences = project.scenes.map((scene, index) => {
+    const from = cursor;
+    cursor += scene.durationFrames;
+    return (
+      <Sequence key={`${index}-${scene.title}`} from={from} durationInFrames={scene.durationFrames}>
+        <Scene data={scene} index={index} />
+      </Sequence>
+    );
+  });
   return (
     <AbsoluteFill style={{ backgroundColor: "#101713" }}>
-      {project.scenes.map((scene, index) => (
-        <Sequence key={`${index}-${scene.title}`} from={index * framesPerScene} durationInFrames={framesPerScene}>
-          <Scene data={scene} index={index} />
-        </Sequence>
-      ))}
+      {sequences}
       {project.voiceoverSrc ? <Audio src={staticFile(project.voiceoverSrc)} volume={1} /> : null}
       {project.musicSrc ? <Audio src={staticFile(project.musicSrc)} volume={0.12} /> : null}
       {project.sfxSrc ? <Audio src={staticFile(project.sfxSrc)} volume={0.42} /> : null}
