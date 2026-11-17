@@ -20,6 +20,9 @@ export const project = {
   fps: 30,
   width: 1080,
   height: 1920,
+  // Dipertahankan untuk kompatibilitas Root.tsx lama.
+  // 301 frame x 12 scene = 3.612 frame pada 30 fps.
+  sceneDurationSeconds: 301 / 30,
 
   // Total 3.612 frame = 120,4 detik, selaras dengan durasi render V2.
   // Durasi scene mengikuti struktur 6 bab pada naskah DOCX.
