@@ -1,13 +1,14 @@
 export type WordBeat = {
   text: string;
-  start: number;
-  duration: number;
+  start: number; // local frame
+  duration: number; // visible frames
 };
 
 export type SceneData = {
   eyebrow: string;
   title: string;
   subtitle: string;
+  durationFrames: number;
   accent: string;
   imageSrc?: string;
   beats: WordBeat[];
@@ -16,16 +17,12 @@ export type SceneData = {
 export const project = {
   title: "PRABOWO SUBIANTO",
   subtitle: "Dari Dunia Militer Menuju Kepemimpinan Nasional",
-
   fps: 30,
   width: 1080,
   height: 1920,
 
-  // 301 frame x 12 scene = 3612 frame = 120,4 detik.
-  // VO sumber 120,346 detik; selisih akhir sekitar 0,054 detik.
-  sceneDurationSeconds: 301 / 30,
-
-  // Pertahankan nama aset yang sudah ada di orion-app/public.
+  // Total 3.612 frame = 120,4 detik, selaras dengan durasi render V2.
+  // Durasi scene mengikuti struktur 6 bab pada naskah DOCX.
   voiceoverSrc: "prabowo_vo.mp3.mp3",
   musicSrc: "",
   sfxSrc: "",
@@ -34,141 +31,144 @@ export const project = {
     {
       eyebrow: "DOKUMENTER / INDONESIA",
       title: "JEJAK LANGKAH",
-      subtitle:
-        "Perjalanan dari dunia militer menuju panggung kepemimpinan nasional.",
+      subtitle: "Perjalanan dari dunia militer menuju panggung kepemimpinan nasional.",
+      durationFrames: 281,
       accent: "#D8B878",
       imageSrc: "1000827929.jpg.jpeg",
       beats: [
-        { text: "PRABOWO SUBIANTO", start: 25, duration: 65 },
-        { text: "DARI MILITER", start: 115, duration: 55 },
-        { text: "MENUJU KEPEMIMPINAN NASIONAL", start: 205, duration: 80 },
+        { text: "SEJARAH INDONESIA MODERN", start: 18, duration: 62 },
+        { text: "JALAN PANJANG", start: 96, duration: 58 },
+        { text: "MILITER → KEPEMIMPINAN NASIONAL", start: 178, duration: 88 },
       ],
     },
     {
       eyebrow: "01 / KELAHIRAN",
       title: "JAKARTA",
-      subtitle:
-        "Prabowo Subianto lahir di Jakarta pada 17 Oktober 1951.",
+      subtitle: "Prabowo Subianto lahir di Jakarta pada 17 Oktober 1951.",
+      durationFrames: 350,
       accent: "#B8D99A",
       beats: [
-        { text: "17 OKTOBER 1951", start: 30, duration: 65 },
-        { text: "JAKARTA", start: 125, duration: 55 },
+        { text: "PRABOWO SUBIANTO", start: 20, duration: 65 },
+        { text: "17 OKTOBER 1951", start: 135, duration: 85 },
+        { text: "JAKARTA", start: 245, duration: 70 },
       ],
     },
     {
       eyebrow: "02 / LATAR KELUARGA",
       title: "KELUARGA",
-      subtitle:
-        "Ia merupakan putra Sumitro Djojohadikusumo, ekonom dan tokoh pemerintahan Indonesia.",
+      subtitle: "Ia merupakan putra ekonom dan tokoh pemerintahan, Sumitro Djojohadikusumo.",
+      durationFrames: 323,
       accent: "#D8B878",
       beats: [
-        { text: "SUMITRO DJOJOHADIKUSUMO", start: 35, duration: 90 },
-        { text: "EKONOM & TOKOH PEMERINTAHAN", start: 155, duration: 90 },
+        { text: "SUMITRO DJOJOHADIKUSUMO", start: 20, duration: 105 },
+        { text: "EKONOM & TOKOH PEMERINTAHAN", start: 160, duration: 125 },
       ],
     },
     {
       eyebrow: "03 / PENDIDIKAN MILITER",
       title: "AKABRI",
-      subtitle:
-        "Menempuh pendidikan militer dan lulus dari Akademi Angkatan Bersenjata Republik Indonesia pada 1974.",
+      subtitle: "Setelah menempuh pendidikan militer, ia lulus dari AKABRI pada tahun 1974.",
+      durationFrames: 254,
       accent: "#A8C9D9",
       beats: [
-        { text: "PENDIDIKAN MILITER", start: 25, duration: 75 },
-        { text: "LULUS 1974", start: 145, duration: 60 },
+        { text: "PENDIDIKAN MILITER", start: 18, duration: 82 },
+        { text: "LULUS AKABRI • 1974", start: 132, duration: 88 },
       ],
     },
     {
       eyebrow: "04 / KARIER MILITER",
       title: "KOPASSUS",
-      subtitle:
-        "Kariernya berkembang di lingkungan Angkatan Darat, termasuk penugasan di pasukan khusus.",
+      subtitle: "Dari sinilah perjalanan panjangnya di lingkungan Angkatan Darat berkembang.",
+      durationFrames: 329,
       accent: "#D9A8B8",
       beats: [
-        { text: "ANGKATAN DARAT", start: 30, duration: 65 },
-        { text: "PASUKAN KHUSUS", start: 145, duration: 70 },
+        { text: "KARIER ANGKATAN DARAT", start: 18, duration: 82 },
+        { text: "LINGKUNGAN PASUKAN KHUSUS", start: 120, duration: 92 },
+        { text: "KOPASSUS", start: 235, duration: 75 },
       ],
     },
     {
       eyebrow: "05 / JABATAN STRATEGIS",
       title: "1996 — 1998",
-      subtitle:
-        "Pada 1996 menjabat Danjen Kopassus, kemudian pada 1998 menjadi Pangkostrad.",
+      subtitle: "Pada 1996 ia dipercaya menjadi Danjen Kopassus, lalu menjabat Pangkostrad pada 1998.",
+      durationFrames: 248,
       accent: "#E5C58B",
       beats: [
-        { text: "1996", start: 20, duration: 45 },
-        { text: "DANJEN KOPASSUS", start: 85, duration: 75 },
-        { text: "1998", start: 185, duration: 45 },
-        { text: "PANGKOSTRAD", start: 245, duration: 55 },
+        { text: "1996", start: 15, duration: 48 },
+        { text: "DANJEN KOPASSUS", start: 82, duration: 68 },
+        { text: "1998 • PANGKOSTRAD", start: 170, duration: 68 },
       ],
     },
     {
       eyebrow: "06 / REFORMASI",
       title: "TITIK BALIK",
-      subtitle:
-        "Setelah Presiden Soeharto mengundurkan diri pada 1998, Prabowo dicopot dari jabatan Pangkostrad.",
+      subtitle: "Setelah Soeharto mundur, Prabowo dicopot dari jabatan Pangkostrad.",
+      durationFrames: 269,
       accent: "#D9A8B8",
       beats: [
-        { text: "REFORMASI 1998", start: 25, duration: 75 },
-        { text: "PANGKOSTRAD DICOPOT", start: 145, duration: 90 },
+        { text: "REFORMASI 1998", start: 16, duration: 72 },
+        { text: "SOEHARTO MUNDUR", start: 105, duration: 70 },
+        { text: "PANGKOSTRAD DICOPOT", start: 190, duration: 68 },
       ],
     },
     {
       eyebrow: "07 / KONTROVERSI SEJARAH",
       title: "1998",
-      subtitle:
-        "Dewan Kehormatan Perwira merekomendasikan pemberhentiannya dari dinas militer. Periode ini juga terkait tuduhan penculikan aktivis dan dugaan pelanggaran HAM yang dibantah Prabowo.",
+      subtitle: "Dewan Kehormatan Perwira merekomendasikan pemberhentiannya dari dinas militer. Periode ini juga menyisakan kontroversi terkait penculikan aktivis dan dugaan pelanggaran HAM, yang dibantah Prabowo.",
+      durationFrames: 278,
       accent: "#D9A8B8",
       beats: [
-        { text: "DEWAN KEHORMATAN PERWIRA", start: 20, duration: 90 },
-        { text: "TUDUHAN PENCULIKAN AKTIVIS", start: 120, duration: 85 },
-        { text: "PRABOWO MEMBANTAH", start: 225, duration: 65 },
+        { text: "DEWAN KEHORMATAN PERWIRA", start: 15, duration: 82 },
+        { text: "KONTROVERSI PENCULIKAN AKTIVIS", start: 105, duration: 85 },
+        { text: "PRABOWO MEMBANTAH", start: 202, duration: 68 },
       ],
     },
     {
       eyebrow: "08 / BABAK BARU",
       title: "TRANSFORMASI",
-      subtitle:
-        "Setelah meninggalkan militer, ia menekuni dunia usaha, kembali ke Indonesia, dan aktif dalam organisasi serta kehidupan publik.",
+      subtitle: "Setelah meninggalkan dinas militer, ia menekuni dunia usaha, kembali ke Indonesia, dan aktif dalam organisasi serta kehidupan publik.",
+      durationFrames: 290,
       accent: "#B8D99A",
       beats: [
-        { text: "MENINGGALKAN DINAS MILITER", start: 20, duration: 85 },
-        { text: "DUNIA USAHA", start: 125, duration: 65 },
-        { text: "KEHIDUPAN PUBLIK", start: 220, duration: 70 },
+        { text: "MENINGGALKAN DINAS MILITER", start: 18, duration: 80 },
+        { text: "DUNIA USAHA", start: 112, duration: 68 },
+        { text: "KEMBALI KE INDONESIA", start: 205, duration: 72 },
       ],
     },
     {
       eyebrow: "09 / PERJALANAN POLITIK",
       title: "GERINDRA",
-      subtitle:
-        "Pada 2008 ikut mendirikan Partai Gerindra. Pada 2009 menjadi calon wakil presiden bersama Megawati, lalu maju dalam pemilihan presiden 2014 dan 2019.",
+      subtitle: "Pada 2008 ikut mendirikan Partai Gerindra. Tahun 2009 menjadi calon wakil presiden bersama Megawati, lalu maju sebagai calon presiden pada 2014 dan 2019.",
+      durationFrames: 326,
       accent: "#A8C9D9",
       beats: [
-        { text: "2008 — GERINDRA", start: 20, duration: 80 },
-        { text: "2009 — CALON WAKIL PRESIDEN", start: 115, duration: 90 },
-        { text: "2014 • 2019", start: 225, duration: 60 },
+        { text: "2008 • GERINDRA", start: 18, duration: 75 },
+        { text: "2009 • CALON WAKIL PRESIDEN", start: 112, duration: 100 },
+        { text: "2014 • 2019", start: 242, duration: 72 },
       ],
     },
     {
       eyebrow: "10 / KEMENTERIAN PERTAHANAN",
       title: "MENTERI",
-      subtitle:
-        "Pada 2019 bergabung dalam pemerintahan sebagai Menteri Pertahanan hingga menjelang Pemilu Presiden 2024.",
+      subtitle: "Pada 2019, ia masuk ke pemerintahan sebagai Menteri Pertahanan hingga menjelang pemilihan presiden 2024.",
+      durationFrames: 291,
       accent: "#D8B878",
       beats: [
-        { text: "2019", start: 25, duration: 45 },
-        { text: "MENTERI PERTAHANAN", start: 100, duration: 85 },
+        { text: "2019", start: 18, duration: 55 },
+        { text: "MENTERI PERTAHANAN", start: 100, duration: 90 },
+        { text: "HINGGA MENJELANG 2024", start: 218, duration: 65 },
       ],
     },
     {
       eyebrow: "11 / KEPEMIMPINAN NASIONAL",
       title: "PRESIDEN KE-8",
-      subtitle:
-        "Pada 20 Oktober 2024, Prabowo Subianto dilantik sebagai Presiden ke-8 Republik Indonesia.",
+      subtitle: "Pada 20 Oktober 2024, Prabowo Subianto dilantik sebagai Presiden Republik Indonesia ke-8.",
+      durationFrames: 373,
       accent: "#D8B878",
       beats: [
-        { text: "20 OKTOBER 2024", start: 25, duration: 75 },
-        { text: "PRESIDEN KE-8", start: 130, duration: 65 },
-        { text: "REPUBLIK INDONESIA", start: 225, duration: 65 },
+        { text: "20 OKTOBER 2024", start: 18, duration: 80 },
+        { text: "PELANTIKAN PRESIDEN", start: 125, duration: 90 },
+        { text: "PRESIDEN REPUBLIK INDONESIA KE-8", start: 250, duration: 100 },
       ],
     },
   ] satisfies SceneData[],
