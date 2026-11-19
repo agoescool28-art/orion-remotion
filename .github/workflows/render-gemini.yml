@@ -7,7 +7,8 @@ on:
         description: 'Ketik ide topik video (contoh: Perbandingan Takt Time vs Cycle Time)'
         required: true
         default: 'Perbandingan Takt Time vs Cycle Time'
-
+  repository_dispatch:
+    types: [buat_video_telegram]
 jobs:
   render-gemini-video:
     runs-on: ubuntu-latest
@@ -31,7 +32,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
-          IDE_KONTEN: ${{ github.event.inputs.ide_konten }}
+          IDE_KONTEN: ${{ github.event.inputs.ide_konten || github.event.client_payload.ide_konten }}
         run: node scripts/generate.mjs
 
       - name: Upload Video Artifact
