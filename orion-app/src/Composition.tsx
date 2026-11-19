@@ -16,74 +16,72 @@ const clamp = {
   extrapolateLeft: "clamp" as const,
   extrapolateRight: "clamp" as const,
 };
-const PAPER = "#F1EDE3";
-const GOLD = "#D7B77A";
-const MUTED = "#A5A69B";
 
-const BeatTypography: React.FC<{ beat: WordBeat; accent: string; index: number }> = ({ beat, accent, index }) => {
+const BG = "#160F0D";
+const PAPER = "#F7F7F3";
+const CYAN = "#53D7E5";
+const ORANGE = "#FF9C52";
+const INK = "#171B1D";
+const MUTED = "#B6B1AA";
+
+const PhraseCaption: React.FC<{ beat: WordBeat }> = ({ beat }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const local = frame - beat.start;
-  const enter = spring({
-    frame: Math.max(0, local),
-    fps,
-    config: { damping: 14, stiffness: 135, mass: 0.55 },
-  });
-  const opacity = interpolate(local, [0, 5, beat.duration - 7, beat.duration], [0, 1, 1, 0], clamp);
-  const y = interpolate(enter, [0, 1], [52, 0]);
-  const scale = interpolate(enter, [0, 1], [0.92, 1]);
-  const fontSize = beat.text.length > 25 ? 35 : beat.text.length > 17 ? 42 : 52;
+  const fade = interpolate(local, [0, 5, beat.duration - 6, beat.duration], [0, 1, 1, 0], clamp);
+  const words = beat.text.trim().split(/\s+/);
+
   return (
     <div
       style={{
         position: "absolute",
-        left: 0,
-        top: 0,
-        width: "100%",
-        opacity,
-        transform: `translate3d(0,${y}px,0) scale(${scale})`,
-        transformOrigin: "left center",
-        color: accent,
+        left: 72,
+        right: 72,
+        top: 1500,
+        minHeight: 170,
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "flex-start",
+        opacity: fade,
+        textAlign: "center",
         fontFamily: "Arial, Helvetica, sans-serif",
-        fontSize,
-        fontWeight: 900,
-        letterSpacing: beat.text.length > 20 ? 0 : 1.2,
+        fontSize: beat.text.length > 28 ? 43 : beat.text.length > 18 ? 50 : 58,
         lineHeight: 1.08,
-        textShadow: "0 5px 28px rgba(0,0,0,.65)",
-        whiteSpace: "normal",
+        fontWeight: 900,
+        letterSpacing: -1.1,
+        color: PAPER,
+        textShadow: "0 4px 24px rgba(0,0,0,.6)",
       }}
     >
-      <span style={{ color: "rgba(241,237,227,.42)", fontSize: 18, marginRight: 14, verticalAlign: "middle" }}>
-        {String(index + 1).padStart(2, "0")}
-      </span>
-      {beat.text.split(" ").map((word, wordIndex, words) => {
-        const wordLocal = local - wordIndex * 3;
-        const wordSpring = spring({
-          frame: Math.max(0, wordLocal),
-          fps,
-          config: { damping: 13, stiffness: 175, mass: 0.42 },
-        });
-        const wordOpacity = interpolate(wordLocal, [0, 3], [0, 1], clamp);
-        const wordY = interpolate(wordSpring, [0, 1], [22, 0]);
-        const wordScale = interpolate(wordSpring, [0, 1], [0.88, 1]);
-        const isEmphasis = wordIndex === words.length - 1;
-        return (
-          <span
-            key={`${word}-${wordIndex}`}
-            style={{
-              display: "inline-block",
-              opacity: wordOpacity,
-              color: isEmphasis ? accent : PAPER,
-              transform: `translate3d(0,${wordY}px,0) scale(${wordScale})`,
-              transformOrigin: "left bottom",
-              marginRight: 9,
-              textShadow: isEmphasis ? `0 0 24px ${accent}55` : "none",
-            }}
-          >
-            {word}
-          </span>
-        );
-      })}
+      <div style={{ maxWidth: 930 }}>
+        {words.map((word, wordIndex) => {
+          const wordLocal = local - wordIndex * 3;
+          const enter = spring({
+            frame: Math.max(0, wordLocal),
+            fps,
+            config: { damping: 14, stiffness: 165, mass: 0.42 },
+          });
+          const opacity = interpolate(wordLocal, [0, 3], [0, 1], clamp);
+          const y = interpolate(enter, [0, 1], [24, 0]);
+          const scale = interpolate(enter, [0, 1], [0.9, 1]);
+          const isAccent = wordIndex === words.length - 1 || wordIndex === 0;
+          return (
+            <span
+              key={`${word}-${wordIndex}`}
+              style={{
+                display: "inline-block",
+                margin: "0 7px 7px",
+                opacity,
+                color: isAccent ? CYAN : PAPER,
+                transform: `translate3d(0,${y}px,0) scale(${scale})`,
+                textShadow: isAccent ? "0 0 22px rgba(83,215,229,.28)" : "none",
+              }}
+            >
+              {word}
+            </span>
+          );
+        })}
+      </div>
     </div>
   );
 };
@@ -91,122 +89,142 @@ const BeatTypography: React.FC<{ beat: WordBeat; accent: string; index: number }
 const Scene: React.FC<{ data: SceneData; index: number }> = ({ data, index }) => {
   const frame = useCurrentFrame();
   const { durationInFrames, fps } = useVideoConfig();
-  const entrance = spring({ frame, fps, config: { damping: 20, stiffness: 72, mass: 0.95 } });
-  const opacity = interpolate(frame, [0, 15, durationInFrames - 18, durationInFrames], [0, 1, 1, 0], clamp);
-  const titleY = interpolate(entrance, [0, 1], [54, 0]);
-  const titleScale = interpolate(entrance, [0, 1], [0.96, 1]);
+  const enter = spring({ frame, fps, config: { damping: 18, stiffness: 78, mass: 0.8 } });
+  const sceneOpacity = interpolate(frame, [0, 12, durationInFrames - 14, durationInFrames], [0, 1, 1, 0], clamp);
   const progress = interpolate(frame, [0, durationInFrames], [0, 1], clamp);
-  const line = interpolate(frame, [8, 34], [0, 1], clamp);
-  const subtitleOpacity = interpolate(frame, [25, 42], [0, 1], clamp);
-  const number = String(index + 1).padStart(2, "0");
-  const titleSize = data.title.length > 16 ? 76 : data.title.length > 10 ? 92 : 118;
+  const artScale = interpolate(frame, [0, durationInFrames], [1.015, 1.075], clamp);
+  const artX = interpolate(frame, [0, durationInFrames], [index % 2 === 0 ? -14 : 14, index % 2 === 0 ? 18 : -18], clamp);
+  const cardY = interpolate(enter, [0, 1], [44, 0]);
+  const cardOpacity = interpolate(frame, [8, 24], [0, 1], clamp);
+  const titleSize = data.title.length > 16 ? 66 : data.title.length > 10 ? 78 : 94;
+  const sceneNo = String(index + 1).padStart(2, "0");
 
   return (
-    <AbsoluteFill style={{ backgroundColor: "#101713", color: PAPER, overflow: "hidden", opacity }}>
+    <AbsoluteFill style={{ backgroundColor: BG, color: PAPER, overflow: "hidden", opacity: sceneOpacity }}>
+      {/* Warm technical-grid background */}
       <AbsoluteFill
         style={{
           backgroundImage:
-            "radial-gradient(ellipse at 50% 40%, rgba(67,83,68,.22) 0%, rgba(16,23,19,0) 55%), linear-gradient(135deg,#101713 0%,#18221C 52%,#0D1411 100%)",
+            "radial-gradient(ellipse at 50% 42%, rgba(111,67,45,.25) 0%, rgba(22,15,13,0) 62%), linear-gradient(145deg,#1B120F 0%,#160F0D 55%,#100B09 100%)",
         }}
       />
       <AbsoluteFill
         style={{
-          opacity: 0.09,
+          opacity: 0.17,
           backgroundImage:
-            "linear-gradient(rgba(229,226,211,.2) 1px, transparent 1px),linear-gradient(90deg,rgba(229,226,211,.2) 1px,transparent 1px)",
-          backgroundSize: "72px 72px",
-          maskImage: "linear-gradient(180deg,black,transparent 90%)",
+            "linear-gradient(rgba(218,190,165,.18) 1px, transparent 1px),linear-gradient(90deg,rgba(218,190,165,.18) 1px,transparent 1px)",
+          backgroundSize: "44px 44px",
+          maskImage: "linear-gradient(180deg,rgba(0,0,0,.95),rgba(0,0,0,.25) 75%,transparent)",
         }}
       />
       <AbsoluteFill
         style={{
           pointerEvents: "none",
-          background:
-            "radial-gradient(ellipse at center, transparent 42%, rgba(0,0,0,.34) 100%), repeating-linear-gradient(0deg, rgba(255,255,255,.012) 0px, rgba(255,255,255,.012) 1px, transparent 1px, transparent 4px)",
-          opacity: 0.72,
+          background: "radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,.48) 100%)",
         }}
       />
-      <div style={{ position: "absolute", left: 72, right: 72, top: 72, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div style={{ color: GOLD, fontSize: 17, fontWeight: 800, letterSpacing: 4 }}>ORION / DOCUMENTARY</div>
-        <div style={{ color: MUTED, fontSize: 15, letterSpacing: 2 }}>INDONESIA • BIOGRAPHY</div>
-      </div>
-      <div style={{ position: "absolute", left: 72, right: 72, top: 112, height: 2, background: "rgba(215,183,122,.22)" }}>
-        <div style={{ width: `${line * 100}%`, height: "100%", background: GOLD, transformOrigin: "left" }} />
+
+      {/* Compact editorial header */}
+      <div style={{ position: "absolute", top: 48, left: 54, right: 54, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ width: 30, height: 30, borderRadius: 7, background: ORANGE, transform: "rotate(8deg)", boxShadow: "0 0 22px rgba(255,156,82,.25)" }} />
+          <div>
+            <div style={{ fontSize: 17, fontWeight: 900, letterSpacing: 2.8, color: PAPER }}>ORION / STORY LAB</div>
+            <div style={{ marginTop: 3, fontSize: 10, letterSpacing: 2.4, color: MUTED }}>BIOGRAPHY • INDONESIA</div>
+          </div>
+        </div>
+        <div style={{ color: CYAN, fontSize: 17, fontWeight: 900, letterSpacing: 2 }}>BAB {sceneNo}</div>
       </div>
 
+      {/* Main artwork stage */}
       <div
         style={{
           position: "absolute",
-          left: 0,
-          right: 0,
-          top: 180,
-          height: 790,
+          left: 34,
+          right: 34,
+          top: 128,
+          height: 850,
           overflow: "hidden",
-          transform: `translate3d(${interpolate(frame, [0, durationInFrames], [index % 2 === 0 ? 18 : -18, index % 2 === 0 ? -26 : 26], clamp)}px,${interpolate(frame, [0, durationInFrames], [index % 3 === 0 ? 8 : -6, index % 3 === 0 ? -12 : 10], clamp)}px,0) scale(${interpolate(frame, [0, durationInFrames], [1.02, 1.105], clamp)})`,
-          transformOrigin: index % 2 === 0 ? "center left" : "center right",
-          willChange: "transform",
+          borderRadius: 20,
+          border: "1px solid rgba(255,255,255,.12)",
+          background: "rgba(0,0,0,.16)",
+          boxShadow: "0 24px 70px rgba(0,0,0,.38)",
         }}
       >
-        <DocumentaryArt sceneIndex={index} />
+        <div
+          style={{
+            position: "absolute",
+            inset: -24,
+            transform: `translate3d(${artX}px,0,0) scale(${artScale})`,
+            transformOrigin: index % 2 === 0 ? "center left" : "center right",
+          }}
+        >
+          <DocumentaryArt sceneIndex={index} />
+        </div>
+        <div style={{ position: "absolute", left: 22, top: 22, padding: "9px 13px", borderRadius: 6, background: "rgba(15,12,11,.78)", color: CYAN, fontSize: 13, fontWeight: 800, letterSpacing: 1.8 }}>
+          KONTEKS SEJARAH
+        </div>
+        <div style={{ position: "absolute", right: 22, top: 22, padding: "9px 13px", borderRadius: 6, background: "rgba(15,12,11,.78)", color: ORANGE, fontSize: 13, fontWeight: 800, letterSpacing: 1.8 }}>
+          ARSIP • LINIMASA
+        </div>
+        {/* Technical callout accents, used as graphic language rather than fabricated facts */}
+        <div style={{ position: "absolute", left: 28, bottom: 64, width: 112, height: 2, background: CYAN, opacity: 0.9 }} />
+        <div style={{ position: "absolute", left: 136, bottom: 58, width: 12, height: 12, borderRadius: 12, background: CYAN, boxShadow: "0 0 16px rgba(83,215,229,.7)" }} />
+        <div style={{ position: "absolute", right: 28, bottom: 64, width: 86, height: 2, background: ORANGE, opacity: 0.9 }} />
       </div>
 
-      <div style={{ position: "absolute", left: 78, right: 78, top: 1005, display: "flex", alignItems: "center", gap: 18 }}>
-        <div style={{ width: 52, height: 3, background: GOLD, opacity: line }} />
-        <div style={{ color: GOLD, fontSize: 18, fontWeight: 800, letterSpacing: 4 }}>{data.eyebrow}</div>
-      </div>
-
+      {/* White information card: visual hierarchy inspired by the reference */}
       <div
         style={{
           position: "absolute",
-          left: 72,
-          right: 72,
-          top: 1070,
-          fontFamily: "Arial, Helvetica, sans-serif",
-          fontSize: titleSize,
-          lineHeight: 0.94,
-          fontWeight: 900,
-          letterSpacing: -3.5,
-          color: PAPER,
-          textTransform: "uppercase",
-          transform: `translate3d(${interpolate(frame, [0, durationInFrames], [index % 2 === 0 ? -8 : 8, 0], clamp)}px,${titleY}px,0) scale(${titleScale})`,
-          transformOrigin: "left top",
-          textShadow: "0 12px 50px rgba(0,0,0,.4)",
+          left: 54,
+          right: 54,
+          top: 1010,
+          minHeight: 330,
+          padding: "34px 38px 30px",
+          boxSizing: "border-box",
+          borderRadius: 18,
+          background: PAPER,
+          color: INK,
+          boxShadow: "0 22px 52px rgba(0,0,0,.38)",
+          transform: `translate3d(0,${cardY}px,0)`,
+          opacity: cardOpacity,
         }}
       >
-        {data.title}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+          <div style={{ color: "#327F88", fontSize: 15, fontWeight: 900, letterSpacing: 2.1 }}>{data.eyebrow}</div>
+          <div style={{ color: "#A75A2E", fontSize: 14, fontWeight: 900, letterSpacing: 1.4 }}>ORION / {sceneNo}</div>
+        </div>
+        <div
+          style={{
+            fontFamily: "Arial, Helvetica, sans-serif",
+            fontSize: titleSize,
+            lineHeight: 0.98,
+            fontWeight: 900,
+            letterSpacing: -2.8,
+            textTransform: "uppercase",
+            color: INK,
+          }}
+        >
+          {data.title}
+        </div>
+        <div style={{ height: 3, width: 104, marginTop: 22, marginBottom: 19, background: `linear-gradient(90deg,${CYAN} 0 62%,${ORANGE} 62% 100%)` }} />
+        <div style={{ fontSize: 25, lineHeight: 1.28, fontWeight: 600, color: "#3E4548", maxHeight: 100, overflow: "hidden" }}>
+          {data.subtitle}
+        </div>
       </div>
 
-      <div style={{ position: "absolute", left: 78, right: 78, top: 1220, height: 2, background: "rgba(241,237,227,.18)" }} />
-      <div style={{ position: "absolute", left: 82, right: 82, top: 1265, height: 115 }}>
-        {data.beats.map((beat, i) => (
-          <BeatTypography key={`${index}-${i}`} beat={beat} accent={data.accent || GOLD} index={i} />
-        ))}
-      </div>
+      {/* Phrase caption: large, centered, word-by-word */}
+      {data.beats.map((beat, i) => (
+        <PhraseCaption key={`${index}-${i}`} beat={beat} />
+      ))}
 
-      <div
-        style={{
-          position: "absolute",
-          left: 82,
-          right: 110,
-          top: 1435,
-          fontSize: 27,
-          lineHeight: 1.38,
-          fontWeight: 400,
-          color: "rgba(241,237,227,.83)",
-          opacity: subtitleOpacity,
-          transform: `translateY(${interpolate(frame, [25, 42], [18, 0], clamp)}px)`,
-          maxHeight: 170,
-        }}
-      >
-        {data.subtitle}
+      {/* Footer progress */}
+      <div style={{ position: "absolute", left: 54, right: 54, bottom: 70, height: 4, borderRadius: 4, background: "rgba(255,255,255,.18)" }}>
+        <div style={{ width: `${progress * 100}%`, height: "100%", borderRadius: 4, background: `linear-gradient(90deg,${CYAN},${ORANGE})` }} />
       </div>
-
-      <div style={{ position: "absolute", left: 82, right: 82, bottom: 132, height: 3, background: "rgba(241,237,227,.18)" }}>
-        <div style={{ width: `${progress * 100}%`, height: "100%", background: GOLD }} />
-      </div>
-      <div style={{ position: "absolute", left: 82, bottom: 82, color: MUTED, fontSize: 16, letterSpacing: 3 }}>JEJAK LANGKAH / PRABOWO SUBIANTO</div>
-      <div style={{ position: "absolute", right: 82, bottom: 75, color: GOLD, fontSize: 23, fontWeight: 800, letterSpacing: 2 }}>{number} / {String(project.scenes.length).padStart(2, "0")}</div>
-      <div style={{ position: "absolute", right: 82, top: 175, color: "rgba(241,237,227,.25)", fontSize: 15, letterSpacing: 3, writingMode: "vertical-rl" as const }}>ARSIP • GARIS WAKTU • KONTEKS</div>
+      <div style={{ position: "absolute", left: 54, bottom: 35, color: MUTED, fontSize: 12, letterSpacing: 2.2 }}>JEJAK LANGKAH • PRABOWO SUBIANTO</div>
+      <div style={{ position: "absolute", right: 54, bottom: 30, color: CYAN, fontSize: 16, fontWeight: 900, letterSpacing: 2 }}>{sceneNo} / {String(project.scenes.length).padStart(2, "0")}</div>
     </AbsoluteFill>
   );
 };
@@ -222,8 +240,9 @@ export const MyComponent: React.FC = () => {
       </Sequence>
     );
   });
+
   return (
-    <AbsoluteFill style={{ backgroundColor: "#101713" }}>
+    <AbsoluteFill style={{ backgroundColor: BG }}>
       {sequences}
       {project.voiceoverSrc ? <Audio src={staticFile(project.voiceoverSrc)} volume={1} /> : null}
       {project.musicSrc ? <Audio src={staticFile(project.musicSrc)} volume={0.12} /> : null}
