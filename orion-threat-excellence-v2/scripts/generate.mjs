@@ -31,24 +31,18 @@ async function fetchPixabayMedia(query, index) {
     return null;
   }
 
-  const searchQueries = [query, "modern technology", "abstract blue"].filter(Boolean);
+  const searchQueries = [query, "automotive engine mechanic", "modern technology"].filter(Boolean);
 
   for (const q of searchQueries) {
     try {
       const url = `https://pixabay.com/api/?key=${PIXABAY_API_KEY}&q=${encodeURIComponent(q)}&image_type=all&safesearch=true&per_page=5`;
       const res = await fetch(url);
-      if (!res.ok) {
-        console.warn(`⚠️ Pixabay API error (${res.status}) untuk "${q}"`);
-        continue;
-      }
+      if (!res.ok) continue;
 
       const data = await res.json();
       const hit = data.hits?.[index % Math.max(1, data.hits.length)] || data.hits?.[0];
       const imageUrl = hit?.largeImageURL || hit?.webformatURL;
-      if (!imageUrl) {
-        console.warn(`⚠️ Tidak ada hasil Pixabay untuk "${q}", mencoba cadangan...`);
-        continue;
-      }
+      if (!imageUrl) continue;
 
       const imgRes = await fetch(imageUrl);
       if (!imgRes.ok) continue;
@@ -56,7 +50,7 @@ async function fetchPixabayMedia(query, index) {
       const buffer = Buffer.from(await imgRes.arrayBuffer());
       const fileName = `pixabay_scene_${index + 1}.jpg`;
       fs.writeFileSync(`./public/${fileName}`, buffer);
-      console.log(`✅ Visual Pixabay terpasang [Adegan ${index + 1}]: ${fileName} (kata kunci: "${q}")`);
+      console.log(`✅ Visual Pixabay terpasang [Adegan ${index + 1}]: ${fileName} ("${q}")`);
       return fileName;
     } catch (err) {
       console.warn(`⚠️ Gagal ambil visual Pixabay ("${q}"):`, err.message);
@@ -143,9 +137,8 @@ async function main() {
 
   let sceneData;
 
-  // Cek apakah input berupa JSON manual atau ide teks
   if (IDE_KONTEN.startsWith("{")) {
-    console.log("🎬 Mode Manual: Membaca skenario JSON kustom...");
+    console.log("🎬 Mode Manual JSON: Membaca skenario kustom...");
     sceneData = JSON.parse(IDE_KONTEN);
   } else {
     console.log(`🧠 Mode Otomatis: Meracik skenario dari ide: "${IDE_KONTEN}"...`);
@@ -195,30 +188,32 @@ Aturan wajib:
     const rawJson = await callGeminiWithRetry(prompt);
     const cleanedJson = rawJson.replace(/```json|```/g, "").trim();
     sceneData = JSON.parse(cleanedJson);
+  }
 
-    // Unduh foto/ilustrasi HD Pixabay untuk semua adegan non-compare
-    if (Array.isArray(sceneData.scenes)) {
-      for (let i = 0; i < sceneData.scenes.length; i++) {
-        const sc = sceneData.scenes[i];
-        if (!sc.media && sc.overlayType !== "compare") {
-          const query = sc.visualQuery || sc.heading;
-          const downloadedFile = await fetchPixabayMedia(query, i);
-          if (downloadedFile) {
-            sc.media = downloadedFile;
-            sc.mediaType = "image";
-            sc.motion = i % 2 === 0 ? "zoom-in" : "zoom-out";
-          }
+  // Jalankan pengunduhan foto/ilustrasi HD Pixabay untuk SEMUA mode (baik Ide Teks maupun JSON Manual)
+  if (Array.isArray(sceneData.scenes)) {
+    for (let i = 0; i < sceneData.scenes.length; i++) {
+      const sc = sceneData.scenes[i];
+      if (!sc.media && sc.overlayType !== "compare") {
+        const query = sc.visualQuery || sc.heading;
+        const downloadedFile = await fetchPixabayMedia(query, i);
+        if (downloadedFile) {
+          sc.media = downloadedFile;
+          sc.mediaType = "image";
+          sc.motion = i % 2 === 0 ? "zoom-in" : "zoom-out";
         }
       }
     }
+  }
 
-    // Generate TTS Bahasa Indonesia
+  // Generate TTS Bahasa Indonesia & hitung durasi pas untuk SEMUA mode
+  if (Array.isArray(sceneData.scenes) && !sceneData.audioSrc) {
     const teksNarasi = sceneData.scenes.map((s) => s.body).join(". ");
-    console.log("🎙️ Membuat suara narator TTS...");
+    console.log("🎙️ Membuat suara narator TTS Bahasa Indonesia...");
     sceneData.audioSrc = await generateIndonesianTtsBase64(teksNarasi);
 
     const wordCount = teksNarasi.split(/\s+/).filter(Boolean).length;
-    const estimatedSec = Math.max(28, Math.ceil(wordCount / 1.65) + 4);
+    const estimatedSec = Math.max(28, Math.ceil(wordCount / 1.95) + 4);
     sceneData.durationInFrames = estimatedSec * 30;
   }
 
@@ -252,7 +247,8 @@ Aturan wajib:
   });
 
   console.log("🎉 Render selesai:", outputLocation);
-  await sendVideoToTelegram(outputLocation, `🎬 *${sceneData.title || "Video Selesai"}*\nIde: ${IDE_KONTEN}`);
+  const labelIde = IDE_KONTEN.startsWith("{") ? (sceneData.title || "Skenario JSON Kustom") : IDE_KONTEN;
+  await sendVideoToTelegram(outputLocation, `🎬 *${sceneData.title || "Video Selesai"}*\nTopik: ${labelIde}`);
 }
 
 main().catch((err) => {
