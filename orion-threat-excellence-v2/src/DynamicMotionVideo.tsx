@@ -3,1019 +3,708 @@ import {
   AbsoluteFill,
   Audio,
   Img,
-  OffthreadVideo,
-  staticFile,
   interpolate,
   spring,
+  staticFile,
   useCurrentFrame,
   useVideoConfig,
-  getInputProps,
 } from "remotion";
 
-export type VisualCategory =
-  | "gear"
-  | "chart"
-  | "shield"
-  | "flow"
-  | "medical"
-  | "history"
-  | "globe"
-  | "bulb";
-
-export interface OverlayPoint {
+export interface PointItem {
   text: string;
-  value?: string;
-  percent?: number;
-  tone?: "gold" | "green" | "red" | "neutral";
+  tone?: "neutral" | "gold" | "danger" | "success";
+  value?: number;
 }
 
-export interface CompareSide {
+export interface CompareColumn {
   title: string;
   badge?: string;
-  tone?: "gold" | "green" | "red" | "neutral";
+  tone?: "neutral" | "gold" | "danger" | "success";
   items: string[];
 }
 
 export interface SceneItem {
   tag?: string;
   heading: string;
-  headingTone?: "gold" | "red" | "green";
-  body: string;
+  headingTone?: "gold" | "danger" | "success" | "neutral";
   heroStat?: string;
   heroLabel?: string;
-  startTime?: number;
-  durationSeconds?: number;
-  overlayType?: "pills" | "bars" | "checklist" | "compare";
-  points?: OverlayPoint[];
-  compareLeft?: CompareSide;
-  compareRight?: CompareSide;
-  pointerLabel?: string;
-  visualType?: VisualCategory;
+  body: string;
+  overlayType?: "pills" | "bars" | "compare" | "checklist";
+  points?: PointItem[];
+  compareLeft?: CompareColumn;
+  compareRight?: CompareColumn;
+  visualType?: string;
   media?: string;
   mediaType?: "image" | "video";
-  mediaFocus?: string;
-  motion?: "zoom-in" | "zoom-out" | "pan-right" | "none";
-}
-export interface StyleConfig {
-  bgColor?: string;
-  accentColor?: string;
-  dangerColor?: string;
-  successColor?: string;
-  textColor?: string;
-  watermark?: string;
-  springDamping?: number;
+  motion?: "zoom-in" | "zoom-out";
 }
 
-export interface DynamicVideoProps {
+export interface DynamicMotionProps {
   title?: string;
   subtitle?: string;
-  insight?: string;
-  accentColor?: string;
-  bgColor?: string;
+  visualStyle?: string;
+  styleConfig?: {
+    bgColor?: string;
+    gridColor?: string;
+    cardBg?: string;
+    accentColor?: string;
+    goldColor?: string;
+    dangerColor?: string;
+    successColor?: string;
+    watermark?: string;
+  };
+  scenes: SceneItem[];
   audioSrc?: string;
-  audioFile?: string;
-  durationInFrames?: number;
-  styleConfig?: StyleConfig;
-  scenes?: SceneItem[];
+  bgmSrc?: string;
+  whooshSrc?: string;
 }
 
-const resolveMediaPath = (src: string) => {
-  if (src.startsWith("http://") || src.startsWith("https://") || src.startsWith("data:")) {
-    return src;
-  }
-  const cleanPath = src.replace(/^\/+/, "").replace(/^public\//, "");
-  return staticFile(cleanPath);
+const ZOOM_STEPS = ["×1 ZOOM", "×3 ZOOM", "×5 ZOOM", "×7 ZOOM", "×8 ZOOM", "×9 ZOOM", "×9 ZOOM", "×9 ZOOM"];
+
+const resolveMediaSrc = (src?: string) => {
+  if (!src) return "";
+  if (src.startsWith("http") || src.startsWith("data:")) return src;
+  return staticFile(src);
 };
 
-const TONE_COLORS = {
-  gold: "#facc15",
-  green: "#22c55e",
-  red: "#ef4444",
-  neutral: "#e2e8f0",
+const CadBlueprintBackground: React.FC<{ bgColor: string; gridColor: string; frame: number }> = ({
+  bgColor,
+  gridColor,
+  frame,
+}) => {
+  const drift = (frame * 0.25) % 60;
+  return (
+    <AbsoluteFill
+      style={{
+        backgroundColor: bgColor,
+        backgroundImage: `
+          linear-gradient(to right, ${gridColor} 1px, transparent 1px),
+          linear-gradient(to bottom, ${gridColor} 1px, transparent 1px),
+          linear-gradient(to right, rgba(56, 189, 248, 0.05) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(56, 189, 248, 0.05) 1px, transparent 1px)
+        `,
+        backgroundSize: "60px 60px, 60px 60px, 300px 300px, 300px 300px",
+        backgroundPosition: `${drift}px ${drift}px`,
+      }}
+    >
+      {/* Vignette radial untuk kedalaman dokumenter */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "radial-gradient(circle at 50% 42%, rgba(250, 204, 21, 0.06) 0%, rgba(10, 8, 6, 0.78) 85%)",
+        }}
+      />
+    </AbsoluteFill>
+  );
 };
 
-const DynamicVectorIllustration: React.FC<{
-  type: VisualCategory;
-  color: string;
-  frame: number;
-}> = ({ type, color, frame }) => {
-  const pulse = Math.sin(frame * 0.08) * 8;
-  const spin = (frame * 1.4) % 360;
-  const reverseSpin = (-frame * 0.9) % 360;
-
-  if (type === "medical") {
-    const beat = 1 + Math.sin(frame * 0.14) * 0.06;
-    return (
-      <svg width="340" height="340" viewBox="0 0 240 240">
-        <circle cx="120" cy="120" r="108" fill={color} fillOpacity="0.08" />
-        <g transform={`translate(120 120) scale(${beat}) translate(-120 -120)`}>
-          <rect x="102" y="54" width="36" height="132" rx="10" fill={color} />
-          <rect x="54" y="102" width="132" height="36" rx="10" fill={color} />
-          <circle cx="120" cy="120" r="14" fill="#ffffff" />
-        </g>
-        <path
-          d="M36 176 L76 176 L92 152 L112 198 L132 144 L148 176 L204 176"
-          fill="none"
-          stroke="#ffffff"
-          strokeWidth="5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    );
-  }
-
-  if (type === "history") {
-    return (
-      <svg width="340" height="340" viewBox="0 0 240 240">
-        <circle cx="120" cy="120" r="108" fill={color} fillOpacity="0.08" />
-        <polygon points="120,44 48,82 192,82" fill={color} />
-        <rect x="56" y="88" width="128" height="10" rx="4" fill="#ffffff" />
-        <rect x="68" y="104" width="18" height="66" rx="4" fill="#e2e8f0" />
-        <rect x="111" y="104" width="18" height="66" rx="4" fill={color} />
-        <rect x="154" y="104" width="18" height="66" rx="4" fill="#e2e8f0" />
-        <rect x="48" y="176" width="144" height="14" rx="6" fill="#ffffff" />
-      </svg>
-    );
-  }
-
-  if (type === "globe") {
-    return (
-      <svg width="340" height="340" viewBox="0 0 240 240">
-        <circle cx="120" cy="120" r="108" fill={color} fillOpacity="0.08" />
-        <circle cx="120" cy="120" r="72" fill="none" stroke={color} strokeWidth="7" />
-        <ellipse cx="120" cy="120" rx="34" ry="72" fill="none" stroke="#ffffff" strokeWidth="5" />
-        <line x1="48" y1="120" x2="192" y2="120" stroke="#ffffff" strokeWidth="5" />
-        <path d="M58 88 Q120 102 182 88" fill="none" stroke={color} strokeWidth="4" />
-        <path d="M58 152 Q120 138 182 152" fill="none" stroke={color} strokeWidth="4" />
-        <circle
-          cx={120 + Math.cos(frame * 0.06) * 72}
-          cy={120 + Math.sin(frame * 0.06) * 28}
-          r="10"
-          fill={color}
-        />
-      </svg>
-    );
-  }
-
-  if (type === "bulb") {
-    const glow = 0.25 + Math.abs(Math.sin(frame * 0.08)) * 0.35;
-    return (
-      <svg width="340" height="340" viewBox="0 0 240 240">
-        <circle cx="120" cy="120" r="108" fill={color} fillOpacity="0.08" />
-        <circle cx="120" cy="105" r="64" fill={color} fillOpacity={glow} />
-        <path
-          d="M120 50 C88 50 66 74 66 104 C66 124 78 140 92 152 L96 168 H144 L148 152 C162 140 174 124 174 104 C174 74 152 50 120 50 Z"
-          fill="none"
-          stroke={color}
-          strokeWidth="9"
-        />
-        <rect x="98" y="176" width="44" height="12" rx="6" fill="#ffffff" />
-        <path
-          d="M106 112 L118 124 L138 96"
-          fill="none"
-          stroke="#ffffff"
-          strokeWidth="8"
-          strokeLinecap="round"
-        />
-      </svg>
-    );
-  }
-
-  if (type === "gear") {
-    return (
-      <svg width="340" height="340" viewBox="0 0 240 240">
-        <circle cx="120" cy="120" r="108" fill={color} fillOpacity="0.08" />
-        <g transform={`rotate(${reverseSpin} 120 120)`}>
-          <circle
-            cx="120"
-            cy="120"
-            r="96"
-            fill="none"
-            stroke={color}
-            strokeOpacity="0.35"
-            strokeWidth="2"
-            strokeDasharray="10 14"
-          />
-        </g>
-        <g transform={`rotate(${spin} 120 120)`}>
-          <circle
-            cx="120"
-            cy="120"
-            r="56"
-            fill="none"
-            stroke={color}
-            strokeWidth="14"
-            strokeDasharray="22 14"
-          />
-          <circle cx="120" cy="120" r="28" fill="none" stroke="#ffffff" strokeWidth="6" />
-        </g>
-        <path d="M42 184 L198 152" stroke={color} strokeWidth="9" strokeLinecap="round" />
-        <circle cx={90 + pulse * 2} cy={160 - pulse * 0.4} r="16" fill="#ffffff" />
-      </svg>
-    );
-  }
-
-  if (type === "chart") {
-    const h1 = 62 + Math.sin(frame * 0.06) * 16;
-    const h2 = 104 + Math.cos(frame * 0.06) * 16;
-    const h3 = 142 + Math.sin(frame * 0.08) * 12;
-    return (
-      <svg width="340" height="340" viewBox="0 0 240 240">
-        <circle cx="120" cy="120" r="108" fill={color} fillOpacity="0.08" />
-        <line x1="40" y1="65" x2="200" y2="65" stroke="rgba(255,255,255,0.12)" strokeWidth="2" />
-        <line x1="40" y1="115" x2="200" y2="115" stroke="rgba(255,255,255,0.12)" strokeWidth="2" />
-        <rect x="52" y={182 - h1} width="34" height={h1} rx="8" fill="#64748b" />
-        <rect x="103" y={182 - h2} width="34" height={h2} rx="8" fill={color} />
-        <rect x="154" y={182 - h3} width="34" height={h3} rx="8" fill="#ffffff" />
-        <path
-          d={`M69 ${172 - h1} L120 ${172 - h2} L171 ${172 - h3}`}
-          fill="none"
-          stroke={color}
-          strokeWidth="5"
-          strokeLinecap="round"
-        />
-        <line x1="38" y1="184" x2="202" y2="184" stroke="#94a3b8" strokeWidth="4" />
-      </svg>
-    );
-  }
-
-  if (type === "shield") {
-    return (
-      <svg width="340" height="340" viewBox="0 0 240 240">
-        <circle cx="120" cy="120" r="108" fill={color} fillOpacity="0.08" />
-        <g transform={`rotate(${spin} 120 120)`}>
-          <circle
-            cx="120"
-            cy="120"
-            r="95"
-            fill="none"
-            stroke={color}
-            strokeOpacity="0.3"
-            strokeWidth="3"
-            strokeDasharray="16 12"
-          />
-        </g>
-        <path
-          d="M120 40 L182 66 V122 C182 162 154 190 120 202 C86 190 58 162 58 122 V66 Z"
-          fill={`${color}18`}
-          stroke={color}
-          strokeWidth="10"
-        />
-        <path
-          d="M90 122 L111 143 L152 98"
-          fill="none"
-          stroke="#ffffff"
-          strokeWidth="12"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    );
-  }
+const CadVectorSchematic: React.FC<{
+  type?: string;
+  cyan: string;
+  orange: string;
+  gold: string;
+  localFrame: number;
+}> = ({ type = "gear", cyan, orange, gold, localFrame }) => {
+  const rotate = localFrame * 0.6;
+  const pulse = 1 + Math.sin(localFrame * 0.12) * 0.04;
+  const drawProgress = interpolate(localFrame, [0, 24], [0, 1], { extrapolateRight: "clamp" });
 
   return (
-    <svg width="340" height="340" viewBox="0 0 240 240">
-      <circle cx="120" cy="120" r="108" fill={color} fillOpacity="0.08" />
+    <svg width="460" height="320" viewBox="0 0 460 320" style={{ overflow: "visible" }}>
+      {/* Outer CAD Framing Brackets */}
       <path
-        d="M64 120 L120 68 L176 120 L120 172 Z"
+        d="M 24 60 L 24 24 L 60 24 M 400 24 L 436 24 L 436 60 M 436 260 L 436 296 L 400 296 M 60 296 L 24 296 L 24 260"
         fill="none"
-        stroke={color}
-        strokeWidth="6"
-        strokeDasharray="10 8"
+        stroke={cyan}
+        strokeWidth="2.5"
+        opacity="0.7"
       />
-      <circle cx="64" cy="120" r="22" fill={color} />
-      <circle cx="120" cy="68" r="22" fill="#ffffff" />
-      <circle cx="176" cy="120" r="22" fill={color} />
-      <circle cx="120" cy="172" r="22" fill="#ffffff" />
+      {/* Crosshair axis */}
+      <line x1="230" y1="15" x2="230" y2="305" stroke="rgba(255,255,255,0.12)" strokeDasharray="6 6" />
+      <line x1="20" y1="160" x2="440" y2="160" stroke="rgba(255,255,255,0.12)" strokeDasharray="6 6" />
+
+      {/* Mechanical Isometric Gear / Valve Cutaway */}
+      <g transform={`translate(230, 160) scale(${pulse})`}>
+        <circle
+          r="96"
+          fill="rgba(56, 189, 248, 0.06)"
+          stroke={cyan}
+          strokeWidth="2.5"
+          strokeDasharray="14 8"
+          transform={`rotate(${rotate})`}
+        />
+        <circle
+          r="66"
+          fill="rgba(249, 115, 22, 0.12)"
+          stroke={orange}
+          strokeWidth="3.5"
+          transform={`rotate(${-rotate * 1.4})`}
+        />
+        <circle r="30" fill="#14110e" stroke={gold} strokeWidth="3" />
+        {/* Hydraulic flow lines */}
+        {type === "flow" || type === "chart" ? (
+          <path
+            d="M -140 0 L -66 0 M 66 0 L 140 0 M 0 -115 L 0 -66"
+            stroke={cyan}
+            strokeWidth="4"
+            strokeLinecap="round"
+            opacity={drawProgress}
+          />
+        ) : null}
+      </g>
+
+      {/* Elbow Callout Line (Cyan + Orange Target Node) */}
+      <g opacity={drawProgress}>
+        <circle cx="282" cy="116" r="7" fill={orange} />
+        <circle cx="282" cy="116" r="14" fill="none" stroke={orange} strokeWidth="2" />
+        <polyline
+          points="282,116 332,68 422,68"
+          fill="none"
+          stroke={cyan}
+          strokeWidth="2.5"
+        />
+        <text
+          x="336"
+          y="58"
+          fill={cyan}
+          fontFamily="monospace"
+          fontSize="15"
+          fontWeight="bold"
+        >
+          TOL: 0.05 MM
+        </text>
+      </g>
     </svg>
   );
 };
 
-const DynamicKineticSubtitle: React.FC<{
-  text: string;
-  localFrame: number;
-  sceneDurationFrames: number;
-  highlightColor: string;
-}> = ({ text, localFrame, sceneDurationFrames, highlightColor }) => {
-  const words = text.trim().split(/\s+/).filter(Boolean);
-  if (words.length === 0) return null;
-
-  const weights = words.map((w) => {
-    let weight = Math.max(3, w.length);
-    if (w.endsWith(",")) weight += 4;
-    if (w.endsWith(".") || w.endsWith("?") || w.endsWith("!")) weight += 7;
-    return weight;
-  });
-
-  const totalWeight = weights.reduce((acc, w) => acc + w, 0);
-  const effectiveDuration = sceneDurationFrames * 0.94;
-  const clampedFrame = Math.min(effectiveDuration - 0.1, Math.max(0, localFrame));
-  const targetWeight = (clampedFrame / effectiveDuration) * totalWeight;
-
-  let cumulative = 0;
-  let activeWordGlobalIndex = words.length - 1;
-  for (let i = 0; i < weights.length; i++) {
-    cumulative += weights[i];
-    if (targetWeight <= cumulative) {
-      activeWordGlobalIndex = i;
-      break;
-    }
-  }
-
-  const chunkSize = 5;
-  const chunkIndex = Math.floor(activeWordGlobalIndex / chunkSize);
-  const startIdx = chunkIndex * chunkSize;
-  const visibleWords = words.slice(startIdx, startIdx + chunkSize);
-
-  return (
-    <div
-      style={{
-        minHeight: 115,
-        display: "flex",
-        flexWrap: "wrap",
-        justifyContent: "center",
-        alignItems: "center",
-        padding: "0 20px",
-        textAlign: "center",
-        lineHeight: 1.3,
-      }}
-    >
-      {visibleWords.map((word, idx) => {
-        const globalIdx = startIdx + idx;
-        const isActive = globalIdx === activeWordGlobalIndex;
-        return (
-          <React.Fragment key={globalIdx}>
-            <span
-              style={{
-                display: "inline-block",
-                margin: "0 10px",
-                fontSize: 42,
-                fontWeight: 900,
-                color: isActive ? highlightColor : "#ffffff",
-                transform: isActive ? "scale(1.06)" : "scale(1)",
-                textShadow: "0 4px 16px rgba(0,0,0,0.85)",
-              }}
-            >
-              {word}
-            </span>
-          </React.Fragment>
-        );
-      })}
-    </div>
-  );
-};
-
-export const DynamicMotionVideo: React.FC<DynamicVideoProps> = (directProps) => {
+export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
+  styleConfig,
+  scenes = [],
+  audioSrc,
+  bgmSrc,
+}) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
-  const inputProps = (getInputProps() as DynamicVideoProps) || {};
-  const props = { ...directProps, ...inputProps };
 
-  const style = props.styleConfig || {};
-  const bg = style.bgColor || props.bgColor || "#061338";
-  const accent = style.accentColor || props.accentColor || "#facc15";
-  const textColor = style.textColor || "#ffffff";
-  const watermark = style.watermark || "orionmotion";
-  const damping = style.springDamping ?? 14;
+  const bgColor = styleConfig?.bgColor || "#14110e";
+  const gridColor = styleConfig?.gridColor || "#26201a";
+  const cyan = styleConfig?.accentColor || "#38bdf8";
+  const gold = styleConfig?.goldColor || "#facc15";
+  const danger = styleConfig?.dangerColor || "#f97316";
+  const success = styleConfig?.successColor || "#22c55e";
+  const watermark = styleConfig?.watermark || "orionmotion";
 
-  const mainTitle = props.title || "MOTION GRAPHIC";
-  const subTitle = props.subtitle || "Visualisasi Edukasi";
-
-  const scenes: SceneItem[] =
-    props.scenes && props.scenes.length > 0
-      ? props.scenes
-      : [
-          {
-            tag: "01 • KONSEP",
-            heading: mainTitle,
-            body: subTitle,
-            visualType: "bulb",
-          },
-        ];
-
-  const sceneRanges: { start: number; end: number; duration: number }[] = [];
-  const hasExplicitStartTimes = scenes.some((s) => typeof s.startTime === "number");
-
-  if (hasExplicitStartTimes) {
-    for (let i = 0; i < scenes.length; i++) {
-      const startSec = scenes[i].startTime ?? 0;
-      const nextStartSec =
-        i < scenes.length - 1
-          ? scenes[i + 1].startTime ?? durationInFrames / fps
-          : durationInFrames / fps;
-      const startFrame = Math.round(startSec * fps);
-      const endFrame = Math.max(startFrame + 15, Math.round(nextStartSec * fps));
-      sceneRanges.push({
-        start: startFrame,
-        end: endFrame,
-        duration: endFrame - startFrame,
-      });
-    }
-  } else {
-    const rawWeights = scenes.map((s) =>
-      s.durationSeconds && s.durationSeconds > 0
-        ? s.durationSeconds
-        : Math.max(15, s.body.length)
-    );
-    const totalRawWeight = rawWeights.reduce((a, b) => a + b, 0);
-
-    let cursor = 0;
-    for (let i = 0; i < scenes.length; i++) {
-      const dur =
-        i === scenes.length - 1
-          ? Math.max(30, durationInFrames - cursor)
-          : Math.max(30, Math.round((rawWeights[i] / totalRawWeight) * durationInFrames));
-      sceneRanges.push({ start: cursor, end: cursor + dur, duration: dur });
-      cursor += dur;
-    }
-  }
-
-  let currentSceneIndex = scenes.length - 1;
-  for (let i = 0; i < sceneRanges.length; i++) {
-    if (frame >= sceneRanges[i].start && frame < sceneRanges[i].end) {
-      currentSceneIndex = i;
-      break;
-    }
-  }
-
-  const activeRange = sceneRanges[currentSceneIndex];
-  const localFrame = Math.max(0, frame - activeRange.start);
-  const sceneDurationFrames = activeRange.duration;
-  const activeScene = scenes[currentSceneIndex];
-
-  const headToneColor =
-    activeScene.headingTone === "red"
-      ? style.dangerColor || "#ef4444"
-      : activeScene.headingTone === "green"
-      ? style.successColor || "#22c55e"
-      : accent;
-
-  const entrance = spring({
-    frame: localFrame,
-    fps,
-    config: { damping, stiffness: 125 },
-  });
-  const exitFade = interpolate(
-    localFrame,
-    [sceneDurationFrames - 8, sceneDurationFrames],
-    [1, 0],
-    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+  const safeScenes = scenes.length > 0 ? scenes : [];
+  const totalWords = safeScenes.reduce(
+    (acc, s) => acc + s.body.split(/\s+/).filter(Boolean).length,
+    0
   );
 
-  const effectivePoints: OverlayPoint[] =
-    activeScene.points && activeScene.points.length > 0
-      ? activeScene.points
-      : activeScene.body
-          .split(/[,.;]+/)
-          .map((part) => part.trim())
-          .filter((part) => part.length > 4)
-          .slice(0, 3)
-          .map((part, idx) => ({
-            text: part.charAt(0).toUpperCase() + part.slice(1),
-            tone: idx === 0 ? "neutral" : activeScene.headingTone || "gold",
-          }));
+  // Alokasi durasi tiap adegan proporsional dengan jumlah kata narasi
+  let accumulatedFrames = 0;
+  const sceneTimings = safeScenes.map((sc, idx) => {
+    const words = Math.max(4, sc.body.split(/\s+/).filter(Boolean).length);
+    const ratio = totalWords > 0 ? words / totalWords : 1 / safeScenes.length;
+    const len =
+      idx === safeScenes.length - 1
+        ? Math.max(30, durationInFrames - accumulatedFrames)
+        : Math.max(45, Math.round(ratio * durationInFrames));
+    const start = accumulatedFrames;
+    accumulatedFrames += len;
+    return { start, duration: len };
+  });
 
-  const effectiveOverlayType = activeScene.overlayType || "pills";
+  const activeIndex = Math.max(
+    0,
+    sceneTimings.findIndex((t, i) =>
+      i === sceneTimings.length - 1
+        ? frame >= t.start
+        : frame >= t.start && frame < t.start + t.duration
+    )
+  );
 
-  const mediaProgress = Math.min(1, localFrame / sceneDurationFrames);
-  let mediaScale = 1.02;
-  let mediaTranslateX = 0;
-  if (activeScene.motion === "zoom-in") {
-    mediaScale = interpolate(mediaProgress, [0, 1], [1.0, 1.13]);
-  } else if (activeScene.motion === "zoom-out") {
-    mediaScale = interpolate(mediaProgress, [0, 1], [1.13, 1.0]);
-  } else if (activeScene.motion === "pan-right") {
-    mediaScale = 1.12;
-    mediaTranslateX = interpolate(mediaProgress, [0, 1], [-22, 22]);
-  }
+  const scene = safeScenes[activeIndex];
+  const timing = sceneTimings[activeIndex] || { start: 0, duration: durationInFrames };
+  const localFrame = Math.max(0, frame - timing.start);
 
-  const resolvedAudio = props.audioSrc
-    ? props.audioSrc
-    : props.audioFile
-    ? resolveMediaPath(props.audioFile)
-    : "";
+  if (!scene) return <AbsoluteFill style={{ backgroundColor: bgColor }} />;
 
-  const hasMedia = Boolean(activeScene.media);
-  const headingWords = activeScene.heading.split(" ");
+  // Animasi masuk & micro-zoom kamera ala referensi
+  const enterSpring = spring({
+    frame: localFrame,
+    fps,
+    config: { damping: 16, stiffness: 120 },
+  });
+
+  const baseZoom = interpolate(activeIndex, [0, Math.max(1, safeScenes.length - 1)], [1.0, 1.14]);
+  const sceneMicroZoom = interpolate(localFrame, [0, timing.duration], [baseZoom, baseZoom + 0.06], {
+    extrapolateRight: "clamp",
+  });
+
+  const toneColor = (tone?: string) => {
+    if (tone === "danger") return danger;
+    if (tone === "success") return success;
+    if (tone === "gold") return gold;
+    return cyan;
+  };
+
+  // Sinkronisasi Karaoke Kata demi Kata
+  const words = scene.body.split(/\s+/).filter(Boolean);
+  const speakWindow = Math.max(1, timing.duration * 0.88);
+  const currentWordIndex = Math.min(
+    words.length - 1,
+    Math.floor((localFrame / speakWindow) * words.length)
+  );
+
+  // Tampilkan jendela 8 kata sekitar kata yang sedang diucapkan agar bersih & mudah dibaca
+  const chunkStart = Math.floor(currentWordIndex / 8) * 8;
+  const visibleWords = words.slice(chunkStart, chunkStart + 8);
+
+  const zoomBadge =
+    scene.tag?.match(/×\d+\s*ZOOM/i)?.[0]?.toUpperCase() ||
+    ZOOM_STEPS[Math.min(activeIndex, ZOOM_STEPS.length - 1)];
+
+  const breadcrumbText = (scene.tag || `BAB 0${activeIndex + 1}`)
+    .replace(/•\s*×\d+\s*ZOOM/i, "")
+    .trim();
 
   return (
-    <AbsoluteFill
-      style={{
-        backgroundColor: bg,
-        fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
-        color: textColor,
-        padding: "52px 48px",
-        justifyContent: "space-between",
-        overflow: "hidden",
-      }}
-    >
-      {resolvedAudio ? <Audio src={resolvedAudio} /> : null}
+    <AbsoluteFill style={{ fontFamily: "Inter, system-ui, sans-serif", color: "#f8fafc" }}>
+      <CadBlueprintBackground bgColor={bgColor} gridColor={gridColor} frame={frame} />
 
+      {/* Audio Narasi TTS & BGM */}
+      {audioSrc ? <Audio src={resolveMediaSrc(audioSrc)} /> : null}
+      {bgmSrc ? <Audio src={resolveMediaSrc(bgmSrc)} volume={0.14} /> : null}
+
+      {/* HUD KIRI ATAS: Breadcrumb + Indikator Zoom Teknis */}
       <div
         style={{
           position: "absolute",
-          inset: 0,
-          background: `radial-gradient(circle at 50% 42%, ${headToneColor}22 0%, rgba(0,0,0,0.5) 75%)`,
-          zIndex: 0,
+          top: 56,
+          left: 48,
+          right: 48,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          zIndex: 20,
         }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px)",
-          backgroundSize: "64px 64px",
-          zIndex: 0,
-        }}
-      />
-
-      {/* Top Watermark & Chapter Heading */}
-      <div style={{ zIndex: 2, opacity: exitFade }}>
+      >
         <div
           style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 24,
+            borderLeft: `4px solid ${cyan}`,
+            paddingLeft: 16,
+            background: "rgba(20, 17, 14, 0.75)",
+            paddingTop: 6,
+            paddingBottom: 6,
+            paddingRight: 16,
+            borderRadius: "0 10px 10px 0",
           }}
         >
-          <span
+          <div
             style={{
-              fontSize: 24,
-              fontWeight: 800,
-              color: "#ffffff",
-              letterSpacing: 0.5,
-              opacity: 0.9,
+              fontFamily: "monospace",
+              fontSize: 20,
+              letterSpacing: 1.5,
+              color: "#cbd5e1",
+              fontWeight: 700,
             }}
           >
-            {watermark}
-          </span>
-          {activeScene.tag && (
-            <span
-              style={{
-                fontSize: 20,
-                fontWeight: 700,
-                color: headToneColor,
-                backgroundColor: `${headToneColor}1f`,
-                border: `1.5px solid ${headToneColor}88`,
-                padding: "6px 16px",
-                borderRadius: 999,
-              }}
-            >
-              {activeScene.tag}
-            </span>
-          )}
+            {breadcrumbText}
+          </div>
+          <div
+            style={{
+              fontFamily: "monospace",
+              fontSize: 34,
+              fontWeight: 900,
+              color: cyan,
+              marginTop: 2,
+              letterSpacing: 1,
+            }}
+          >
+            {zoomBadge}
+          </div>
         </div>
 
         <div
           style={{
-            display: "flex",
-            flexWrap: "wrap",
-            justifyContent: "center",
-            gap: "8px 16px",
-            textAlign: "center",
-            transform: `translateY(${interpolate(entrance, [0, 1], [-22, 0])}px)`,
+            fontFamily: "monospace",
+            fontSize: 18,
+            color: "rgba(248,250,252,0.5)",
+            background: "rgba(255,255,255,0.06)",
+            padding: "8px 14px",
+            borderRadius: 8,
+            border: "1px solid rgba(255,255,255,0.12)",
           }}
         >
-          {headingWords.map((w, i) => {
-            const isHighlighted = i === headingWords.length - 1 && headingWords.length > 1;
-            return (
-              <span
-                key={i}
-                style={{
-                  fontSize: 62,
-                  fontWeight: 900,
-                  lineHeight: 1.1,
-                  textTransform: "uppercase",
-                  color: isHighlighted ? headToneColor : "#ffffff",
-                  letterSpacing: -0.5,
-                }}
-              >
-                {w}
-              </span>
-            );
-          })}
+          @{watermark}
         </div>
       </div>
 
-{/* Center Stage */}
+      {/* KONTEN UTAMA TENGAH */}
       <div
         style={{
-          zIndex: 2,
+          position: "absolute",
+          top: 195,
+          left: 48,
+          right: 48,
+          bottom: 290,
           display: "flex",
           flexDirection: "column",
-          alignItems: "center",
-          width: "100%",
-          opacity: exitFade,
-          transform: `scale(${interpolate(entrance, [0, 1], [0.95, 1])})`,
+          justifyContent: "space-between",
+          transform: `translateY(${interpolate(enterSpring, [0, 1], [28, 0])}px)`,
+          opacity: enterSpring,
         }}
       >
-        {effectiveOverlayType === "compare" &&
-        activeScene.compareLeft &&
-        activeScene.compareRight ? (
-          /* Mode Duel Perbandingan 2 Kolom (Kiri VS Kanan) */
+        {/* Judul Bab Teknis & Hero Stat */}
+        <div>
+          <div
+            style={{
+              display: "inline-block",
+              fontFamily: "monospace",
+              fontSize: 22,
+              fontWeight: 800,
+              color: toneColor(scene.headingTone),
+              letterSpacing: 2,
+              marginBottom: 8,
+            }}
+          >
+            {scene.heroStat ? `[ ${scene.heroStat} • ${scene.heroLabel || ""} ]` : "INSPEKSI TEKNIS"}
+          </div>
+          <h1
+            style={{
+              margin: 0,
+              fontSize: 54,
+              lineHeight: 1.12,
+              fontWeight: 900,
+              color: "#ffffff",
+              textTransform: "uppercase",
+              letterSpacing: -0.5,
+            }}
+          >
+            {scene.heading}
+          </h1>
+        </div>
+
+        {/* AREA VISUAL TENGAH: Foto HD Pixabay dalam Bingkai CAD / Skematik CAD */}
+        {scene.overlayType !== "compare" ? (
           <div
             style={{
               position: "relative",
-              width: "100%",
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 18,
-              alignItems: "stretch",
+              height: 450,
+              borderRadius: 22,
+              overflow: "hidden",
+              border: `2px solid rgba(56, 189, 248, 0.45)`,
+              backgroundColor: "#0d0b09",
+              boxShadow: "0 24px 60px rgba(0,0,0,0.65)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
-            {[
-              { side: activeScene.compareLeft, delay: 0, defaultTone: "red" as const },
-              {
-                side: activeScene.compareRight,
-                delay: Math.floor(sceneDurationFrames * 0.35),
-                defaultTone: "green" as const,
-              },
-            ].map(({ side, delay, defaultTone }, colIdx) => {
-              const colSpring = spring({
-                frame: Math.max(0, localFrame - delay),
-                fps,
-                config: { damping: 14, stiffness: 130 },
-              });
-              const colOpacity = interpolate(localFrame - delay, [0, 10], [0, 1], {
-                extrapolateLeft: "clamp",
-                extrapolateRight: "clamp",
-              });
-              const colColor = TONE_COLORS[side.tone || defaultTone];
-
-              return (
-                <div
-                  key={colIdx}
+            {scene.media ? (
+              <>
+                <Img
+                  src={resolveMediaSrc(scene.media)}
                   style={{
-                    padding: "28px 22px",
-                    borderRadius: 26,
-                    background: `linear-gradient(165deg, ${colColor}18 0%, rgba(10,25,68,0.88) 100%)`,
-                    border: `2px solid ${colColor}88`,
-                    boxShadow: `0 20px 50px rgba(0,0,0,0.5), 0 0 28px ${colColor}15`,
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "space-between",
-                    opacity: colOpacity,
-                    transform: `translateY(${interpolate(colSpring, [0, 1], [32, 0])}px)`,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    transform: `scale(${sceneMicroZoom})`,
+                    filter: "contrast(1.08) brightness(0.86)",
+                  }}
+                />
+                {/* Overlay Grid & Callout Siku Cyan di atas Foto HD */}
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    background:
+                      "linear-gradient(180deg, rgba(20,17,14,0.2) 0%, rgba(20,17,14,0.72) 100%)",
+                  }}
+                />
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 18,
+                    left: 18,
+                    background: "rgba(14, 18, 26, 0.85)",
+                    border: `1.5px solid ${cyan}`,
+                    color: cyan,
+                    fontFamily: "monospace",
+                    fontSize: 18,
+                    fontWeight: 800,
+                    padding: "6px 14px",
+                    borderRadius: 8,
                   }}
                 >
-                  <div>
-                    {side.badge && (
-                      <div
+                  ● CAD VIEW // {scene.heroStat || "ACTIVE"}
+                </div>
+              </>
+            ) : (
+              <CadVectorSchematic
+                type={scene.visualType}
+                cyan={cyan}
+                orange={danger}
+                gold={gold}
+                localFrame={localFrame}
+              />
+            )}
+          </div>
+        ) : null}
+
+        {/* OVERLAY DATA: KANVAS DIAGRAM PUTIH (Compare & Bars) atau SPOTLIGHT CARDS */}
+        {scene.overlayType === "compare" && scene.compareLeft && scene.compareRight ? (
+          <div
+            style={{
+              backgroundColor: "#ffffff",
+              color: "#0f172a",
+              borderRadius: 26,
+              padding: 32,
+              boxShadow: "0 25px 60px rgba(0,0,0,0.65)",
+              border: `3px solid ${cyan}`,
+            }}
+          >
+            <div
+              style={{
+                fontFamily: "monospace",
+                fontSize: 20,
+                fontWeight: 800,
+                color: "#475569",
+                marginBottom: 18,
+                letterSpacing: 1,
+              }}
+            >
+              DIAGRAM PERBANDINGAN KOMPONEN
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 22 }}>
+              {[scene.compareLeft, scene.compareRight].map((col, cIdx) => {
+                const colColor = toneColor(col.tone);
+                const colDelay = cIdx * 18;
+                const colOpacity = interpolate(localFrame, [colDelay, colDelay + 15], [0.25, 1], {
+                  extrapolateLeft: "clamp",
+                  extrapolateRight: "clamp",
+                });
+                return (
+                  <div
+                    key={cIdx}
+                    style={{
+                      backgroundColor: "#f8fafc",
+                      borderRadius: 18,
+                      padding: 22,
+                      borderTop: `8px solid ${colColor}`,
+                      borderLeft: "1px solid #e2e8f0",
+                      borderRight: "1px solid #e2e8f0",
+                      borderBottom: "1px solid #e2e8f0",
+                      opacity: colOpacity,
+                    }}
+                  >
+                    {col.badge ? (
+                      <span
                         style={{
                           display: "inline-block",
-                          fontSize: 18,
-                          fontWeight: 800,
-                          color: "#061338",
                           backgroundColor: colColor,
+                          color: "#ffffff",
+                          fontFamily: "monospace",
+                          fontSize: 17,
+                          fontWeight: 900,
                           padding: "4px 12px",
-                          borderRadius: 999,
-                          marginBottom: 14,
-                          textTransform: "uppercase",
+                          borderRadius: 6,
+                          marginBottom: 10,
                         }}
                       >
-                        {side.badge}
-                      </div>
-                    )}
+                        {col.badge}
+                      </span>
+                    ) : null}
                     <div
                       style={{
-                        fontSize: 34,
+                        fontSize: 27,
                         fontWeight: 900,
-                        color: colColor,
-                        lineHeight: 1.15,
-                        marginBottom: 20,
-                        textTransform: "uppercase",
+                        color: "#0f172a",
+                        marginBottom: 14,
                       }}
                     >
-                      {side.title}
+                      {col.title}
                     </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                      {side.items.map((item, itemIdx) => (
-                        <div
-                          key={itemIdx}
-                          style={{
-                            display: "flex",
-                            alignItems: "flex-start",
-                            gap: 10,
-                            fontSize: 24,
-                            fontWeight: 700,
-                            color: "#f1f5f9",
-                            lineHeight: 1.3,
-                            backgroundColor: "rgba(15, 23, 42, 0.65)",
-                            padding: "12px 14px",
-                            borderRadius: 14,
-                            borderLeft: `4px solid ${colColor}`,
-                          }}
-                        >
-                          <span>{item}</span>
-                        </div>
-                      ))}
-                    </div>
+                    {col.items.map((item, iIdx) => (
+                      <div
+                        key={iIdx}
+                        style={{
+                          fontSize: 22,
+                          lineHeight: 1.35,
+                          color: "#334155",
+                          fontWeight: 600,
+                          marginBottom: 10,
+                          paddingLeft: 12,
+                          borderLeft: `3px solid ${colColor}`,
+                        }}
+                      >
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : scene.overlayType === "bars" && scene.points ? (
+          /* Kanvas Diagram Putih dengan Grafik Garis & Toleransi (seperti detik 00:14-00:48 referensi) */
+          <div
+            style={{
+              backgroundColor: "#ffffff",
+              color: "#0f172a",
+              borderRadius: 24,
+              padding: 30,
+              boxShadow: "0 20px 50px rgba(0,0,0,0.6)",
+            }}
+          >
+            <div
+              style={{
+                fontFamily: "monospace",
+                fontSize: 19,
+                fontWeight: 800,
+                color: "#64748b",
+                marginBottom: 16,
+              }}
+            >
+              GRAFIK TEKANAN HIDROLIK (PSI / BAR)
+            </div>
+            {scene.points.map((pt, idx) => {
+              const barColor = toneColor(pt.tone);
+              const targetVal = pt.value ?? 75;
+              const animatedWidth = interpolate(
+                localFrame,
+                [idx * 14, idx * 14 + 24],
+                [0, targetVal],
+                { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+              );
+              return (
+                <div key={idx} style={{ marginBottom: idx === scene.points!.length - 1 ? 0 : 20 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      fontSize: 24,
+                      fontWeight: 800,
+                      marginBottom: 8,
+                    }}
+                  >
+                    <span>{pt.text}</span>
+                    <span style={{ fontFamily: "monospace", color: barColor }}>
+                      {Math.round(animatedWidth)}%
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      height: 22,
+                      backgroundColor: "#e2e8f0",
+                      borderRadius: 999,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: `${animatedWidth}%`,
+                        height: "100%",
+                        backgroundColor: barColor,
+                        borderRadius: 999,
+                      }}
+                    />
                   </div>
                 </div>
               );
             })}
-
-            {/* Lencana VS Bercahaya di Tengah */}
-            <div
-              style={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                width: 68,
-                height: 68,
-                borderRadius: "50%",
-                backgroundColor: "#061338",
-                border: `3px solid ${accent}`,
-                boxShadow: `0 0 24px ${accent}88`,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 26,
-                fontWeight: 900,
-                color: accent,
-                zIndex: 5,
-              }}
-            >
-              VS
-            </div>
           </div>
-        ) : (
-          <>
-            {hasMedia ? (
-              <div
-                style={{
-                  position: "relative",
-                  width: "100%",
-                  height: effectivePoints.length > 0 ? 490 : 610,
-                  borderRadius: 26,
-                  overflow: "hidden",
-                  border: "2px solid rgba(255,255,255,0.2)",
-                  boxShadow: "0 24px 60px rgba(0,0,0,0.6)",
-                }}
-              >
+        ) : scene.points ? (
+          /* Spotlight Focus Cards (kartu aktif menyala putih terang, lainnya meredup) */
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {scene.points.map((pt, idx) => {
+              const pColor = toneColor(pt.tone);
+              const stepSpan = timing.duration / Math.max(1, scene.points!.length);
+              const isSpotlight =
+                localFrame >= idx * stepSpan && localFrame < (idx + 1) * stepSpan + 10;
+
+              return (
                 <div
+                  key={idx}
                   style={{
-                    width: "100%",
-                    height: "100%",
-                    transform: `scale(${mediaScale}) translateX(${mediaTranslateX}px)`,
+                    backgroundColor: isSpotlight ? "#ffffff" : "rgba(255, 255, 255, 0.12)",
+                    color: isSpotlight ? "#0f172a" : "#cbd5e1",
+                    borderRadius: 18,
+                    padding: "20px 26px",
+                    borderLeft: `10px solid ${pColor}`,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 18,
+                    transform: isSpotlight ? "scale(1.02)" : "scale(0.99)",
+                    boxShadow: isSpotlight ? "0 14px 34px rgba(0,0,0,0.45)" : "none",
                   }}
                 >
-                  {activeScene.mediaType === "video" ? (
-                    <OffthreadVideo
-                      src={resolveMediaPath(activeScene.media!)}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        objectPosition: activeScene.mediaFocus || "center 18%",
-                      }}
-                      muted
-                    />
-                  ) : (
-                    <Img
-                      src={resolveMediaPath(activeScene.media!)}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        objectPosition: activeScene.mediaFocus || "center 18%",
-                      }}
-                    />
-                  )}
-                </div>
-
-                {activeScene.pointerLabel && (
                   <div
                     style={{
-                      position: "absolute",
-                      top: 28,
-                      left: 28,
+                      width: 34,
+                      height: 34,
+                      borderRadius: "50%",
+                      backgroundColor: pColor,
+                      color: "#ffffff",
+                      fontFamily: "monospace",
+                      fontWeight: 900,
+                      fontSize: 20,
                       display: "flex",
                       alignItems: "center",
-                      gap: 10,
-                      backgroundColor: "rgba(6, 19, 56, 0.85)",
-                      padding: "8px 18px",
-                      borderRadius: 12,
-                      border: "1.5px solid rgba(255,255,255,0.6)",
+                      justifyContent: "center",
+                      flexShrink: 0,
                     }}
                   >
-                    <div
-                      style={{
-                        width: 12,
-                        height: 12,
-                        borderRadius: "50%",
-                        backgroundColor: headToneColor,
-                      }}
-                    />
-                    <span
-                      style={{
-                        fontSize: 22,
-                        fontWeight: 800,
-                        color: "#ffffff",
-                        letterSpacing: 1,
-                      }}
-                    >
-                      {activeScene.pointerLabel}
-                    </span>
+                    {scene.overlayType === "checklist" ? "✓" : idx + 1}
                   </div>
-                )}
-              </div>
-            ) : (
-              <div
-                style={{
-                  width: "100%",
-                  padding: "42px 30px",
-                  borderRadius: 30,
-                  background:
-                    "linear-gradient(155deg, rgba(255,255,255,0.09) 0%, rgba(10,25,68,0.75) 100%)",
-                  border: `2px solid ${headToneColor}55`,
-                  boxShadow: `0 24px 60px rgba(0,0,0,0.55), 0 0 36px ${headToneColor}18`,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  position: "relative",
-                }}
-              >
-                <DynamicVectorIllustration
-                  type={activeScene.visualType || "bulb"}
-                  color={headToneColor}
-                  frame={frame}
-                />
-                {activeScene.heroStat && (
-                  <div
-                    style={{
-                      marginTop: 10,
-                      display: "flex",
-                      alignItems: "baseline",
-                      gap: 12,
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: 58,
-                        fontWeight: 900,
-                        color: headToneColor,
-                        letterSpacing: -1,
-                      }}
-                    >
-                      {activeScene.heroStat}
-                    </span>
-                    {activeScene.heroLabel && (
-                      <span
-                        style={{
-                          fontSize: 24,
-                          fontWeight: 800,
-                          color: "#e2e8f0",
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        {activeScene.heroLabel}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Interactive Overlay Panel */}
-            {effectivePoints.length > 0 && (
-              <div
-                style={{
-                  width: "100%",
-                  marginTop: 26,
-                  padding: effectiveOverlayType === "pills" ? 0 : "22px 26px",
-                  borderRadius: 22,
-                  backgroundColor:
-                    effectiveOverlayType === "pills"
-                      ? "transparent"
-                      : "rgba(10, 25, 68, 0.9)",
-                  border:
-                    effectiveOverlayType === "pills"
-                      ? "none"
-                      : "1.5px solid rgba(255,255,255,0.18)",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 16,
-                }}
-              >
-                {effectivePoints.map((pt, idx) => {
-                  const stepDelay = Math.floor(
-                    (sceneDurationFrames / (effectivePoints.length + 1)) * idx
-                  );
-                  const ptSpring = spring({
-                    frame: Math.max(0, localFrame - stepDelay),
-                    fps,
-                    config: { damping: 14, stiffness: 130 },
-                  });
-                  const ptOpacity = interpolate(localFrame - stepDelay, [0, 8], [0, 1], {
-                    extrapolateLeft: "clamp",
-                    extrapolateRight: "clamp",
-                  });
-                  const toneCol = TONE_COLORS[pt.tone || "gold"];
-
-                  if (effectiveOverlayType === "pills") {
-                    return (
-                      <div
-                        key={idx}
-                        style={{
-                          alignSelf: "center",
-                          maxWidth: "94%",
-                          textAlign: "center",
-                          padding: "13px 28px",
-                          borderRadius: 16,
-                          backgroundColor: "rgba(15, 23, 42, 0.94)",
-                          border: `2px solid ${toneCol}`,
-                          color: toneCol,
-                          fontSize: 27,
-                          fontWeight: 800,
-                          opacity: ptOpacity,
-                          transform: `translateY(${interpolate(ptSpring, [0, 1], [24, 0])}px)`,
-                          boxShadow: "0 10px 25px rgba(0,0,0,0.45)",
-                        }}
-                      >
-                        {pt.text}
-                      </div>
-                    );
-                  }
-
-                  if (effectiveOverlayType === "bars") {
-                    const barWidth = interpolate(ptSpring, [0, 1], [0, pt.percent || 75]);
-                    return (
-                      <div key={idx} style={{ opacity: ptOpacity }}>
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            fontSize: 24,
-                            fontWeight: 800,
-                            marginBottom: 8,
-                          }}
-                        >
-                          <span style={{ color: "#ffffff" }}>{pt.text}</span>
-                          <span style={{ color: toneCol }}>{pt.value}</span>
-                        </div>
-                        <div
-                          style={{
-                            width: "100%",
-                            height: 16,
-                            borderRadius: 99,
-                            backgroundColor: "rgba(255,255,255,0.12)",
-                            overflow: "hidden",
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: `${barWidth}%`,
-                              height: "100%",
-                              borderRadius: 99,
-                              backgroundColor: toneCol,
-                            }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  const isCross = pt.tone === "red";
-                  return (
-                    <div
-                      key={idx}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 14,
-                        fontSize: 27,
-                        fontWeight: 800,
-                        color: isCross ? "#fca5a5" : "#86efac",
-                        opacity: ptOpacity,
-                        transform: `translateX(${interpolate(ptSpring, [0, 1], [-20, 0])}px)`,
-                      }}
-                    >
-                      <span style={{ color: toneCol, fontSize: 30 }}>
-                        {isCross ? "✕" : "✓"}
-                      </span>
-                      <span>{pt.text}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </>
-        )}
+                  <div style={{ fontSize: 26, fontWeight: 800, lineHeight: 1.3 }}>{pt.text}</div>
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
       </div>
 
-      {/* Bottom Dynamic Karaoke Subtitle */}
-      <div style={{ zIndex: 2 }}>
-        <DynamicKineticSubtitle
-          text={activeScene.body}
-          localFrame={localFrame}
-          sceneDurationFrames={sceneDurationFrames}
-          highlightColor={accent}
-        />
+      {/* SUBTITLE KARAOKE BAWAH (Bold Putih + Sorotan Cyan #38bdf8 seperti Referensi) */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 84,
+          left: 48,
+          right: 48,
+          backgroundColor: "rgba(12, 10, 8, 0.88)",
+          border: "1px solid rgba(56, 189, 248, 0.28)",
+          borderRadius: 22,
+          padding: "24px 30px",
+          textAlign: "center",
+          boxShadow: "0 16px 40px rgba(0,0,0,0.7)",
+        }}
+      >
+        <div style={{ fontSize: 38, fontWeight: 900, lineHeight: 1.35, letterSpacing: -0.3 }}>
+          {visibleWords.map((word, wIdx) => {
+            const globalWordIdx = chunkStart + wIdx;
+            const isActive = globalWordIdx === currentWordIndex;
+            const isSpoken = globalWordIdx < currentWordIndex;
+            return (
+              <span
+                key={globalWordIdx}
+                style={{
+                  color: isActive ? cyan : isSpoken ? "#ffffff" : "rgba(255,255,255,0.55)",
+                  textShadow: isActive ? `0 0 18px rgba(56, 189, 248, 0.65)` : "none",
+                  marginRight: 11,
+                  display: "inline-block",
+                  transform: isActive ? "scale(1.06)" : "scale(1)",
+                }}
+              >
+                {word}
+              </span>
+            );
+          })}
+        </div>
       </div>
     </AbsoluteFill>
   );
