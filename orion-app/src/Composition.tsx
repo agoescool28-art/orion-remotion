@@ -56,18 +56,28 @@ const BeatTypography: React.FC<{ beat: WordBeat; accent: string; index: number }
       <span style={{ color: "rgba(241,237,227,.42)", fontSize: 18, marginRight: 14, verticalAlign: "middle" }}>
         {String(index + 1).padStart(2, "0")}
       </span>
-      {beat.text.split(" ").map((word, wordIndex) => {
-        const wordFrame = local - wordIndex * 3;
-        const wordOpacity = interpolate(wordFrame, [0, 4], [0, 1], clamp);
-        const wordY = interpolate(wordFrame, [0, 5], [16, 0], clamp);
+      {beat.text.split(" ").map((word, wordIndex, words) => {
+        const wordLocal = local - wordIndex * 3;
+        const wordSpring = spring({
+          frame: Math.max(0, wordLocal),
+          fps,
+          config: { damping: 13, stiffness: 175, mass: 0.42 },
+        });
+        const wordOpacity = interpolate(wordLocal, [0, 3], [0, 1], clamp);
+        const wordY = interpolate(wordSpring, [0, 1], [22, 0]);
+        const wordScale = interpolate(wordSpring, [0, 1], [0.88, 1]);
+        const isEmphasis = wordIndex === words.length - 1;
         return (
           <span
             key={`${word}-${wordIndex}`}
             style={{
               display: "inline-block",
               opacity: wordOpacity,
-              transform: `translateY(${wordY}px)`,
+              color: isEmphasis ? accent : PAPER,
+              transform: `translate3d(0,${wordY}px,0) scale(${wordScale})`,
+              transformOrigin: "left bottom",
               marginRight: 9,
+              textShadow: isEmphasis ? `0 0 24px ${accent}55` : "none",
             }}
           >
             {word}
@@ -108,6 +118,14 @@ const Scene: React.FC<{ data: SceneData; index: number }> = ({ data, index }) =>
           maskImage: "linear-gradient(180deg,black,transparent 90%)",
         }}
       />
+      <AbsoluteFill
+        style={{
+          pointerEvents: "none",
+          background:
+            "radial-gradient(ellipse at center, transparent 42%, rgba(0,0,0,.34) 100%), repeating-linear-gradient(0deg, rgba(255,255,255,.012) 0px, rgba(255,255,255,.012) 1px, transparent 1px, transparent 4px)",
+          opacity: 0.72,
+        }}
+      />
       <div style={{ position: "absolute", left: 72, right: 72, top: 72, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ color: GOLD, fontSize: 17, fontWeight: 800, letterSpacing: 4 }}>ORION / DOCUMENTARY</div>
         <div style={{ color: MUTED, fontSize: 15, letterSpacing: 2 }}>INDONESIA • BIOGRAPHY</div>
@@ -124,7 +142,7 @@ const Scene: React.FC<{ data: SceneData; index: number }> = ({ data, index }) =>
           top: 180,
           height: 790,
           overflow: "hidden",
-          transform: `translate3d(${interpolate(frame, [0, durationInFrames], [index % 2 === 0 ? 8 : -8, index % 2 === 0 ? -12 : 12], clamp)}px,0,0) scale(${interpolate(frame, [0, durationInFrames], [1.015, 1.075], clamp)})`,
+          transform: `translate3d(${interpolate(frame, [0, durationInFrames], [index % 2 === 0 ? 18 : -18, index % 2 === 0 ? -26 : 26], clamp)}px,${interpolate(frame, [0, durationInFrames], [index % 3 === 0 ? 8 : -6, index % 3 === 0 ? -12 : 10], clamp)}px,0) scale(${interpolate(frame, [0, durationInFrames], [1.02, 1.105], clamp)})`,
           transformOrigin: index % 2 === 0 ? "center left" : "center right",
           willChange: "transform",
         }}
@@ -150,7 +168,7 @@ const Scene: React.FC<{ data: SceneData; index: number }> = ({ data, index }) =>
           letterSpacing: -3.5,
           color: PAPER,
           textTransform: "uppercase",
-          transform: `translateY(${titleY}px) scale(${titleScale})`,
+          transform: `translate3d(${interpolate(frame, [0, durationInFrames], [index % 2 === 0 ? -8 : 8, 0], clamp)}px,${titleY}px,0) scale(${titleScale})`,
           transformOrigin: "left top",
           textShadow: "0 12px 50px rgba(0,0,0,.4)",
         }}
