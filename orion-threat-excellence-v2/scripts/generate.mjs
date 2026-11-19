@@ -1,125 +1,166 @@
+import fs from "fs";
+import path from "path";
 import { bundle } from "@remotion/bundler";
 import { renderMedia, selectComposition } from "@remotion/renderer";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import googleTTS from "google-tts-api";
-import path from "path";
-import fs from "fs";
+import * as googleTTS from "google-tts-api";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const PIXABAY_API_KEY = process.env.PIXABAY_API_KEY;
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+const IDE_KONTEN = (process.env.IDE_KONTEN || "Perbandingan Takt Time vs Cycle Time").trim();
 
+// 1. Fungsi TTS Bahasa Indonesia (Base64 Data URI)
 async function generateIndonesianTtsBase64(text) {
-  const cleanText = text.replace(/\s+/g, " ").trim();
-  const segments = await googleTTS.getAllAudioBase64(cleanText, {
+  const cleanText = text.replace(/[*#_`]/g, "").trim();
+  const parts = await googleTTS.getAllAudioBase64(cleanText, {
     lang: "id",
     slow: false,
     host: "https://translate.google.com",
-    timeout: 15000,
-    splitPunct: ",.?!",
+    splitPunct: ",.?!;:",
   });
-  const buffers = segments.map((seg) => Buffer.from(seg.base64, "base64"));
-  const combinedBuffer = Buffer.concat(buffers);
-  return {
-    dataUri: `data:audio/mp3;base64,${combinedBuffer.toString("base64")}`,
-    byteLength: combinedBuffer.length,
-  };
+  const buffers = parts.map((p) => Buffer.from(p.base64, "base64"));
+  const merged = Buffer.concat(buffers);
+  return `data:audio/mp3;base64,${merged.toString("base64")}`;
 }
 
-async function textToMp4() {
-  const ideKonten = process.env.IDE_KONTEN || "Cara kerja mesin efisiensi produksi modern";
-
-  if (!fs.existsSync("./out")) {
-    fs.mkdirSync("./out", { recursive: true });
+// 2. Fungsi Pengunduh Foto & Ilustrasi HD dari Pixabay
+async function fetchPixabayMedia(query, index) {
+  if (!PIXABAY_API_KEY) {
+    console.warn("⚠️ PIXABAY_API_KEY kosong! Pastikan sudah diatur di GitHub Secrets & render-gemini.yml.");
+    return null;
   }
 
-  let sceneData = {};
-  let isCustomJson = false;
+  const searchQueries = [query, "modern technology", "abstract blue"].filter(Boolean);
 
-  try {
-    const parsed = JSON.parse(ideKonten.trim());
-    if (parsed && typeof parsed === "object") {
-      sceneData = parsed;
-      isCustomJson = true;
-      console.log("🎯 MODE PRESISI AKTIF: Menggunakan skenario JSON langsung.");
-    }
-  } catch (e) {
-    isCustomJson = false;
-  }
-
-  let audioDataUri = "";
-
-  if (isCustomJson) {
-    if (sceneData.audioFile) {
-      console.log(`🎧 Menggunakan file audio kustom: ${sceneData.audioFile}`);
-      const cleanAudioPath = sceneData.audioFile.replace(/^\/+/, "").replace(/^public\//, "");
-      const fullAudioPath = path.resolve("./public", cleanAudioPath);
-      if (fs.existsSync(fullAudioPath)) {
-        const audioBuffer = fs.readFileSync(fullAudioPath);
-        audioDataUri = `data:audio/mp3;base64,${audioBuffer.toString("base64")}`;
-        console.log(`✅ File audio kustom berhasil dimuat (${Math.round(audioBuffer.length / 1024)} KB)`);
-      } else {
-        console.log(`⚠️ File audio tidak ditemukan di: ${fullAudioPath}`);
+  for (const q of searchQueries) {
+    try {
+      const url = `https://pixabay.com/api/?key=${PIXABAY_API_KEY}&q=${encodeURIComponent(q)}&image_type=all&safesearch=true&per_page=5`;
+      const res = await fetch(url);
+      if (!res.ok) {
+        console.warn(`⚠️ Pixabay API error (${res.status}) untuk "${q}"`);
+        continue;
       }
-    } else {
-      console.log("🎙️ Membuat suara narator dari naskah JSON...");
-      const teksNarasi =
-        sceneData.scenes && sceneData.scenes.length > 0
-          ? sceneData.scenes.map((s) => s.body).join(" ")
-          : sceneData.insight || sceneData.subtitle || "Video edukasi motion graphic";
-      const ttsResult = await generateIndonesianTtsBase64(teksNarasi);
-      async function fetchPixabayMedia(query, index) {
-  const apiKey = process.env.PIXABAY_API_KEY;
-  if (!apiKey) {
-    console.warn("⚠️ PIXABAY_API_KEY tidak terbaca di environment! Cek GitHub Secrets & render.yml.");
-    return null;
+
+      const data = await res.json();
+      const hit = data.hits?.[index % Math.max(1, data.hits.length)] || data.hits?.[0];
+      const imageUrl = hit?.largeImageURL || hit?.webformatURL;
+      if (!imageUrl) {
+        console.warn(`⚠️ Tidak ada hasil Pixabay untuk "${q}", mencoba cadangan...`);
+        continue;
+      }
+
+      const imgRes = await fetch(imageUrl);
+      if (!imgRes.ok) continue;
+
+      const buffer = Buffer.from(await imgRes.arrayBuffer());
+      const fileName = `pixabay_scene_${index + 1}.jpg`;
+      fs.writeFileSync(`./public/${fileName}`, buffer);
+      console.log(`✅ Visual Pixabay terpasang [Adegan ${index + 1}]: ${fileName} (kata kunci: "${q}")`);
+      return fileName;
+    } catch (err) {
+      console.warn(`⚠️ Gagal ambil visual Pixabay ("${q}"):`, err.message);
+    }
   }
-  if (!query) return null;
 
-  try {
-    // Hapus filter orientation=vertical agar hasil pencarian jauh lebih banyak
-    const url = `https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(query)}&image_type=photo&safesearch=true&per_page=5`;
-    const res = await fetch(url);
-    if (!res.ok) {
-      console.warn(`⚠️ Pixabay API HTTP error: ${res.status}`);
-      return null;
+  return null;
+}
+
+// 3. Fungsi Panggil Gemini dengan Retry & Fallback Model
+async function callGeminiWithRetry(prompt) {
+  if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY tidak ditemukan di environment!");
+
+  const models = ["gemini-2.5-flash", "gemini-2.0-flash"];
+  for (const model of models) {
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: {
+                temperature: 0.7,
+                responseMimeType: "application/json",
+              },
+            }),
+          }
+        );
+
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`HTTP ${res.status}: ${errText}`);
+        }
+
+        const data = await res.json();
+        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!rawText) throw new Error("Respons Gemini kosong");
+        return rawText;
+      } catch (err) {
+        console.warn(`⚠️ Percobaan ${attempt} gagal (${model}): ${err.message}`);
+        await new Promise((r) => setTimeout(r, attempt * 2000));
+      }
     }
+  }
+  throw new Error("Semua percobaan Gemini API gagal.");
+}
 
-    const data = await res.json();
-    const hit = data.hits?.[0];
-    if (!hit?.largeImageURL) {
-      console.warn(`⚠️ Tidak ada gambar Pixabay untuk kata kunci: "${query}"`);
-      return null;
-    }
+// 4. Kirim Video ke Telegram
+async function sendVideoToTelegram(videoPath, caption) {
+  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+    console.log("ℹ️ Telegram credentials tidak diset, melewati pengiriman Telegram.");
+    return;
+  }
 
-    const imgRes = await fetch(hit.largeImageURL);
-    if (!imgRes.ok) return null;
+  const form = new FormData();
+  form.append("chat_id", TELEGRAM_CHAT_ID);
+  form.append("caption", caption);
+  const fileBuffer = fs.readFileSync(videoPath);
+  form.append("video", new Blob([fileBuffer], { type: "video/mp4" }), "video_1.mp4");
 
-    const buffer = Buffer.from(await imgRes.arrayBuffer());
-    const fileName = `pixabay_scene_${index + 1}.jpg`;
-    fs.writeFileSync(`./public/${fileName}`, buffer);
-    console.log(`✅ Berhasil unduh visual Pixabay: ${fileName} (${hit.tags})`);
-    return fileName;
-  } catch (err) {
-    console.warn(`⚠️ Gagal ambil visual Pixabay untuk "${query}":`, err.message);
-    return null;
+  const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVideo`, {
+    method: "POST",
+    body: form,
+  });
+
+  if (!res.ok) {
+    console.warn("⚠️ Gagal mengirim ke Telegram:", await res.text());
+  } else {
+    console.log("✅ Video berhasil terkirim ke Telegram!");
   }
 }
-      audioDataUri = ttsResult.dataUri;
-    }
-  } else {
-    console.log(`🧠 Meracik skenario visual infografis dari ide: "${ideKonten}"...`);
 
-const prompt = `Kamu adalah sutradara video motion graphic edukasi vertikal (9:16) bergaya Technical Explainer modern (latar biru gelap #061338, sorotan emas #facc15, merah #ef4444 untuk masalah/risiko, hijau #22c55e untuk solusi).
-Buat skenario video dari ide berikut: "${ideKonten}"
+async function main() {
+  if (!fs.existsSync("./public")) fs.mkdirSync("./public", { recursive: true });
+  if (!fs.existsSync("./out")) fs.mkdirSync("./out", { recursive: true });
+
+  let sceneData;
+
+  // Cek apakah input berupa JSON manual atau ide teks
+  if (IDE_KONTEN.startsWith("{")) {
+    console.log("🎬 Mode Manual: Membaca skenario JSON kustom...");
+    sceneData = JSON.parse(IDE_KONTEN);
+  } else {
+    console.log(`🧠 Mode Otomatis: Meracik skenario dari ide: "${IDE_KONTEN}"...`);
+
+    const prompt = `Kamu adalah sutradara video motion graphic edukasi vertikal (9:16) bergaya Technical Explainer modern (latar biru gelap #061338, sorotan emas #facc15, merah #ef4444 untuk masalah/risiko, hijau #22c55e untuk solusi).
+Buat skenario video dari ide berikut: "${IDE_KONTEN}"
 
 Aturan wajib:
 1. Buat tepat 4 adegan (scenes) yang tuntas dari awal sampai kesimpulan (total 55-75 kata, maks 18 kata per adegan):
    - Adegan 01: Pengenalan topik & konteks utama.
    - Adegan 02: Perbandingan / inti perbedaan (gunakan "overlayType": "compare" jika topik membandingkan 2 hal).
    - Adegan 03: Data, fakta lapangan, atau dampak utama ("bars" atau "pills").
-  - Adegan 04: Kesimpulan praktis & rekomendasi penutup yang tuntas ("checklist").
-2. Setiap adegan wajib menyertakan "visualQuery": "2 kata kunci bahasa Inggris umum dan populer untuk foto di Pixabay (contoh: 'factory warehouse', 'business chart', 'teamwork office', 'modern technology')".
+   - Adegan 04: Kesimpulan praktis & rekomendasi penutup yang tuntas ("checklist").
+2. Pilih "visualType" yang paling sesuai dari: "medical", "history", "globe", "bulb", "gear", "chart", "shield", "flow".
+3. Jika topik mengandung perbandingan ("vs", "perbedaan", "dibanding", "mana lebih baik"), WAJIB gunakan "overlayType": "compare" pada adegan ke-2 dengan mengisi "compareLeft" dan "compareRight" (masing-masing punya "title", "badge", "tone", dan 3 string singkat di "items").
+4. Setiap adegan WAJIB menyertakan "visualQuery": "2 kata kunci bahasa Inggris populer untuk mencari foto atau ilustrasi HD di Pixabay (contoh: 'factory production', 'business growth', 'teamwork office', 'technology data')".
+5. Keluarkan HANYA JSON murni tanpa markdown:
 {
-"title": "JUDUL UTAMA SINGKAT",
+  "title": "JUDUL UTAMA SINGKAT",
+  "subtitle": "Subjudul singkat",
   "styleConfig": {
     "bgColor": "#061338",
     "accentColor": "#facc15",
@@ -140,128 +181,47 @@ Aturan wajib:
         { "text": "Poin pengantar pertama", "tone": "neutral" },
         { "text": "Poin pengantar kedua", "tone": "gold" }
       ],
-      "visualType": "bulb"
-    },
-    {
-      "tag": "02 • PERBANDINGAN",
-      "heading": "DUEL KARAKTERISTIK",
-      "headingTone": "gold",
-      "body": "Kalimat yang membandingkan sisi kiri dan sisi kanan secara jelas.",
-      "overlayType": "compare",
-      "compareLeft": {
-        "title": "OPSI A",
-        "badge": "SISI KIRI",
-        "tone": "red",
-        "items": ["Ciri utama pertama", "Kelebihan atau batasannya", "Kondisi pemakaian"]
-      },
-      "compareRight": {
-        "title": "OPSI B",
-        "badge": "SISI KANAN",
-        "tone": "green",
-        "items": ["Ciri utama pertama", "Keunggulan utamanya", "Kondisi pemakaian"]
-      },
-      "visualType": "flow"
+      "visualType": "bulb",
+      "visualQuery": "factory production"
     }
   ]
 }`;
 
-    const candidateModels = [
-      "gemini-3.8-flash",
-      "gemini-3-flash-preview",
-      "gemini-3.8-flash",
-    ];
-    let rawText = "";
+    const rawJson = await callGeminiWithRetry(prompt);
+    const cleanedJson = rawJson.replace(/```json|```/g, "").trim();
+    sceneData = JSON.parse(cleanedJson);
 
-    for (let attempt = 0; attempt < candidateModels.length; attempt++) {
-      const modelName = candidateModels[attempt];
-      try {
-        if (attempt > 0) {
-          const waitMs = attempt * 5000;
-          console.log(`🔄 Percobaan ke-${attempt + 1} (${modelName}) dalam ${waitMs / 1000} detik...`);
-          await new Promise((r) => setTimeout(r, waitMs));
+    // Unduh foto/ilustrasi HD Pixabay untuk semua adegan non-compare
+    if (Array.isArray(sceneData.scenes)) {
+      for (let i = 0; i < sceneData.scenes.length; i++) {
+        const sc = sceneData.scenes[i];
+        if (!sc.media && sc.overlayType !== "compare") {
+          const query = sc.visualQuery || sc.heading;
+          const downloadedFile = await fetchPixabayMedia(query, i);
+          if (downloadedFile) {
+            sc.media = downloadedFile;
+            sc.mediaType = "image";
+            sc.motion = i % 2 === 0 ? "zoom-in" : "zoom-out";
+          }
         }
-        const model = genAI.getGenerativeModel({
-          model: modelName,
-          generationConfig: { responseMimeType: "application/json" },
-        });
-        const aiResponse = await model.generateContent(prompt, { timeout: 30000 });
-        rawText = aiResponse.response.text();
-        if (rawText) break;
-      } catch (err) {
-        console.warn(`⚠️ ${modelName} gagal (${err.status || err.message}), mencoba ulang...`);
       }
     }
 
-    if (rawText) {
-      sceneData = JSON.parse(rawText);
-    } else {
-      console.log("🛡️ Menggunakan struktur cadangan otomatis agar render tetap lanjut...");
-      const cleanTopic = ideKonten.toUpperCase().slice(0, 32);
-      sceneData = {
-        title: cleanTopic,
-        subtitle: "Visualisasi Edukasi Terstruktur",
-        styleConfig: {
-          bgColor: "#061338",
-          accentColor: "#facc15",
-          dangerColor: "#ef4444",
-          successColor: "#22c55e",
-          watermark: "orionmotion",
-        },
-        scenes: [
-          {
-            tag: "01 • KONSEP UTAMA",
-            heading: cleanTopic,
-            headingTone: "gold",
-            heroStat: "100%",
-            heroLabel: "FOKUS SISTEM",
-            body: `Mari kita pahami konsep dasar mengenai ${ideKonten} secara terstruktur dan mudah diterapkan.`,
-            overlayType: "pills",
-            points: [
-              { text: "Fondasi Prinsip Kerja", tone: "neutral" },
-              { text: "Penerapan Konsisten di Lapangan", tone: "gold" },
-            ],
-            visualType: "flow",
-          },
-          {
-            tag: "02 • DAMPAK & HASIL",
-            heading: "MANFAAT PENERAPAN",
-            headingTone: "green",
-            heroStat: "+40%",
-            heroLabel: "EFISIENSI KERJA",
-            body: `Dengan memahami ${ideKonten}, proses kerja menjadi lebih stabil, efisien, dan terukur setiap hari.`,
-            overlayType: "bars",
-            points: [
-              { text: "Stabilitas Proses", value: "95%", percent: 95, tone: "green" },
-              { text: "Efisiensi Operasional", value: "85%", percent: 85, tone: "gold" },
-            ],
-            visualType: "chart",
-          },
-        ],
-      };
-    }
-    sceneData.audioSrc = "";
-    sceneData = JSON.parse(rawText);
-    sceneData.audioSrc = "";
-
-    console.log("🎙️ Membuat suara narator bahasa Indonesia (Google TTS)...");
-    const teksNarasi =
-      sceneData.scenes && sceneData.scenes.length > 0
-        ? sceneData.scenes.map((s) => s.body).join(" ")
-        : sceneData.insight || sceneData.subtitle || "Video edukasi motion graphic";
-
-    const ttsResult = await generateIndonesianTtsBase64(teksNarasi);
-    audioDataUri = ttsResult.dataUri;
+    // Generate TTS Bahasa Indonesia
+    const teksNarasi = sceneData.scenes.map((s) => s.body).join(". ");
+    console.log("🎙️ Membuat suara narator TTS...");
+    sceneData.audioSrc = await generateIndonesianTtsBase64(teksNarasi);
 
     const wordCount = teksNarasi.split(/\s+/).filter(Boolean).length;
-    const estimatedSec = Math.max(25, Math.ceil(wordCount / 1.65) + 4);
+    const estimatedSec = Math.max(28, Math.ceil(wordCount / 1.65) + 4);
     sceneData.durationInFrames = estimatedSec * 30;
   }
 
-  sceneData.audioSrc = audioDataUri;
-  const targetFrames = sceneData.durationInFrames || 1200;
+  // Aktifkan BGM & Whoosh otomatis jika file tersedia di folder public/
+  if (fs.existsSync("./public/bgm.mp3")) sceneData.bgmSrc = "bgm.mp3";
+  if (fs.existsSync("./public/whoosh.mp3")) sceneData.whooshSrc = "whoosh.mp3";
 
-  console.log(`🚀 Merender DynamicMotionVideo (${targetFrames} frames)...`);
-
+  console.log("📦 Membundel proyek Remotion...");
   const bundleLocation = await bundle({
     entryPoint: path.resolve("./src/index.ts"),
   });
@@ -272,44 +232,25 @@ Aturan wajib:
     inputProps: sceneData,
   });
 
-  composition.durationInFrames = targetFrames;
+  const outputLocation = path.resolve("./out/video_1.mp4");
+  console.log(`🎬 Merender video (${sceneData.durationInFrames} frames)...`);
 
   await renderMedia({
-    composition,
+    composition: {
+      ...composition,
+      durationInFrames: sceneData.durationInFrames || composition.durationInFrames,
+    },
     serveUrl: bundleLocation,
     codec: "h264",
-    outputLocation: "./out/video_1.mp4",
+    outputLocation,
     inputProps: sceneData,
-    chromiumOptions: {
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    },
   });
-const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
 
-  if (botToken && chatId) {
-    console.log("📲 Mengirim video ke Telegram...");
-    const videoBuffer = fs.readFileSync("./out/video_1.mp4");
-    const formData = new FormData();
-    formData.append("chat_id", chatId);
-    formData.append("caption", `🎬 ${sceneData.title || "Video Motion Graphic"}`);
-    formData.append("video", new Blob([videoBuffer], { type: "video/mp4" }), "video_1.mp4");
-
-    const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendVideo`, {
-      method: "POST",
-      body: formData,
-    });
-    const tgJson = await tgRes.json();
-    if (tgJson.ok) {
-      console.log("✅ Video berhasil terkirim ke Telegram!");
-    } else {
-      console.error("⚠️ Gagal kirim ke Telegram:", tgJson);
-    }
-  }
-  console.log("✅ SUKSES! Video MP4 tersimpan di ./out/video_1.mp4");
+  console.log("🎉 Render selesai:", outputLocation);
+  await sendVideoToTelegram(outputLocation, `🎬 *${sceneData.title || "Video Selesai"}*\nIde: ${IDE_KONTEN}`);
 }
 
-textToMp4().catch((err) => {
-  console.error(err);
+main().catch((err) => {
+  console.error("❌ Fatal Error:", err);
   process.exit(1);
 });
