@@ -70,7 +70,12 @@ async function fetchPixabayMedia(query, index) {
 async function callGeminiWithRetry(prompt) {
   if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY tidak ditemukan di environment!");
 
-  const models = ["gemini-3.8-flash", "gemini-3.0-flash"];
+  const models = [
+    "gemini-3.8-flash",
+    "gemini-3.8-flash-lite",
+    "gemini-3.8-pro",
+    "gemini-flash-latest"
+  ];
   for (const model of models) {
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
@@ -100,7 +105,7 @@ async function callGeminiWithRetry(prompt) {
         return rawText;
       } catch (err) {
         console.warn(`⚠️ Percobaan ${attempt} gagal (${model}): ${err.message}`);
-        await new Promise((r) => setTimeout(r, attempt * 2000));
+        await new Promise((r) => setTimeout(r, attempt * 5000));
       }
     }
   }
