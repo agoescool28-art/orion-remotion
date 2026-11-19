@@ -156,7 +156,7 @@ Aturan wajib:
    - Adegan 04: Kesimpulan praktis & rekomendasi penutup yang tuntas ("checklist").
 2. Pilih "visualType" yang paling sesuai dari: "medical", "history", "globe", "bulb", "gear", "chart", "shield", "flow".
 3. Jika topik mengandung perbandingan ("vs", "perbedaan", "dibanding", "mana lebih baik"), WAJIB gunakan "overlayType": "compare" pada adegan ke-2 dengan mengisi "compareLeft" dan "compareRight" (masing-masing punya "title", "badge", "tone", dan 3 string singkat di "items").
-4. Setiap adegan WAJIB menyertakan "visualQuery": "2 kata kunci bahasa Inggris populer untuk mencari foto atau ilustrasi HD di Pixabay (contoh: 'factory production', 'business growth', 'teamwork office', 'technology data')".
+4. Setiap adegan WAJIB menyertakan "visualQuery": "2-3 kata kunci bahasa Inggris spesifik yang relevan dengan konteks industri/teknologi/edukasi (hindari kata ambigu seperti 'speed' atau 'race'; gunakan misalnya 'manufacturing assembly', 'warehouse logistics', 'engineering blueprint', 'data analytics')".
 5. Keluarkan HANYA JSON murni tanpa markdown:
 {
   "title": "JUDUL UTAMA SINGKAT",
