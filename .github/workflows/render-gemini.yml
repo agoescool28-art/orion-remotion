@@ -1,0 +1,42 @@
+name: AI Text-to-Video Gemini + Pixabay
+
+on:
+  workflow_dispatch:
+    inputs:
+      ide_konten:
+        description: 'Ketik ide topik video (contoh: Perbandingan Takt Time vs Cycle Time)'
+        required: true
+        default: 'Perbandingan Takt Time vs Cycle Time'
+
+jobs:
+  render-gemini-video:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Tarik Kode dari Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        working-directory: orion-threat-excellence-v2
+        run: npm install
+
+      - name: Generate MP4 via Gemini, Pixabay & Remotion
+        working-directory: orion-threat-excellence-v2
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+          IDE_KONTEN: ${{ github.event.inputs.ide_konten }}
+        run: node scripts/generate.mjs
+
+      - name: Upload Video Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: motion-graphic-gemini
+          path: orion-threat-excellence-v2/out/video_1.mp4
+          retention-days: 3
