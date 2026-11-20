@@ -243,7 +243,11 @@ export const MyComponent: React.FC = () => {
     cursor += scene.durationFrames;
     return (
       <Sequence key={`${index}-${scene.title}`} from={from} durationInFrames={scene.durationFrames}>
-        <Scene data={scene} index={index} />
+        <Scene
+  data={scene}
+  index={index}
+  globalStartFrame={from}
+/>
       </Sequence>
     );
   });
