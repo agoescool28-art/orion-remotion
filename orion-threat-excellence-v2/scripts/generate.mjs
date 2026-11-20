@@ -206,19 +206,31 @@ Aturan wajib:
     }
   }
 
-// Gunakan audio VO kustom jika sudah disediakan di JSON, atau buat via TTS
+// Baca durasi ASLI audio kustom menggunakan ffprobe (100% presisi milidetik)
   if (Array.isArray(sceneData.scenes)) {
     if (sceneData.audioSrc && !sceneData.audioSrc.startsWith("data:")) {
       const localAudioPath = path.resolve("./public", sceneData.audioSrc);
       if (fs.existsSync(localAudioPath)) {
-        const stats = fs.statSync(localAudioPath);
-        // Bitrate standar ElevenLabs MP3 = 128 kbps (16.000 bytes/detik)
-        const detectedSec = Math.ceil(stats.size / 16000);
-        const totalSec = sceneData.durationInFrames
-          ? Math.ceil(sceneData.durationInFrames / 30)
-          : Math.max(30, detectedSec + 2);
-        sceneData.durationInFrames = totalSec * 30;
-        console.log(`🎙️ Menggunakan VO kustom: ${sceneData.audioSrc} (~${detectedSec} detik -> Render ${totalSec} detik)`);
+        let exactAudioSec = 84;
+        try {
+          const probeOut = execSync(
+            `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${localAudioPath}"`
+          )
+            .toString()
+            .trim();
+          const parsed = parseFloat(probeOut);
+          if (!isNaN(parsed) && parsed > 0) exactAudioSec = parsed;
+        } catch (e) {
+          const stats = fs.statSync(localAudioPath);
+          exactAudioSec = stats.size / 15000;
+        }
+
+        // Tambahkan 1.5 detik jeda penutup agar tidak pernah terpotong
+        const totalFrames = Math.ceil((exactAudioSec + 1.5) * 30);
+        sceneData.durationInFrames = totalFrames;
+        console.log(
+          `🎙️ VO Kustom: ${sceneData.audioSrc} | Durasi asli: ${exactAudioSec.toFixed(2)} dtk -> Render: ${(totalFrames / 30).toFixed(2)} dtk (${totalFrames} frames)`
+        );
       }
     } else if (!sceneData.audioSrc) {
       const teksNarasi = sceneData.scenes.map((s) => s.body).join(". ");
