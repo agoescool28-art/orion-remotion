@@ -206,15 +206,30 @@ Aturan wajib:
     }
   }
 
-  // Generate TTS Bahasa Indonesia & hitung durasi pas untuk SEMUA mode
-  if (Array.isArray(sceneData.scenes) && !sceneData.audioSrc) {
-    const teksNarasi = sceneData.scenes.map((s) => s.body).join(". ");
-    console.log("🎙️ Membuat suara narator TTS Bahasa Indonesia...");
-    sceneData.audioSrc = await generateIndonesianTtsBase64(teksNarasi);
+// Gunakan audio VO kustom jika sudah disediakan di JSON, atau buat via TTS
+  if (Array.isArray(sceneData.scenes)) {
+    if (sceneData.audioSrc && !sceneData.audioSrc.startsWith("data:")) {
+      const localAudioPath = path.resolve("./public", sceneData.audioSrc);
+      if (fs.existsSync(localAudioPath)) {
+        const stats = fs.statSync(localAudioPath);
+        // Bitrate standar ElevenLabs MP3 = 128 kbps (16.000 bytes/detik)
+        const detectedSec = Math.ceil(stats.size / 16000);
+        const totalSec = sceneData.durationInFrames
+          ? Math.ceil(sceneData.durationInFrames / 30)
+          : Math.max(30, detectedSec + 2);
+        sceneData.durationInFrames = totalSec * 30;
+        console.log(`🎙️ Menggunakan VO kustom: ${sceneData.audioSrc} (~${detectedSec} detik -> Render ${totalSec} detik)`);
+      }
+    } else if (!sceneData.audioSrc) {
+      const teksNarasi = sceneData.scenes.map((s) => s.body).join(". ");
+      console.log("🎙️ Membuat suara narator TTS Bahasa Indonesia...");
+      const ttsResult = await generateIndonesianTtsBase64(teksNarasi);
+      sceneData.audioSrc = ttsResult.dataUri;
 
-    const wordCount = teksNarasi.split(/\s+/).filter(Boolean).length;
-    const estimatedSec = Math.max(28, Math.ceil(wordCount / 1.95) + 4);
-    sceneData.durationInFrames = estimatedSec * 30;
+      const actualAudioSec = Math.ceil(ttsResult.byteLength / 4000);
+      const totalSec = Math.max(30, actualAudioSec + 3);
+      sceneData.durationInFrames = totalSec * 30;
+    }
   }
 
   // Aktifkan BGM & Whoosh otomatis jika file tersedia di folder public/
