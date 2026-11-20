@@ -181,12 +181,32 @@ const Scene: React.FC<{
         {data.title}
       </div>
 
-      <div style={{ position: "absolute", left: 78, right: 78, top: 1220, height: 2, background: "rgba(241,237,227,.18)" }} />
-      <div style={{ position: "absolute", left: 82, right: 82, top: 1265, height: 115 }}>
-        {data.beats.map((beat, i) => (
-          <BeatTypography key={`${index}-${i}`} beat={beat} accent={data.accent || GOLD} index={i} />
-        ))}
-      </div>
+      <div
+  style={{
+    position: "absolute",
+    left: 82,
+    right: 82,
+    top: 1265,
+    height: 115,
+  }}
+>
+  {prabowoWords.length > 0 ? (
+    <AudioSyncedTypography
+      words={prabowoWords}
+      globalStartFrame={globalStartFrame}
+      accent={data.accent || GOLD}
+    />
+  ) : (
+    data.beats.map((beat, i) => (
+      <BeatTypography
+        key={`${index}-${i}`}
+        beat={beat}
+        accent={data.accent || GOLD}
+        index={i}
+      />
+    ))
+  )}
+</div>
 
       <div
         style={{
