@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { execSync } from "child_process";
 import { bundle } from "@remotion/bundler";
 import { renderMedia, selectComposition } from "@remotion/renderer";
 import * as googleTTS from "google-tts-api";
@@ -10,7 +11,7 @@ const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 const IDE_KONTEN = (process.env.IDE_KONTEN || "Perbandingan Takt Time vs Cycle Time").trim();
 
-// 1. Fungsi TTS Bahasa Indonesia (Base64 Data URI)
+// 1. Fungsi TTS Bahasa Indonesia (Mengembalikan dataUri & byteLength)
 async function generateIndonesianTtsBase64(text) {
   const cleanText = text.replace(/[*#_`]/g, "").trim();
   const parts = await googleTTS.getAllAudioBase64(cleanText, {
@@ -21,7 +22,10 @@ async function generateIndonesianTtsBase64(text) {
   });
   const buffers = parts.map((p) => Buffer.from(p.base64, "base64"));
   const merged = Buffer.concat(buffers);
-  return `data:audio/mp3;base64,${merged.toString("base64")}`;
+  return {
+    dataUri: `data:audio/mp3;base64,${merged.toString("base64")}`,
+    byteLength: merged.length,
+  };
 }
 
 // 2. Fungsi Pengunduh Foto & Ilustrasi HD dari Pixabay
@@ -60,18 +64,20 @@ async function fetchPixabayMedia(query, index) {
   return null;
 }
 
-// 3. Fungsi Panggil Gemini dengan Retry & Fallback Model
+// 3. Fungsi Panggil Gemini dengan Retry & Fallback Model Aktif
 async function callGeminiWithRetry(prompt) {
   if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY tidak ditemukan di environment!");
 
   const models = [
-    "gemini-3.8-flash",
-    "gemini-3.8-flash-lite",
-    "gemini-3.8-pro",
-    "gemini-flash-latest"
+    "gemini-2.5-flash",
+    "gemini-flash-latest",
+    "gemini-2.0-flash"
   ];
-  for (const model of models) {
-    for (let attempt = 1; attempt <= 3; attempt++) {
+  const delays = [5000, 15000, 30000];
+
+  for (let i = 0; i < models.length; i++) {
+    const model = models[i];
+    for (let attempt = 1; attempt <= 2; attempt++) {
       try {
         const res = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
@@ -99,7 +105,7 @@ async function callGeminiWithRetry(prompt) {
         return rawText;
       } catch (err) {
         console.warn(`⚠️ Percobaan ${attempt} gagal (${model}): ${err.message}`);
-        await new Promise((r) => setTimeout(r, attempt * 5000));
+        await new Promise((r) => setTimeout(r, delays[i] || 5000));
       }
     }
   }
@@ -135,12 +141,23 @@ async function main() {
   if (!fs.existsSync("./public")) fs.mkdirSync("./public", { recursive: true });
   if (!fs.existsSync("./out")) fs.mkdirSync("./out", { recursive: true });
 
-  let sceneData;
+  let sceneData = null;
 
-  if (IDE_KONTEN.startsWith("{")) {
-    console.log("🎬 Mode Manual JSON: Membaca skenario kustom...");
-    sceneData = JSON.parse(IDE_KONTEN);
-  } else {
+  // Cek apakah IDE_KONTEN sudah berupa JSON (baik langsung atau terbungkus markdown ```json)
+  const cleanedInput = IDE_KONTEN.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
+  if (cleanedInput.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(cleanedInput);
+      if (parsed && Array.isArray(parsed.scenes)) {
+        console.log("🎬 Mode Manual JSON: Membaca skenario kustom (Bypass Gemini API)...");
+        sceneData = parsed;
+      }
+    } catch (e) {
+      console.warn("⚠️ Input diawali '{' tapi gagal parse JSON, beralih ke Mode Otomatis Gemini:", e.message);
+    }
+  }
+
+  if (!sceneData) {
     console.log(`🧠 Mode Otomatis: Meracik skenario dari ide: "${IDE_KONTEN}"...`);
 
     const prompt = `Kamu adalah sutradara video motion graphic edukasi vertikal (9:16) bergaya Technical Explainer modern (latar biru gelap #061338, sorotan emas #facc15, merah #ef4444 untuk masalah/risiko, hijau #22c55e untuk solusi).
@@ -148,10 +165,10 @@ Buat skenario video dari ide berikut: "${IDE_KONTEN}"
 
 Aturan wajib:
 1. Buat tepat 4 adegan (scenes) yang tuntas dari awal sampai kesimpulan (total 55-75 kata, maks 18 kata per adegan):
-   - Adegan 01: Pengenalan topik & konteks utama.
-   - Adegan 02: Perbandingan / inti perbedaan (gunakan "overlayType": "compare" jika topik membandingkan 2 hal).
-   - Adegan 03: Data, fakta lapangan, atau dampak utama ("bars" atau "pills").
-   - Adegan 04: Kesimpulan praktis & rekomendasi penutup yang tuntas ("checklist").
+  - Adegan 01: Pengenalan topik & konteks utama.
+  - Adegan 02: Perbandingan / inti perbedaan (gunakan "overlayType": "compare" jika topik membandingkan 2 hal).
+  - Adegan 03: Data, fakta lapangan, atau dampak utama ("bars" atau "pills").
+  - Adegan 04: Kesimpulan praktis & rekomendasi penutup yang tuntas ("checklist").
 2. Pilih "visualType" yang paling sesuai dari: "medical", "history", "globe", "bulb", "gear", "chart", "shield", "flow".
 3. Jika topik mengandung perbandingan ("vs", "perbedaan", "dibanding", "mana lebih baik"), WAJIB gunakan "overlayType": "compare" pada adegan ke-2 dengan mengisi "compareLeft" dan "compareRight" (masing-masing punya "title", "badge", "tone", dan 3 string singkat di "items").
 4. Setiap adegan WAJIB menyertakan "visualQuery": "2-3 kata kunci bahasa Inggris spesifik yang relevan dengan konteks industri/teknologi/edukasi (hindari kata ambigu seperti 'speed' atau 'race'; gunakan misalnya 'manufacturing assembly', 'warehouse logistics', 'engineering blueprint', 'data analytics')".
@@ -190,7 +207,7 @@ Aturan wajib:
     sceneData = JSON.parse(cleanedJson);
   }
 
-  // Jalankan pengunduhan foto/ilustrasi HD Pixabay untuk SEMUA mode (baik Ide Teks maupun JSON Manual)
+  // Jalankan pengunduhan foto/ilustrasi HD Pixabay untuk SEMUA mode
   if (Array.isArray(sceneData.scenes)) {
     for (let i = 0; i < sceneData.scenes.length; i++) {
       const sc = sceneData.scenes[i];
@@ -206,7 +223,7 @@ Aturan wajib:
     }
   }
 
-// Baca durasi ASLI audio kustom menggunakan ffprobe (100% presisi milidetik)
+  // Baca durasi ASLI audio kustom atau buat TTS Bahasa Indonesia
   if (Array.isArray(sceneData.scenes)) {
     if (sceneData.audioSrc && !sceneData.audioSrc.startsWith("data:")) {
       const localAudioPath = path.resolve("./public", sceneData.audioSrc);
@@ -225,7 +242,6 @@ Aturan wajib:
           exactAudioSec = stats.size / 15000;
         }
 
-        // Tambahkan 1.5 detik jeda penutup agar tidak pernah terpotong
         const totalFrames = Math.ceil((exactAudioSec + 1.5) * 30);
         sceneData.durationInFrames = totalFrames;
         console.log(
@@ -241,6 +257,7 @@ Aturan wajib:
       const actualAudioSec = Math.ceil(ttsResult.byteLength / 4000);
       const totalSec = Math.max(30, actualAudioSec + 3);
       sceneData.durationInFrames = totalSec * 30;
+      console.log(`✅ TTS berhasil dibuat (${ttsResult.byteLength} bytes, ~${totalSec} detik)`);
     }
   }
 
@@ -274,7 +291,7 @@ Aturan wajib:
   });
 
   console.log("🎉 Render selesai:", outputLocation);
-  const labelIde = IDE_KONTEN.startsWith("{") ? (sceneData.title || "Skenario JSON Kustom") : IDE_KONTEN;
+  const labelIde = sceneData.title || IDE_KONTEN;
   await sendVideoToTelegram(outputLocation, `🎬 *${sceneData.title || "Video Selesai"}*\nTopik: ${labelIde}`);
 }
 
