@@ -1,6 +1,6 @@
 export type AudioWordCue = {
   text: string;
-  start: number;
-  end: number;
+  start: number; // detik sejak awal audio
+  end: number;   // detik sejak awal audio
   score?: number;
 };
