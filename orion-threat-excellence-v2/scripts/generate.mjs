@@ -254,7 +254,7 @@ Aturan wajib:
       const ttsResult = await generateIndonesianTtsBase64(teksNarasi);
       sceneData.audioSrc = ttsResult.dataUri;
 
-      const actualAudioSec = Math.ceil(ttsResult.byteLength / 4000);
+      const actualAudioSec = Math.ceil(ttsResult.byteLength / 8000);
       const totalSec = Math.max(30, actualAudioSec + 3);
       sceneData.durationInFrames = totalSec * 30;
       console.log(`✅ TTS berhasil dibuat (${ttsResult.byteLength} bytes, ~${totalSec} detik)`);
