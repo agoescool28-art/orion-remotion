@@ -60,7 +60,16 @@ export interface DynamicMotionProps {
   whooshSrc?: string;
 }
 
-const ZOOM_STEPS = ["×1 ZOOM", "×3 ZOOM", "×5 ZOOM", "×7 ZOOM", "×8 ZOOM", "×9 ZOOM", "×9 ZOOM", "×9 ZOOM"];
+const ZOOM_STEPS = [
+  "×1 ZOOM",
+  "×3 ZOOM",
+  "×5 ZOOM",
+  "×7 ZOOM",
+  "×8 ZOOM",
+  "×9 ZOOM",
+  "×9 ZOOM",
+  "×9 ZOOM",
+];
 
 const resolveMediaSrc = (src?: string) => {
   if (!src) return "";
@@ -68,11 +77,11 @@ const resolveMediaSrc = (src?: string) => {
   return staticFile(src);
 };
 
-const CadBlueprintBackground: React.FC<{ bgColor: string; gridColor: string; frame: number }> = ({
-  bgColor,
-  gridColor,
-  frame,
-}) => {
+const CadBlueprintBackground: React.FC<{
+  bgColor: string;
+  gridColor: string;
+  frame: number;
+}> = ({ bgColor, gridColor, frame }) => {
   const drift = (frame * 0.25) % 60;
   return (
     <AbsoluteFill
@@ -88,7 +97,6 @@ const CadBlueprintBackground: React.FC<{ bgColor: string; gridColor: string; fra
         backgroundPosition: `${drift}px ${drift}px`,
       }}
     >
-      {/* Vignette radial untuk kedalaman dokumenter */}
       <div
         style={{
           position: "absolute",
@@ -107,14 +115,22 @@ const CadVectorSchematic: React.FC<{
   orange: string;
   gold: string;
   localFrame: number;
-}> = ({ type = "gear", cyan, orange, gold, localFrame }) => {
+  compact?: boolean;
+}> = ({ type = "gear", cyan, orange, gold, localFrame, compact = false }) => {
   const rotate = localFrame * 0.6;
   const pulse = 1 + Math.sin(localFrame * 0.12) * 0.04;
-  const drawProgress = interpolate(localFrame, [0, 24], [0, 1], { extrapolateRight: "clamp" });
+  const drawProgress = interpolate(localFrame, [0, 24], [0, 1], {
+    extrapolateRight: "clamp",
+  });
+  const scaleFactor = compact ? 0.68 : 1;
 
   return (
-    <svg width="460" height="320" viewBox="0 0 460 320" style={{ overflow: "visible" }}>
-      {/* Outer CAD Framing Brackets */}
+    <svg
+      width={compact ? "340" : "460"}
+      height={compact ? "210" : "320"}
+      viewBox="0 0 460 320"
+      style={{ overflow: "visible", transform: `scale(${scaleFactor})` }}
+    >
       <path
         d="M 24 60 L 24 24 L 60 24 M 400 24 L 436 24 L 436 60 M 436 260 L 436 296 L 400 296 M 60 296 L 24 296 L 24 260"
         fill="none"
@@ -122,11 +138,23 @@ const CadVectorSchematic: React.FC<{
         strokeWidth="2.5"
         opacity="0.7"
       />
-      {/* Crosshair axis */}
-      <line x1="230" y1="15" x2="230" y2="305" stroke="rgba(255,255,255,0.12)" strokeDasharray="6 6" />
-      <line x1="20" y1="160" x2="440" y2="160" stroke="rgba(255,255,255,0.12)" strokeDasharray="6 6" />
+      <line
+        x1="230"
+        y1="15"
+        x2="230"
+        y2="305"
+        stroke="rgba(255,255,255,0.12)"
+        strokeDasharray="6 6"
+      />
+      <line
+        x1="20"
+        y1="160"
+        x2="440"
+        y2="160"
+        stroke="rgba(255,255,255,0.12)"
+        strokeDasharray="6 6"
+      />
 
-      {/* Mechanical Isometric Gear / Valve Cutaway */}
       <g transform={`translate(230, 160) scale(${pulse})`}>
         <circle
           r="96"
@@ -144,7 +172,6 @@ const CadVectorSchematic: React.FC<{
           transform={`rotate(${-rotate * 1.4})`}
         />
         <circle r="30" fill="#14110e" stroke={gold} strokeWidth="3" />
-        {/* Hydraulic flow lines */}
         {type === "flow" || type === "chart" ? (
           <path
             d="M -140 0 L -66 0 M 66 0 L 140 0 M 0 -115 L 0 -66"
@@ -156,7 +183,6 @@ const CadVectorSchematic: React.FC<{
         ) : null}
       </g>
 
-      {/* Elbow Callout Line (Cyan + Orange Target Node) */}
       <g opacity={drawProgress}>
         <circle cx="282" cy="116" r="7" fill={orange} />
         <circle cx="282" cy="116" r="14" fill="none" stroke={orange} strokeWidth="2" />
@@ -199,23 +225,32 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
   const watermark = styleConfig?.watermark || "orionmotion";
 
   const safeScenes = scenes.length > 0 ? scenes : [];
-  const totalWords = safeScenes.reduce(
-    (acc, s) => acc + s.body.split(/\s+/).filter(Boolean).length,
-    0
-  );
 
-  // Alokasi durasi tiap adegan proporsional dengan jumlah kata narasi
+  // Bobot durasi berbasis kata + jeda tanda baca (. ! ? ,) agar sinkron dengan ritme ElevenLabs
+  const getSpeechWeight = (text: string) => {
+    const clean = text.trim();
+    const wordWeight = clean.split(/\s+/).filter(Boolean).length * 1.0;
+    const sentencePauses = (clean.match(/[.!?]+/g) || []).length * 1.65;
+    const commaPauses = (clean.match(/[,;:]+/g) || []).length * 0.75;
+    return Math.max(4, wordWeight + sentencePauses + commaPauses);
+  };
+
+  // Jendela bicara aktif 94.5% dari total durasi (sisanya jeda penutup alami)
+  const activeSpeechFrames = Math.round(durationInFrames * 0.945);
+  const totalWeight = safeScenes.reduce((acc, s) => acc + getSpeechWeight(s.body), 0);
+
   let accumulatedFrames = 0;
   const sceneTimings = safeScenes.map((sc, idx) => {
-    const words = Math.max(4, sc.body.split(/\s+/).filter(Boolean).length);
-    const ratio = totalWords > 0 ? words / totalWords : 1 / safeScenes.length;
-    const len =
-      idx === safeScenes.length - 1
-        ? Math.max(30, durationInFrames - accumulatedFrames)
-        : Math.max(45, Math.round(ratio * durationInFrames));
+    const weight = getSpeechWeight(sc.body);
+    const ratio = totalWeight > 0 ? weight / totalWeight : 1 / safeScenes.length;
+    const isLast = idx === safeScenes.length - 1;
+    const speechLen = isLast
+      ? Math.max(30, activeSpeechFrames - accumulatedFrames)
+      : Math.max(45, Math.round(ratio * activeSpeechFrames));
+    const totalLen = isLast ? durationInFrames - accumulatedFrames : speechLen;
     const start = accumulatedFrames;
-    accumulatedFrames += len;
-    return { start, duration: len };
+    accumulatedFrames += totalLen;
+    return { start, duration: totalLen, speechDuration: speechLen };
   });
 
   const activeIndex = Math.max(
@@ -228,22 +263,34 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
   );
 
   const scene = safeScenes[activeIndex];
-  const timing = sceneTimings[activeIndex] || { start: 0, duration: durationInFrames };
+  const timing = sceneTimings[activeIndex] || {
+    start: 0,
+    duration: durationInFrames,
+    speechDuration: activeSpeechFrames,
+  };
   const localFrame = Math.max(0, frame - timing.start);
 
   if (!scene) return <AbsoluteFill style={{ backgroundColor: bgColor }} />;
 
-  // Animasi masuk & micro-zoom kamera ala referensi
   const enterSpring = spring({
     frame: localFrame,
     fps,
     config: { damping: 16, stiffness: 120 },
   });
 
-  const baseZoom = interpolate(activeIndex, [0, Math.max(1, safeScenes.length - 1)], [1.0, 1.14]);
-  const sceneMicroZoom = interpolate(localFrame, [0, timing.duration], [baseZoom, baseZoom + 0.06], {
-    extrapolateRight: "clamp",
-  });
+  const baseZoom = interpolate(
+    activeIndex,
+    [0, Math.max(1, safeScenes.length - 1)],
+    [1.0, 1.14]
+  );
+  const sceneMicroZoom = interpolate(
+    localFrame,
+    [0, timing.duration],
+    [baseZoom, baseZoom + 0.06],
+    {
+      extrapolateRight: "clamp",
+    }
+  );
 
   const toneColor = (tone?: string) => {
     if (tone === "danger") return danger;
@@ -252,17 +299,33 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
     return cyan;
   };
 
-  // Sinkronisasi Karaoke Kata demi Kata
+  // Sinkronisasi Karaoke Berbobot Tanda Baca & Panjang Kata
   const words = scene.body.split(/\s+/).filter(Boolean);
-  const speakWindow = Math.max(1, timing.duration * 0.88);
-  const currentWordIndex = Math.min(
-    words.length - 1,
-    Math.floor((localFrame / speakWindow) * words.length)
+  const wordWeights = words.map((w) => {
+    let wt = 1 + Math.min(0.6, w.length * 0.04);
+    if (/[.!?]$/.test(w)) wt += 1.5;
+    else if (/[,;:]$/.test(w)) wt += 0.7;
+    return wt;
+  });
+  const totalWordWeight = wordWeights.reduce((a, b) => a + b, 0);
+  const speechProgress = Math.min(
+    1,
+    localFrame / Math.max(1, timing.speechDuration)
   );
+  const targetWeight = speechProgress * totalWordWeight;
 
-  // Tampilkan jendela 8 kata sekitar kata yang sedang diucapkan agar bersih & mudah dibaca
-  const chunkStart = Math.floor(currentWordIndex / 8) * 8;
-  const visibleWords = words.slice(chunkStart, chunkStart + 8);
+  let accW = 0;
+  let currentWordIndex = words.length - 1;
+  for (let i = 0; i < wordWeights.length; i++) {
+    accW += wordWeights[i];
+    if (targetWeight <= accW) {
+      currentWordIndex = i;
+      break;
+    }
+  }
+
+  const chunkStart = Math.floor(currentWordIndex / 7) * 7;
+  const visibleWords = words.slice(chunkStart, chunkStart + 7);
 
   const zoomBadge =
     scene.tag?.match(/×\d+\s*ZOOM/i)?.[0]?.toUpperCase() ||
@@ -272,15 +335,22 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
     .replace(/•\s*×\d+\s*ZOOM/i, "")
     .trim();
 
-  return (
-    <AbsoluteFill style={{ fontFamily: "Inter, system-ui, sans-serif", color: "#f8fafc" }}>
-      <CadBlueprintBackground bgColor={bgColor} gridColor={gridColor} frame={frame} />
+  const isCompare = scene.overlayType === "compare";
 
-      {/* Audio Narasi TTS & BGM */}
+  return (
+    <AbsoluteFill
+      style={{ fontFamily: "Inter, system-ui, sans-serif", color: "#f8fafc" }}
+    >
+      <CadBlueprintBackground
+        bgColor={bgColor}
+        gridColor={gridColor}
+        frame={frame}
+      />
+
       {audioSrc ? <Audio src={resolveMediaSrc(audioSrc)} /> : null}
       {bgmSrc ? <Audio src={resolveMediaSrc(bgmSrc)} volume={0.14} /> : null}
 
-      {/* HUD KIRI ATAS: Breadcrumb + Indikator Zoom Teknis */}
+      {/* HUD KIRI ATAS */}
       <div
         style={{
           position: "absolute",
@@ -372,7 +442,9 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
               marginBottom: 8,
             }}
           >
-            {scene.heroStat ? `[ ${scene.heroStat} • ${scene.heroLabel || ""} ]` : "INSPEKSI TEKNIS"}
+            {scene.heroStat
+              ? `[ ${scene.heroStat} • ${scene.heroLabel || ""} ]`
+              : "INSPEKSI TEKNIS"}
           </div>
           <h1
             style={{
@@ -389,81 +461,79 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
           </h1>
         </div>
 
-        {/* AREA VISUAL TENGAH: Foto HD Pixabay dalam Bingkai CAD / Skematik CAD */}
-        {scene.overlayType !== "compare" ? (
-          <div
-            style={{
-              position: "relative",
-              height: 450,
-              borderRadius: 22,
-              overflow: "hidden",
-              border: `2px solid rgba(56, 189, 248, 0.45)`,
-              backgroundColor: "#0d0b09",
-              boxShadow: "0 24px 60px rgba(0,0,0,0.65)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {scene.media ? (
-              <>
-                <Img
-                  src={resolveMediaSrc(scene.media)}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    transform: `scale(${sceneMicroZoom})`,
-                    filter: "contrast(1.08) brightness(0.86)",
-                  }}
-                />
-                {/* Overlay Grid & Callout Siku Cyan di atas Foto HD */}
-                <div
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    background:
-                      "linear-gradient(180deg, rgba(20,17,14,0.2) 0%, rgba(20,17,14,0.72) 100%)",
-                  }}
-                />
-                <div
-                  style={{
-                    position: "absolute",
-                    top: 18,
-                    left: 18,
-                    background: "rgba(14, 18, 26, 0.85)",
-                    border: `1.5px solid ${cyan}`,
-                    color: cyan,
-                    fontFamily: "monospace",
-                    fontSize: 18,
-                    fontWeight: 800,
-                    padding: "6px 14px",
-                    borderRadius: 8,
-                  }}
-                >
-                  ● CAD VIEW // {scene.heroStat || "ACTIVE"}
-                </div>
-              </>
-            ) : (
-              <CadVectorSchematic
-                type={scene.visualType}
-                cyan={cyan}
-                orange={danger}
-                gold={gold}
-                localFrame={localFrame}
+        {/* AREA VISUAL TENGAH: Tetap tampil di semua mode (termasuk mode compare agar tidak kosong) */}
+        <div
+          style={{
+            position: "relative",
+            height: isCompare ? 235 : 430,
+            borderRadius: 22,
+            overflow: "hidden",
+            border: `2px solid rgba(56, 189, 248, 0.45)`,
+            backgroundColor: "#0d0b09",
+            boxShadow: "0 24px 60px rgba(0,0,0,0.65)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {scene.media && !isCompare ? (
+            <>
+              <Img
+                src={resolveMediaSrc(scene.media)}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  transform: `scale(${sceneMicroZoom})`,
+                  filter: "contrast(1.08) brightness(0.86)",
+                }}
               />
-            )}
-          </div>
-        ) : null}
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background:
+                    "linear-gradient(180deg, rgba(20,17,14,0.2) 0%, rgba(20,17,14,0.72) 100%)",
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  top: 18,
+                  left: 18,
+                  background: "rgba(14, 18, 26, 0.85)",
+                  border: `1.5px solid ${cyan}`,
+                  color: cyan,
+                  fontFamily: "monospace",
+                  fontSize: 18,
+                  fontWeight: 800,
+                  padding: "6px 14px",
+                  borderRadius: 8,
+                }}
+              >
+                ● CAD VIEW // {scene.heroStat || "ACTIVE"}
+              </div>
+            </>
+          ) : (
+            <CadVectorSchematic
+              type={scene.visualType}
+              cyan={cyan}
+              orange={danger}
+              gold={gold}
+              localFrame={localFrame}
+              compact={isCompare}
+            />
+          )}
+        </div>
 
-        {/* OVERLAY DATA: KANVAS DIAGRAM PUTIH (Compare & Bars) atau SPOTLIGHT CARDS */}
-        {scene.overlayType === "compare" && scene.compareLeft && scene.compareRight ? (
+        {/* OVERLAY DATA: KANVAS DIAGRAM PUTIH atau SPOTLIGHT CARDS */}
+        {isCompare && scene.compareLeft && scene.compareRight ? (
           <div
             style={{
               backgroundColor: "#ffffff",
               color: "#0f172a",
               borderRadius: 26,
-              padding: 32,
+              padding: 28,
               boxShadow: "0 25px 60px rgba(0,0,0,0.65)",
               border: `3px solid ${cyan}`,
             }}
@@ -471,30 +541,35 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
             <div
               style={{
                 fontFamily: "monospace",
-                fontSize: 20,
+                fontSize: 19,
                 fontWeight: 800,
                 color: "#475569",
-                marginBottom: 18,
+                marginBottom: 14,
                 letterSpacing: 1,
               }}
             >
               DIAGRAM PERBANDINGAN KOMPONEN
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 22 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
               {[scene.compareLeft, scene.compareRight].map((col, cIdx) => {
                 const colColor = toneColor(col.tone);
                 const colDelay = cIdx * 18;
-                const colOpacity = interpolate(localFrame, [colDelay, colDelay + 15], [0.25, 1], {
-                  extrapolateLeft: "clamp",
-                  extrapolateRight: "clamp",
-                });
+                const colOpacity = interpolate(
+                  localFrame,
+                  [colDelay, colDelay + 15],
+                  [0.25, 1],
+                  {
+                    extrapolateLeft: "clamp",
+                    extrapolateRight: "clamp",
+                  }
+                );
                 return (
                   <div
                     key={cIdx}
                     style={{
                       backgroundColor: "#f8fafc",
                       borderRadius: 18,
-                      padding: 22,
+                      padding: 20,
                       borderTop: `8px solid ${colColor}`,
                       borderLeft: "1px solid #e2e8f0",
                       borderRight: "1px solid #e2e8f0",
@@ -509,11 +584,11 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
                           backgroundColor: colColor,
                           color: "#ffffff",
                           fontFamily: "monospace",
-                          fontSize: 17,
+                          fontSize: 16,
                           fontWeight: 900,
                           padding: "4px 12px",
                           borderRadius: 6,
-                          marginBottom: 10,
+                          marginBottom: 8,
                         }}
                       >
                         {col.badge}
@@ -521,10 +596,10 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
                     ) : null}
                     <div
                       style={{
-                        fontSize: 27,
+                        fontSize: 26,
                         fontWeight: 900,
                         color: "#0f172a",
-                        marginBottom: 14,
+                        marginBottom: 12,
                       }}
                     >
                       {col.title}
@@ -533,11 +608,11 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
                       <div
                         key={iIdx}
                         style={{
-                          fontSize: 22,
-                          lineHeight: 1.35,
+                          fontSize: 21,
+                          lineHeight: 1.32,
                           color: "#334155",
                           fontWeight: 600,
-                          marginBottom: 10,
+                          marginBottom: 8,
                           paddingLeft: 12,
                           borderLeft: `3px solid ${colColor}`,
                         }}
@@ -551,7 +626,6 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
             </div>
           </div>
         ) : scene.overlayType === "bars" && scene.points ? (
-          /* Kanvas Diagram Putih dengan Grafik Garis & Toleransi (seperti detik 00:14-00:48 referensi) */
           <div
             style={{
               backgroundColor: "#ffffff",
@@ -582,7 +656,12 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
                 { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
               );
               return (
-                <div key={idx} style={{ marginBottom: idx === scene.points!.length - 1 ? 0 : 20 }}>
+                <div
+                  key={idx}
+                  style={{
+                    marginBottom: idx === scene.points!.length - 1 ? 0 : 20,
+                  }}
+                >
                   <div
                     style={{
                       display: "flex",
@@ -619,19 +698,22 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
             })}
           </div>
         ) : scene.points ? (
-          /* Spotlight Focus Cards (kartu aktif menyala putih terang, lainnya meredup) */
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {scene.points.map((pt, idx) => {
               const pColor = toneColor(pt.tone);
-              const stepSpan = timing.duration / Math.max(1, scene.points!.length);
+              const stepSpan =
+                timing.speechDuration / Math.max(1, scene.points!.length);
               const isSpotlight =
-                localFrame >= idx * stepSpan && localFrame < (idx + 1) * stepSpan + 10;
+                localFrame >= idx * stepSpan &&
+                localFrame < (idx + 1) * stepSpan + 10;
 
               return (
                 <div
                   key={idx}
                   style={{
-                    backgroundColor: isSpotlight ? "#ffffff" : "rgba(255, 255, 255, 0.12)",
+                    backgroundColor: isSpotlight
+                      ? "#ffffff"
+                      : "rgba(255, 255, 255, 0.12)",
                     color: isSpotlight ? "#0f172a" : "#cbd5e1",
                     borderRadius: 18,
                     padding: "20px 26px",
@@ -640,7 +722,9 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
                     alignItems: "center",
                     gap: 18,
                     transform: isSpotlight ? "scale(1.02)" : "scale(0.99)",
-                    boxShadow: isSpotlight ? "0 14px 34px rgba(0,0,0,0.45)" : "none",
+                    boxShadow: isSpotlight
+                      ? "0 14px 34px rgba(0,0,0,0.45)"
+                      : "none",
                   }}
                 >
                   <div
@@ -661,7 +745,9 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
                   >
                     {scene.overlayType === "checklist" ? "✓" : idx + 1}
                   </div>
-                  <div style={{ fontSize: 26, fontWeight: 800, lineHeight: 1.3 }}>{pt.text}</div>
+                  <div style={{ fontSize: 26, fontWeight: 800, lineHeight: 1.3 }}>
+                    {pt.text}
+                  </div>
                 </div>
               );
             })}
@@ -669,7 +755,7 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
         ) : null}
       </div>
 
-      {/* SUBTITLE KARAOKE BAWAH (Bold Putih + Sorotan Cyan #38bdf8 seperti Referensi) */}
+      {/* SUBTITLE KARAOKE BAWAH (Spasi Flex Renggang + Sorotan Cyan #38bdf8) */}
       <div
         style={{
           position: "absolute",
@@ -684,7 +770,19 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
           boxShadow: "0 16px 40px rgba(0,0,0,0.7)",
         }}
       >
-        <div style={{ fontSize: 38, fontWeight: 900, lineHeight: 1.35, letterSpacing: -0.3 }}>
+        <div
+          style={{
+            fontSize: 38,
+            fontWeight: 900,
+            lineHeight: 1.38,
+            letterSpacing: 0.2,
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "center",
+            columnGap: 14,
+            rowGap: 6,
+          }}
+        >
           {visibleWords.map((word, wIdx) => {
             const globalWordIdx = chunkStart + wIdx;
             const isActive = globalWordIdx === currentWordIndex;
@@ -693,10 +791,14 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
               <span
                 key={globalWordIdx}
                 style={{
-                  color: isActive ? cyan : isSpoken ? "#ffffff" : "rgba(255,255,255,0.55)",
-                  textShadow: isActive ? `0 0 18px rgba(56, 189, 248, 0.65)` : "none",
-                  marginRight: 11,
-                  display: "inline-block",
+                  color: isActive
+                    ? cyan
+                    : isSpoken
+                    ? "#ffffff"
+                    : "rgba(255,255,255,0.52)",
+                  textShadow: isActive
+                    ? "0 0 18px rgba(56, 189, 248, 0.75)"
+                    : "none",
                   transform: isActive ? "scale(1.06)" : "scale(1)",
                 }}
               >
