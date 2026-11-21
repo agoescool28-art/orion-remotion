@@ -38,30 +38,39 @@ export const AudioSyncedTypography: React.FC<Props> = ({
     ),
   }));
 
+  // Cari kata yang benar-benar sedang diucapkan.
   const activeIndex = cues.findIndex(
     (word) =>
       absoluteFrame >= word.startFrame &&
       absoluteFrame < word.endFrame
   );
 
-  const nextIndex = cues.findIndex(
-    (word) => word.startFrame > absoluteFrame
-  );
+  // Jika ada jeda, tahan kata terakhir maksimal 6 frame.
+  let anchor = activeIndex;
 
-  // Pilih kata aktif, atau kata berikutnya ketika ada jeda VO.
-  const anchor =
-    activeIndex >= 0
-      ? activeIndex
-      : nextIndex;
+  if (anchor < 0) {
+    for (let i = cues.length - 1; i >= 0; i--) {
+      if (cues[i].endFrame <= absoluteFrame) {
+        const framesSinceEnd =
+          absoluteFrame - cues[i].endFrame;
 
-  // Jangan tampilkan teks sebelum kata pertama dimulai.
+        if (framesSinceEnd <= 6) {
+          anchor = i;
+        }
+
+        break;
+      }
+    }
+  }
+
+  // Tidak menampilkan kata sebelum atau terlalu jauh
+  // dari waktu pengucapannya.
   if (anchor < 0) return null;
 
-  // Tampilkan dua kata sebelumnya dan beberapa kata berikutnya.
-  const from = Math.max(0, anchor - 2);
-  const to = Math.min(cues.length, from + 6);
-
-  const visible = cues.slice(from, to);
+  // Tampilkan maksimal empat kata sebelumnya
+  // dan kata yang sedang aktif.
+  const from = Math.max(0, anchor - 4);
+  const visible = cues.slice(from, anchor + 1);
 
   return (
     <div
@@ -86,9 +95,6 @@ export const AudioSyncedTypography: React.FC<Props> = ({
         const cueIndex = from + index;
         const isActive = cueIndex === activeIndex;
 
-        const framesUntil =
-          word.startFrame - absoluteFrame;
-
         const elapsed =
           absoluteFrame - word.startFrame;
 
@@ -103,13 +109,8 @@ export const AudioSyncedTypography: React.FC<Props> = ({
         });
 
         const opacity = isActive
-          ? 1
-          : interpolate(
-              enter,
-              [0, 1],
-              [0.45, 0.78],
-              clamp
-            );
+          ? interpolate(enter, [0, 1], [0.65, 1], clamp)
+          : 0.58;
 
         const y = interpolate(
           enter,
