@@ -93,10 +93,12 @@ const Scene: React.FC<{
   data: SceneData;
   index: number;
   globalStartFrame: number;
-}> = ({ data, index, globalStartFrame })  { => {
+}> = ({ data, index, globalStartFrame }) => {
+
   const frame = useCurrentFrame();
   const { durationInFrames, fps } = useVideoConfig();
-  const entrance = spring({ frame, fps, config: { damping: 20, stiffness: 72, mass: 0.95 } });
+
+  // Kode Scene selanjutnya tetap seperti semula.  const entrance = spring({ frame, fps, config: { damping: 20, stiffness: 72, mass: 0.95 } });
   const opacity = interpolate(frame, [0, 15, durationInFrames - 18, durationInFrames], [0, 1, 1, 0], clamp);
   const titleY = interpolate(entrance, [0, 1], [54, 0]);
   const titleScale = interpolate(entrance, [0, 1], [0.96, 1]);
