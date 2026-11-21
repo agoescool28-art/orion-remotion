@@ -96,7 +96,11 @@ def main():
                     4
                 ),
             })
+    words.sort(key=lambda item: item["start"])
 
+    for previous, current in zip(words, words[1:]):
+        if current["start"] < previous["start"]:
+            raise RuntimeError("Urutan timestamp tidak valid.")
     if not words:
         raise RuntimeError(
             "Tidak ada timestamp kata yang berhasil dibuat."
