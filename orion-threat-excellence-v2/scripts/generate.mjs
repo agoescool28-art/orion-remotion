@@ -243,11 +243,11 @@ Aturan wajib:
             exactAudioSec = stats.size / 16000;
           }
 
-          const totalFrames = Math.ceil((exactAudioSec + 0.8) * 30);
-          sceneData.durationInFrames = totalFrames;
+          sceneData.durationInFrames = Math.ceil((exactAudioSec + 0.8) * 30);
         }
+
         console.log(
-          `🎙️ VO Kustom: ${sceneData.audioSrc} | Durasi asli: ${exactAudioSec.toFixed(2)} dtk -> Render: ${(totalFrames / 30).toFixed(2)} dtk (${totalFrames} frames)`
+          `🎙️ VO Kustom: ${sceneData.audioSrc} -> Render: ${(sceneData.durationInFrames / 30).toFixed(2)} dtk (${sceneData.durationInFrames} frames)`
         );
       }
     } else if (!sceneData.audioSrc) {
