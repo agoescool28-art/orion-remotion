@@ -93,7 +93,7 @@ const Scene: React.FC<{
   data: SceneData;
   index: number;
   globalStartFrame: number;
-}> = ({ data, index, globalStartFrame }) => { => {
+}> = ({ data, index, globalStartFrame })  { => {
   const frame = useCurrentFrame();
   const { durationInFrames, fps } = useVideoConfig();
   const entrance = spring({ frame, fps, config: { damping: 20, stiffness: 72, mass: 0.95 } });
