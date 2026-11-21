@@ -228,22 +228,24 @@ Aturan wajib:
     if (sceneData.audioSrc && !sceneData.audioSrc.startsWith("data:")) {
       const localAudioPath = path.resolve("./public", sceneData.audioSrc);
       if (fs.existsSync(localAudioPath)) {
-        let exactAudioSec = 84;
-        try {
-          const probeOut = execSync(
-            `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${localAudioPath}"`
-          )
-            .toString()
-            .trim();
-          const parsed = parseFloat(probeOut);
-          if (!isNaN(parsed) && parsed > 0) exactAudioSec = parsed;
-        } catch (e) {
-          const stats = fs.statSync(localAudioPath);
-          exactAudioSec = stats.size / 15000;
-        }
+        if (!sceneData.durationInFrames) {
+          let exactAudioSec = 84;
+          try {
+            const probeOut = execSync(
+              `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${localAudioPath}"`
+            )
+              .toString()
+              .trim();
+            const parsed = parseFloat(probeOut);
+            if (!isNaN(parsed) && parsed > 0) exactAudioSec = parsed;
+          } catch (e) {
+            const stats = fs.statSync(localAudioPath);
+            exactAudioSec = stats.size / 16000;
+          }
 
-        const totalFrames = Math.ceil((exactAudioSec + 1.5) * 30);
-        sceneData.durationInFrames = totalFrames;
+          const totalFrames = Math.ceil((exactAudioSec + 0.8) * 30);
+          sceneData.durationInFrames = totalFrames;
+        }
         console.log(
           `🎙️ VO Kustom: ${sceneData.audioSrc} | Durasi asli: ${exactAudioSec.toFixed(2)} dtk -> Render: ${(totalFrames / 30).toFixed(2)} dtk (${totalFrames} frames)`
         );
