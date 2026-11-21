@@ -26,6 +26,7 @@ export const AudioSyncedTypography: React.FC<Props> = ({
 }) => {
   const localFrame = useCurrentFrame();
   const { fps } = useVideoConfig();
+
   const absoluteFrame = globalStartFrame + localFrame;
 
   const cues = words.map((word) => ({
@@ -47,12 +48,20 @@ export const AudioSyncedTypography: React.FC<Props> = ({
     (word) => word.startFrame > absoluteFrame
   );
 
-  const anchor = activeIndex >= 0 ? activeIndex : nextIndex;
+  // Pilih kata aktif, atau kata berikutnya ketika ada jeda VO.
+  const anchor =
+    activeIndex >= 0
+      ? activeIndex
+      : nextIndex;
 
+  // Jangan tampilkan teks sebelum kata pertama dimulai.
   if (anchor < 0) return null;
 
+  // Tampilkan dua kata sebelumnya dan beberapa kata berikutnya.
   const from = Math.max(0, anchor - 2);
-  const visible = cues.slice(from, from + 6);
+  const to = Math.min(cues.length, from + 6);
+
+  const visible = cues.slice(from, to);
 
   return (
     <div
@@ -77,10 +86,14 @@ export const AudioSyncedTypography: React.FC<Props> = ({
         const cueIndex = from + index;
         const isActive = cueIndex === activeIndex;
 
-        const framesUntil = word.startFrame - absoluteFrame;
+        const framesUntil =
+          word.startFrame - absoluteFrame;
+
+        const elapsed =
+          absoluteFrame - word.startFrame;
 
         const enter = spring({
-          frame: Math.max(0, 8 - Math.max(0, framesUntil)),
+          frame: Math.max(0, elapsed),
           fps,
           config: {
             damping: 14,
@@ -91,9 +104,21 @@ export const AudioSyncedTypography: React.FC<Props> = ({
 
         const opacity = isActive
           ? 1
-          : interpolate(enter, [0, 1], [0.38, 0.78], clamp);
+          : interpolate(
+              enter,
+              [0, 1],
+              [0.45, 0.78],
+              clamp
+            );
 
-        const y = interpolate(enter, [0, 1], [16, 0], clamp);
+        const y = interpolate(
+          enter,
+          [0, 1],
+          [16, 0],
+          clamp
+        );
+
+        const scale = isActive ? 1.08 : 1;
 
         return (
           <span
@@ -102,9 +127,7 @@ export const AudioSyncedTypography: React.FC<Props> = ({
               display: "inline-block",
               color: isActive ? accent : "#F1EDE3",
               opacity,
-              transform: `translate3d(0,${y}px,0) scale(${
-                isActive ? 1.08 : 1
-              })`,
+              transform: `translate3d(0,${y}px,0) scale(${scale})`,
               textShadow: isActive
                 ? `0 0 24px ${accent}66`
                 : "none",
