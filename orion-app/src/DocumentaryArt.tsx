@@ -170,22 +170,107 @@ const PresidencyArtwork: React.FC<{frame:number}> = ({frame}) => {
   </g>;
 };
 
+
 const OpeningArtwork: React.FC<{frame:number}> = ({frame}) => {
-  const p=interpolate(frame,[0,55],[0,1],clamp);
-  const scale=interpolate(frame,[0,300],[1.04,1.15],clamp);
+  const p = interpolate(frame, [0, 42], [0, 1], clamp);
+  const scale = interpolate(frame, [0, 300], [1.02, 1.17], clamp);
+  const driftX = interpolate(frame, [0, 300], [10, -18], clamp);
+  const driftY = interpolate(frame, [0, 300], [4, -8], clamp);
+  const scan = interpolate(frame, [0, 105], [-180, 980], clamp);
+  const rule = interpolate(frame, [18, 72], [0, 1], clamp);
+  const pulse = 0.35 + Math.sin(frame / 18) * 0.12;
+
   return <g>
-    <image
-      href={staticFile("1000827929.jpg.jpeg")}
-      x="90"
-      y="60"
-      width="720"
-      height="600"
-      preserveAspectRatio="xMidYMid slice"
-      transform={`translate(-${360 * (scale - 1)} -${300 * (scale - 1)}) scale(${scale})`}
-      filter="saturate(.65) contrast(1.12) brightness(.78)"
+    <defs>
+      <clipPath id="openingPhotoClip">
+        <rect x="78" y="58" width="744" height="590" />
+      </clipPath>
+
+      <linearGradient id="openingShade" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stopColor="#07100C" stopOpacity=".12" />
+        <stop offset=".55" stopColor="#07100C" stopOpacity=".08" />
+        <stop offset="1" stopColor="#07100C" stopOpacity=".86" />
+      </linearGradient>
+
+      <linearGradient id="openingSweep" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stopColor="#D7B77A" stopOpacity="0" />
+        <stop offset=".5" stopColor="#D7B77A" stopOpacity=".72" />
+        <stop offset="1" stopColor="#D7B77A" stopOpacity="0" />
+      </linearGradient>
+
+      <filter id="openingGrade">
+        <feColorMatrix type="saturate" values=".58" />
+        <feComponentTransfer>
+          <feFuncR type="gamma" amplitude="1.08" exponent=".92" offset="0" />
+          <feFuncG type="gamma" amplitude="1.02" exponent=".96" offset="0" />
+          <feFuncB type="gamma" amplitude=".91" exponent="1.04" offset="0" />
+        </feComponentTransfer>
+      </filter>
+    </defs>
+
+    <g clipPath="url(#openingPhotoClip)">
+      <image
+        href={staticFile("1000827929.jpg.jpeg")}
+        x="58"
+        y="35"
+        width="790"
+        height="650"
+        preserveAspectRatio="xMidYMid slice"
+        transform={`translate(${driftX} ${driftY}) translate(450 350) scale(${scale}) translate(-450 -350)`}
+        filter="url(#openingGrade)"
+      />
+
+      <rect x="78" y="58" width="744" height="590" fill="url(#openingShade)" />
+
+      <path
+        d={`M${scan} 58 l120 0 -210 590 -120 0 Z`}
+        fill="url(#openingSweep)"
+        opacity={pulse}
+      />
+
+      <path d="M78 510 H822" stroke="#F1EDE3" strokeWidth="1" opacity=".18" />
+
+      <g opacity={p}>
+        <rect x="98" y="82" width="4" height="74" fill={GOLD} />
+        <text x="116" y="103" fill={GOLD} fontSize="15" fontWeight="800" letterSpacing="4">
+          ARSIP PERJALANAN
+        </text>
+        <text x="116" y="132" fill={PAPER} fontSize="12" letterSpacing="2">
+          INDONESIA / DOKUMENTER
+        </text>
+      </g>
+
+      <g opacity={p}>
+        <text x="112" y="548" fill="#F1EDE3" fontSize="13" fontWeight="700" letterSpacing="3">
+          SEBUAH PERJALANAN PANJANG
+        </text>
+        <text x="108" y="604" fill="#F1EDE3" fontSize="48" fontWeight="900" letterSpacing="-1">
+          JEJAK LANGKAH
+        </text>
+        <rect x="110" y="620" width={590 * rule} height="3" fill={GOLD} />
+      </g>
+    </g>
+
+    <rect x="78" y="58" width="744" height="590" fill="none" stroke={GOLD} strokeWidth="2" opacity={p} />
+
+    <path
+      d="M78 58 h62 M78 58 v62 M822 58 h-62 M822 58 v62 M78 648 h62 M78 648 v-62 M822 648 h-62 M822 648 v-62"
+      fill="none"
+      stroke="#F1EDE3"
+      strokeWidth="3"
+      opacity=".9"
     />
-    <rect x="90" y="60" width="720" height="600" fill="none" stroke={GOLD} strokeWidth="2" opacity={p}/>
-    <Label x={450} y={700} size={16} color={GOLD}>ORION ORIGINAL DOCUMENTARY</Label>
+
+    <g opacity={p}>
+      <text x="78" y="690" fill={GOLD} fontSize="16" fontWeight="800" letterSpacing="3">
+        ORION ORIGINAL DOCUMENTARY
+      </text>
+      <text x="822" y="690" fill={MUTED} fontSize="13" textAnchor="end" letterSpacing="2">
+        CHAPTER 01 / THE BEGINNING
+      </text>
+    </g>
+
+    <circle cx="798" cy="84" r="5" fill={GOLD} opacity={pulse + .2} />
   </g>;
 };
 
