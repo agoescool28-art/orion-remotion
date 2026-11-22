@@ -258,12 +258,12 @@ const photoShiftX = interpolate(
       >
        
         <g opacity={graduationOpacity}>
-          
-        </g>
+  <GraduationScene />
+</g>
 
-        <g opacity={careerOpacity}>
-        
-        </g>
+<g opacity={careerOpacity}>
+  <CareerScene />
+</g>
 
         {/* Film grain / editorial texture */}
         <path
