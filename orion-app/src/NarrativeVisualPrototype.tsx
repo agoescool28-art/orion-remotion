@@ -81,36 +81,6 @@ const Cadet: React.FC<{
     </g>
   );
 };
-
-// ADEGAN 1: latihan dan barisan taruna.
-const TrainingScene: React.FC = () => {
-  const frame = useCurrentFrame();
-  const camera = interpolate(frame, [0, 100], [0, -85], clamp);
-
-  return (
-    <g transform={`translate(${camera} 0)`}>
-      {/* Lapangan perspektif */}
-      <path d="M0 1080 L1080 1080 L1080 1920 L0 1920Z" fill="#263B35" />
-      <path d="M540 1080 L0 1920 M540 1080 L1080 1920" stroke="#A89B77" strokeWidth="3" opacity=".25" />
-      <path d="M0 1450 H1080 M0 1650 H1080" stroke="#C6B995" strokeWidth="3" opacity=".18" />
-
-      {/* Gedung menjadi latar, bukan fokus utama */}
-      <path d="M120 760 L540 480 L960 760Z" fill="#6C7568" />
-      <rect x="175" y="760" width="730" height="310" fill="#AFA78D" />
-      {Array.from({ length: 6 }).map((_, i) => (
-        <rect key={i} x={230 + i * 125} y="805" width="42" height="220" fill="#59685D" />
-      ))}
-
-      {/* Formasi taruna */}
-      <Cadet x={230} y={1570} scale={1.05} delay={2} />
-      <Cadet x={420} y={1530} scale={1.15} delay={8} />
-      <Cadet x={610} y={1570} scale={1.05} delay={14} />
-      <Cadet x={800} y={1530} scale={1.15} delay={20} />
-      <Cadet x={970} y={1570} scale={1.05} delay={26} />
-    </g>
-  );
-};
-
 // ADEGAN 2: seremoni kelulusan.
 const GraduationScene: React.FC = () => {
   const frame = useCurrentFrame();
