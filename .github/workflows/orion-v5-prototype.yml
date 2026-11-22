@@ -1,0 +1,56 @@
+
+name: ORION V5 Narrative Prototype
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  render-orion-v5:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    defaults:
+      run:
+        working-directory: orion-app
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: orion-app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify voiceover
+        run: test -s public/prabowo_vo.mp3.mp3
+
+      - name: TypeScript check
+        run: npx tsc --noEmit
+
+      - name: Ensure Remotion browser
+        run: npx remotion browser ensure
+
+      - name: Render ORION V5 Prototype
+        run: >
+          npx remotion render src/index.ts ORION-V5-PROTOTYPE
+          out/orion-v5-prototype.mp4
+          --codec h264 --crf 19 --pixel-format yuv420p
+
+      - name: Upload V5 MP4
+        uses: actions/upload-artifact@v4
+        with:
+          name: ORION-V5-Narrative-Prototype
+          path: orion-app/out/orion-v5-prototype.mp4
+          if-no-files-found: error
+          retention-days: 14
