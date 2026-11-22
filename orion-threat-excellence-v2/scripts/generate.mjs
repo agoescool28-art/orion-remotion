@@ -69,9 +69,9 @@ async function callGeminiWithRetry(prompt) {
   if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY tidak ditemukan di environment!");
 
   const models = [
-    "gemini-2.5-flash",
+    "gemini-3.8-flash",
     "gemini-flash-latest",
-    "gemini-2.0-flash"
+    "gemini-2.5-flash"
   ];
   const delays = [5000, 15000, 30000];
 
