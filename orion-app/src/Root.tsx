@@ -23,7 +23,7 @@ export const RemotionRoot: React.FC = () => {
       />
 
       <Composition
-        id="ORION_V5_PROTOTYPE"
+        id="ORION-V5-PROTOTYPE"
         component={NarrativeVisualPrototype}
         durationInFrames={300}
         fps={30}
