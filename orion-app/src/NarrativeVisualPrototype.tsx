@@ -12,290 +12,316 @@ import { project } from "./project";
 import { prabowoWords } from "./audio/prabowo.words";
 import { AudioSyncedTypography } from "./audio/AudioSyncedTypography";
 
+const FPS = 30;
 const START_SECONDS = 21.5;
-const START_FRAME = Math.round(START_SECONDS * 30);
+const START_FRAME = Math.round(START_SECONDS * FPS);
+
 const clamp = {
   extrapolateLeft: "clamp" as const,
   extrapolateRight: "clamp" as const,
 };
 
+const fade = (frame: number, start: number, end: number) =>
+  interpolate(frame, [start, start + 12, end - 12, end], [0, 1, 1, 0], clamp);
+
+// Siluet taruna dengan anatomi dan posisi yang terlihat di kanvas.
 const Cadet: React.FC<{
   x: number;
-  delay: number;
-  scale: number;
-}> = ({ x, delay, scale }) => {
+  y: number;
+  scale?: number;
+  delay?: number;
+  color?: string;
+}> = ({ x, y, scale = 1, delay = 0, color = "#263B34" }) => {
   const frame = useCurrentFrame();
-
-  const y = interpolate(frame - delay, [0, 24], [70, 0], clamp);
-  const opacity = interpolate(frame - delay, [0, 18], [0, 1], clamp);
-  const step = Math.sin((frame - delay) / 5) * 4;
+  const local = Math.max(0, frame - delay);
+  const walk = Math.sin(local / 4) * 9;
+  const enter = interpolate(frame - delay, [0, 18], [70, 0], clamp);
+  const opacity = interpolate(frame - delay, [0, 12], [0, 1], clamp);
 
   return (
     <g
-      transform={`translate(${x} ${y + step}) scale(${scale})`}
+      transform={`translate(${x + walk} ${y + enter}) scale(${scale})`}
       opacity={opacity}
     >
-      <ellipse cy="0" rx="25" ry="7" fill="#05090D" opacity=".5" />
-      <path d="M-15 -95 L15 -95 L21 -32 L-21 -32Z" fill="#1D3430" />
-      <circle cy="-112" r="12" fill="#B98763" />
-      <path d="M-14 -123 L14 -123 L9 -132 L-9 -132Z" fill="#C6AD76" />
+      <ellipse cx="0" cy="0" rx="42" ry="9" fill="#080F0D" opacity=".4" />
+
+      {/* Legs */}
       <path
-        d="M-10 -32 L-17 0 L-4 0 L2 -31 M8 -32 L5 0 L19 0 L17 -32"
-        fill="#101A1E"
+        d="M-14 -100 L-18 -12 L-35 0 L-7 0 L8 -76 L20 -12 L35 0 L7 0 L4 -100"
+        fill="#172822"
       />
+
+      {/* Body */}
       <path
-        d="M-18 -85 L-36 -50 M18 -85 L34 -52"
-        stroke="#B98763"
-        strokeWidth="8"
+        d="M-22 -175 L22 -175 L31 -105 L-30 -105Z"
+        fill={color}
+        stroke="#A99B76"
+        strokeWidth="2"
+      />
+
+      {/* Arms */}
+      <path
+        d="M-19 -163 L-43 -115 L-32 -108 L-9 -146"
+        stroke="#B68E6B"
+        strokeWidth="12"
         strokeLinecap="round"
+        fill="none"
       />
-      <path d="M-5 -92 L5 -92 L5 -42 L-5 -42Z" fill="#C6AD76" />
+      <path
+        d="M19 -163 L42 -125 L32 -117 L8 -147"
+        stroke="#B68E6B"
+        strokeWidth="12"
+        strokeLinecap="round"
+        fill="none"
+      />
+
+      {/* Head and cap */}
+      <circle cx="0" cy="-195" r="17" fill="#B68E6B" />
+      <path d="M-20 -202 L20 -202 L13 -218 L-13 -218Z" fill="#263B34" />
+      <path d="M-23 -202 L23 -202" stroke="#D5C18D" strokeWidth="4" />
     </g>
   );
 };
 
-const AcademyVisual: React.FC = () => {
+// ADEGAN 1: latihan dan barisan taruna.
+const TrainingScene: React.FC = () => {
   const frame = useCurrentFrame();
-
-  const push = interpolate(frame, [0, 300], [1, 1.13], clamp);
-  const drift = interpolate(frame, [0, 300], [12, -18], clamp);
-  const year = interpolate(frame, [145, 205], [0, 1], clamp);
-  const sweep = interpolate(frame, [0, 300], [-500, 1500], clamp);
-  const progress = interpolate(frame, [20, 120], [0, 100], clamp);
+  const camera = interpolate(frame, [0, 100], [0, -85], clamp);
 
   return (
-    <AbsoluteFill
-      style={{
-        background:
-          "radial-gradient(ellipse at 50% 30%, #53625B, #263638 42%, #10191D 82%)",
-        overflow: "hidden",
-      }}
-    >
-      <div
+    <g transform={`translate(${camera} 0)`}>
+      {/* Lapangan perspektif */}
+      <path d="M0 1080 L1080 1080 L1080 1920 L0 1920Z" fill="#263B35" />
+      <path d="M540 1080 L0 1920 M540 1080 L1080 1920" stroke="#A89B77" strokeWidth="3" opacity=".25" />
+      <path d="M0 1450 H1080 M0 1650 H1080" stroke="#C6B995" strokeWidth="3" opacity=".18" />
+
+      {/* Gedung menjadi latar, bukan fokus utama */}
+      <path d="M120 760 L540 480 L960 760Z" fill="#6C7568" />
+      <rect x="175" y="760" width="730" height="310" fill="#AFA78D" />
+      {Array.from({ length: 6 }).map((_, i) => (
+        <rect key={i} x={230 + i * 125} y="805" width="42" height="220" fill="#59685D" />
+      ))}
+
+      {/* Formasi taruna */}
+      <Cadet x={230} y={1570} scale={1.05} delay={2} />
+      <Cadet x={420} y={1530} scale={1.15} delay={8} />
+      <Cadet x={610} y={1570} scale={1.05} delay={14} />
+      <Cadet x={800} y={1530} scale={1.15} delay={20} />
+      <Cadet x={970} y={1570} scale={1.05} delay={26} />
+    </g>
+  );
+};
+
+// ADEGAN 2: seremoni kelulusan.
+const GraduationScene: React.FC = () => {
+  const frame = useCurrentFrame();
+  const rise = interpolate(frame, [95, 145], [100, 0], clamp);
+  const light = interpolate(frame, [105, 180], [0.1, 0.8], clamp);
+
+  return (
+    <g transform={`translate(0 ${rise})`}>
+      <path d="M0 1250 H1080 V1920 H0Z" fill="#26362F" />
+
+      {/* Panggung seremoni */}
+      <path d="M140 1120 H940 L1010 1280 H70Z" fill="#A79E83" />
+      <path d="M70 1280 H1010 L1080 1360 H0Z" fill="#56645A" />
+
+      {/* Latar podium */}
+      <rect x="270" y="650" width="540" height="420" fill="#BEB395" />
+      <path d="M210 650 L540 430 L870 650Z" fill="#D8CBA9" />
+      <path d="M270 650 H810" stroke="#E9DCBA" strokeWidth="12" />
+
+      {/* Pintu utama */}
+      <rect x="460" y="830" width="160" height="240" fill="#24342F" />
+
+      {/* Barisan peserta seremoni */}
+      {Array.from({ length: 7 }).map((_, i) => (
+        <g key={i} transform={`translate(${125 + i * 140} 0)`}>
+          <circle cx="0" cy="1160" r="18" fill="#B68E6B" />
+          <path d="M-23 1185 H23 L28 1280 H-28Z" fill="#263B34" />
+          <path d="M-12 1280 L-15 1340 M12 1280 L18 1340" stroke="#151E1A" strokeWidth="13" />
+          <path d="M-20 1143 H20 L13 1130 H-13Z" fill="#D2BD8D" />
+        </g>
+      ))}
+
+      {/* Cahaya panggung */}
+      <path
+        d="M540 150 L820 1250 H260Z"
+        fill="#F0DCA7"
+        opacity={light * 0.12}
+      />
+    </g>
+  );
+};
+
+// ADEGAN 3: transisi menuju perjalanan karier.
+const CareerScene: React.FC = () => {
+  const frame = useCurrentFrame();
+  const travel = interpolate(frame, [185, 300], [150, -450], clamp);
+
+  return (
+    <g>
+      <path d="M0 1120 H1080 V1920 H0Z" fill="#172922" />
+
+      {/* Garis perspektif lapangan */}
+      {Array.from({ length: 7 }).map((_, i) => (
+        <path
+          key={i}
+          d={`M540 1080 L${i * 180} 1920`}
+          stroke="#BBAE89"
+          strokeWidth="3"
+          opacity=".2"
+        />
+      ))}
+
+      {/* Formasi bergerak melintasi layar */}
+      <g transform={`translate(${travel} 0)`}>
+        <Cadet x={250} y={1530} scale={1.15} delay={185} color="#334C3F" />
+        <Cadet x={450} y={1530} scale={1.15} delay={193} color="#334C3F" />
+        <Cadet x={650} y={1530} scale={1.15} delay={201} color="#334C3F" />
+        <Cadet x={850} y={1530} scale={1.15} delay={209} color="#334C3F" />
+        <Cadet x={1050} y={1530} scale={1.15} delay={217} color="#334C3F" />
+      </g>
+
+      {/* Garis perjalanan */}
+      <path
+        d="M90 1420 Q540 1280 990 1420"
+        stroke="#D6BD85"
+        strokeWidth="4"
+        strokeDasharray="14 12"
+        fill="none"
+        opacity={interpolate(frame, [210, 270], [0, 1], clamp)}
+      />
+    </g>
+  );
+};
+
+const NarrativeVisual: React.FC = () => {
+  const frame = useCurrentFrame();
+
+  const trainingOpacity = fade(frame, 0, 112);
+  const graduationOpacity = fade(frame, 92, 205);
+  const careerOpacity = fade(frame, 185, 300);
+
+  return (
+    <AbsoluteFill style={{ backgroundColor: "#101B18", overflow: "hidden" }}>
+      {/* Background atmospheric depth */}
+      <AbsoluteFill
         style={{
-          position: "absolute",
-          inset: -70,
-          transform: `translateX(${drift}px) scale(${push})`,
+          background:
+            "radial-gradient(ellipse at 50% 25%, #53645A 0%, #263A32 42%, #101B18 100%)",
         }}
+      />
+
+      {/* Scene layers */}
+      <svg
+        viewBox="0 0 1080 1920"
+        width="100%"
+        height="100%"
+        style={{ position: "absolute", inset: 0 }}
       >
-        <svg viewBox="0 0 1080 1920" width="100%" height="100%">
-          <defs>
-            <linearGradient id="facadeV5" x1="0" y1="0" x2="1" y2="1">
-              <stop stopColor="#D7CBAA" />
-              <stop offset="1" stopColor="#69766E" />
-            </linearGradient>
+        <g opacity={trainingOpacity}>
+          <TrainingScene />
+        </g>
 
-            <linearGradient id="beamV5">
-              <stop stopColor="#F2DCA4" stopOpacity="0" />
-              <stop offset=".5" stopColor="#F2DCA4" stopOpacity=".25" />
-              <stop offset="1" stopColor="#F2DCA4" stopOpacity="0" />
-            </linearGradient>
-          </defs>
+        <g opacity={graduationOpacity}>
+          <GraduationScene />
+        </g>
 
-          {/* Latar dan lapangan */}
-          <path d="M0 1050 L1080 930 V1920 H0Z" fill="#172629" />
+        <g opacity={careerOpacity}>
+          <CareerScene />
+        </g>
 
-          {/* Gedung akademi */}
-          <path d="M115 900 L540 580 L965 900Z" fill="#56645D" />
-          <path d="M165 900 L540 620 L915 900Z" fill="url(#facadeV5)" />
-          <path d="M190 900 H890 V1330 H190Z" fill="#A9A58F" />
-          <path d="M190 900 L540 650 L890 900Z" fill="#D4C8A8" />
+        {/* Film grain / editorial texture */}
+        <path
+          d="M0 0 H1080 V1920 H0Z"
+          fill="none"
+          stroke="#E7DAB9"
+          strokeWidth="3"
+          opacity=".12"
+        />
+      </svg>
 
-          <path
-            d="M170 900 L540 630 L910 900"
-            fill="none"
-            stroke="#E8DDBD"
-            strokeWidth="16"
-          />
-
-          {/* Pilar gedung */}
-          {Array.from({ length: 6 }).map((_, i) => (
-            <g key={i} transform={`translate(${245 + i * 118} 925)`}>
-              <rect width="38" height="365" fill="#D8CBA9" />
-              <rect
-                x="8"
-                width="8"
-                height="365"
-                fill="#F4E8C8"
-                opacity=".45"
-              />
-            </g>
-          ))}
-
-          {/* Pintu utama */}
-          <rect x="470" y="1050" width="140" height="280" fill="#1B2B2D" />
-
-          <text
-            x="540"
-            y="858"
-            textAnchor="middle"
-            fill="#35433D"
-            fontSize="30"
-            fontWeight="700"
-            letterSpacing="7"
-          >
-            AKADEMI MILITER
-          </text>
-
-          {/* Tangga */}
-          <path d="M190 1330 H890 L950 1400 H130Z" fill="#7B857A" />
-          <path d="M130 1400 H950 L1010 1470 H70Z" fill="#465A57" />
-
-          {/* Perspektif lapangan */}
-          <path
-            d="M540 1480 L0 1920 M540 1480 L1080 1920"
-            stroke="#C5B998"
-            strokeWidth="3"
-            opacity=".2"
-          />
-
-          {/* Taruna */}
-          <Cadet x={330} delay={8} scale={1} />
-          <Cadet x={470} delay={20} scale={1.2} />
-          <Cadet x={625} delay={32} scale={1.12} />
-          <Cadet x={770} delay={44} scale={0.96} />
-
-          {/* Cahaya bergerak */}
-          <path
-            d={`M${sweep} 0 L${sweep + 250} 0 L${sweep - 180} 1920 L${sweep - 430} 1920Z`}
-            fill="url(#beamV5)"
-          />
-        </svg>
-      </div>
-
-      {/* Identitas editorial */}
+      {/* Editorial labels: kecil, tidak menguasai layar */}
       <div
         style={{
           position: "absolute",
-          top: 120,
-          left: 76,
-          color: "#D5C49A",
-          fontSize: 24,
-          letterSpacing: 7,
+          top: 90,
+          left: 72,
+          color: "#D7C69B",
+          fontSize: 20,
           fontWeight: 700,
+          letterSpacing: 6,
         }}
       >
-        JEJAK LANGKAH
+        JEJAK LANGKAH / 03
       </div>
 
-      {/* Informasi visual */}
+      {/* Peristiwa dan penanda waktu */}
+      <div
+        style={{
+          position: "absolute",
+          top: 1180,
+          left: 75,
+          right: 75,
+          opacity: interpolate(frame, [110, 135, 180, 200], [0, 1, 1, 0], clamp),
+        }}
+      >
+        <div
+          style={{
+            color: "#E3CB91",
+            fontSize: 76,
+            fontWeight: 900,
+            letterSpacing: -2,
+          }}
+        >
+          1974
+        </div>
+        <div
+          style={{
+            color: "#F1EBDD",
+            fontSize: 23,
+            letterSpacing: 4,
+            marginTop: 5,
+          }}
+        >
+          KELULUSAN AKABRI
+        </div>
+      </div>
+
+      {/* Typography sinkron dengan VO */}
       <div
         style={{
           position: "absolute",
           left: 76,
           right: 76,
-          bottom: 265,
+          bottom: 165,
+          height: 120,
         }}
       >
-        <div
-          style={{
-            color: "#D5C49A",
-            fontSize: 22,
-            letterSpacing: 5,
-          }}
-        >
-          PENDIDIKAN MILITER
-        </div>
-
-        <div
-          style={{
-            marginTop: 14,
-            color: "#F4F0E6",
-            fontSize: 68,
-            lineHeight: 0.98,
-            fontWeight: 900,
-            letterSpacing: -2,
-          }}
-        >
-          DISIPLIN
-          <br />
-          MEMBENTUK
-          <br />
-          KARAKTER
-        </div>
-
-        {/* Timeline progresif */}
-        <div
-          style={{
-            marginTop: 28,
-            height: 3,
-            background: "rgba(240,230,205,.25)",
-          }}
-        >
-          <div
-            style={{
-              height: 3,
-              width: `${progress}%`,
-              background: "#D5C49A",
-            }}
-          />
-        </div>
-
-        {/* Tahun kelulusan */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 18,
-            marginTop: 18,
-            opacity: year,
-          }}
-        >
-          <span
-            style={{
-              color: "#E5C77F",
-              fontSize: 60,
-              fontWeight: 900,
-            }}
-          >
-            1974
-          </span>
-
-          <span
-            style={{
-              color: "#EEE7D7",
-              fontSize: 20,
-              letterSpacing: 3,
-            }}
-          >
-            LULUS DARI AKABRI
-          </span>
-        </div>
+        <AudioSyncedTypography
+          words={prabowoWords}
+          globalStartFrame={START_FRAME}
+          accent="#E2C789"
+        />
       </div>
 
-      {/* Kinetic typography sinkron VO */}
+      {/* Progress */}
       <div
         style={{
           position: "absolute",
           left: 76,
           right: 76,
           bottom: 105,
-          height: 115,
-        }}
-      >
-        <AudioSyncedTypography
-          words={prabowoWords}
-          globalStartFrame={START_FRAME}
-          accent="#E5C77F"
-        />
-      </div>
-
-      {/* Progress bar video */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          height: 10,
-          width: "100%",
-          background: "rgba(255,255,255,.12)",
+          height: 3,
+          background: "rgba(255,255,255,.22)",
         }}
       >
         <div
           style={{
+            width: `${interpolate(frame, [0, 300], [0, 100], clamp)}%`,
             height: "100%",
-            width: `${frame / 3}%`,
-            background: "#D5C49A",
+            background: "#D8BD82",
           }}
         />
       </div>
@@ -311,7 +337,7 @@ export const NarrativeVisualPrototype: React.FC = () => {
         startFrom={START_FRAME}
         volume={1}
       />
-      <AcademyVisual />
+      <NarrativeVisual />
     </AbsoluteFill>
   );
 };
