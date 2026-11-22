@@ -1,13 +1,12 @@
 
-import React from "react";
 import {
   AbsoluteFill,
   Audio,
+  Img,
   interpolate,
   staticFile,
   useCurrentFrame,
 } from "remotion";
-
 import { project } from "./project";
 import { prabowoWords } from "./audio/prabowo.words";
 import { AudioSyncedTypography } from "./audio/AudioSyncedTypography";
@@ -202,6 +201,19 @@ const NarrativeVisual: React.FC = () => {
   const trainingOpacity = fade(frame, 0, 112);
   const graduationOpacity = fade(frame, 92, 205);
   const careerOpacity = fade(frame, 185, 300);
+  const photoScale = interpolate(
+  frame,
+  [0, 112],
+  [1.03, 1.12],
+  clamp
+);
+
+const photoShiftX = interpolate(
+  frame,
+  [0, 112],
+  [0, -18],
+  clamp
+);
 
   return (
     <AbsoluteFill style={{ backgroundColor: "#101B18", overflow: "hidden" }}>
@@ -212,7 +224,31 @@ const NarrativeVisual: React.FC = () => {
             "radial-gradient(ellipse at 50% 25%, #53645A 0%, #263A32 42%, #101B18 100%)",
         }}
       />
+{/* Documentary photography background */}
+<AbsoluteFill
+  style={{
+    opacity: trainingOpacity,
+    overflow: "hidden",
+  }}
+>
+  <Img
+    src={staticFile("academy-cadets.jpg")}
+    style={{
+      width: "100%",
+      height: "100%",
+      objectFit: "cover",
+      transform: `translateX(${photoShiftX}px) scale(${photoScale})`,
+      transformOrigin: "center center",
+    }}
+  />
 
+  <AbsoluteFill
+    style={{
+      background:
+        "linear-gradient(180deg, rgba(10,18,15,.12) 0%, rgba(10,18,15,.04) 42%, rgba(10,18,15,.68) 100%)",
+    }}
+  />
+</AbsoluteFill>
       {/* Scene layers */}
       <svg
         viewBox="0 0 1080 1920"
@@ -220,16 +256,13 @@ const NarrativeVisual: React.FC = () => {
         height="100%"
         style={{ position: "absolute", inset: 0 }}
       >
-        <g opacity={trainingOpacity}>
-          <TrainingScene />
-        </g>
-
+       
         <g opacity={graduationOpacity}>
-          <GraduationScene />
+          
         </g>
 
         <g opacity={careerOpacity}>
-          <CareerScene />
+        
         </g>
 
         {/* Film grain / editorial texture */}
