@@ -1,5 +1,5 @@
 
-name: ORION V5 Narrative Prototype
+name: ORION Full Documentary Video
 
 on:
   workflow_dispatch:
@@ -8,9 +8,9 @@ permissions:
   contents: read
 
 jobs:
-  render-orion-v5:
+  render-orion-full:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
 
     defaults:
       run:
@@ -32,7 +32,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Verify voiceover
+      - name: Verify full voiceover
         run: test -s public/prabowo_vo.mp3.mp3
 
       - name: TypeScript check
@@ -41,16 +41,16 @@ jobs:
       - name: Ensure Remotion browser
         run: npx remotion browser ensure
 
-      - name: Render ORION V5 Prototype
+      - name: Render FULL Documentary
         run: >
-          npx remotion render src/index.ts ORION-V5-PROTOTYPE
-          out/orion-v5-prototype.mp4
+          npx remotion render src/index.ts MyComp
+          out/orion-prabowo-full-documentary.mp4
           --codec h264 --crf 19 --pixel-format yuv420p
 
-      - name: Upload V5 MP4
+      - name: Upload FULL Documentary MP4
         uses: actions/upload-artifact@v4
         with:
-          name: ORION-V5-Narrative-Prototype
-          path: orion-app/out/orion-v5-prototype.mp4
+          name: ORION-Prabowo-Full-Documentary
+          path: orion-app/out/orion-prabowo-full-documentary.mp4
           if-no-files-found: error
           retention-days: 14
