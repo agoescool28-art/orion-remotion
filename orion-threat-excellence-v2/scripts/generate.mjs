@@ -64,16 +64,17 @@ async function fetchPixabayMedia(query, index) {
   return null;
 }
 
-// 3. Fungsi Panggil Gemini dengan Retry & Fallback Model Aktif
+// 3. Fungsi Panggil Gemini dengan Retry, Fallback Model, & Fallback Lokal Anti-Gagal
 async function callGeminiWithRetry(prompt) {
   if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY tidak ditemukan di environment!");
 
   const models = [
-  "gemini-2.5-flash",
-  "gemini-3.8-flash",
-  "gemini-flash-latest"
-];
-  const delays = [5000, 15000, 30000];
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
+    "gemini-3.8-flash",
+    "gemini-flash-latest"
+  ];
+  const delays = [5000, 10000, 15000, 20000];
 
   for (let i = 0; i < models.length; i++) {
     const model = models[i];
@@ -109,9 +110,84 @@ async function callGeminiWithRetry(prompt) {
       }
     }
   }
-  throw new Error("Semua percobaan Gemini API gagal.");
-}
 
+  // Fallback otomatis jika server Gemini 503/sibuk agar video tetap ter-render
+  console.warn("⚠️ Semua server Gemini sedang sibuk (503). Menggunakan generator kerangka lokal otomatis...");
+  const judulSingkat = IDE_KONTEN.slice(0, 60).toUpperCase();
+  return JSON.stringify({
+    title: judulSingkat,
+    subtitle: "Ringkasan Visual & Analisis Utama",
+    styleConfig: {
+      bgColor: "#061338",
+      accentColor: "#facc15",
+      dangerColor: "#ef4444",
+      successColor: "#22c55e",
+      watermark: "orionmotion"
+    },
+    scenes: [
+      {
+        tag: "01 • PENGENALAN",
+        heading: "KONTEKS UTAMA",
+        headingTone: "gold",
+        heroStat: "100%",
+        heroLabel: "FOKUS PEMBAHASAN",
+        body: `Mari kita bahas topik penting mengenai ${IDE_KONTEN} secara ringkas dan terstruktur.`,
+        overlayType: "pills",
+        points: [
+          { text: "Pemahaman konsep dasar", tone: "neutral" },
+          { text: "Dampak langsung di lapangan", tone: "gold" }
+        ],
+        visualType: "bulb",
+        visualQuery: "industrial engineering technology"
+      },
+      {
+        tag: "02 • ANALISIS",
+        heading: "TANTANGAN UTAMA",
+        headingTone: "red",
+        heroStat: "RISIKO",
+        heroLabel: "YANG PERLU DIHINDARI",
+        body: "Tanpa perencanaan dan kontrol yang tepat, proses operasional rentan mengalami hambatan.",
+        overlayType: "bars",
+        points: [
+          { text: "Potensi pemborosan waktu", tone: "red" },
+          { text: "Penurunan efisiensi kerja", tone: "neutral" }
+        ],
+        visualType: "gear",
+        visualQuery: "manufacturing assembly line"
+      },
+      {
+        tag: "03 • SOLUSI",
+        heading: "LANGKAH PERBAIKAN",
+        headingTone: "green",
+        heroStat: "OPTIMAL",
+        heroLabel: "STANDAR TERBAIK",
+        body: "Penerapan standar kerja yang konsisten membantu menjaga stabilitas dan kualitas hasil.",
+        overlayType: "pills",
+        points: [
+          { text: "Evaluasi parameter secara berkala", tone: "green" },
+          { text: "Standardisasi alur kerja", tone: "gold" }
+        ],
+        visualType: "chart",
+        visualQuery: "data analytics dashboard"
+      },
+      {
+        tag: "04 • KESIMPULAN",
+        heading: "POIN KUNCI",
+        headingTone: "gold",
+        heroStat: "SIAP",
+        heroLabel: "IMPLEMENTASI",
+        body: "Dengan memahami prinsip utamanya, eksekusi di lapangan menjadi jauh lebih efektif dan terukur.",
+        overlayType: "checklist",
+        points: [
+          { text: "Identifikasi akar masalah", tone: "green" },
+          { text: "Terapkan perbaikan berkelanjutan", tone: "gold" }
+        ],
+        visualType: "shield",
+        visualQuery: "modern factory automation"
+      }
+    ]
+  });
+}
 // 4. Kirim Video ke Telegram
 async function sendVideoToTelegram(videoPath, caption) {
   if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
