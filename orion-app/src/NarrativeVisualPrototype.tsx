@@ -137,6 +137,15 @@ const TrainingScene: React.FC = () => {
             filter: "contrast(1.12) saturate(.82) sepia(.1)",
           }}
         />
+        
+      <SceneLabel
+        number="01"
+        eyebrow="PEMBENTUKAN"
+        title="DISIPLIN DAN PENGABDIAN"
+        frame={frame}
+        start={5}
+      />
+
       </AbsoluteFill>
 
       <AbsoluteFill style={{ opacity: shotB, overflow: "hidden" }}>
