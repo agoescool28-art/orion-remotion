@@ -1,5 +1,5 @@
 
-name: ORION Full Documentary Video
+name: ORION Full Narrative Render
 
 on:
   workflow_dispatch:
@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 jobs:
-  render-orion-full:
+  render-orion-full-narrative:
     runs-on: ubuntu-latest
     timeout-minutes: 90
 
@@ -22,7 +22,7 @@ jobs:
         with:
           lfs: true
 
-      - name: Setup Node.js 22
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -32,8 +32,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Verify full voiceover
-        run: test -s public/prabowo_vo.mp3.mp3
+      - name: Verify assets
+        run: |
+          test -s public/prabowo_vo.mp3.mp3
+          test -s public/1000827929.jpg.jpeg
+          test -s public/academy-cadets.jpg
 
       - name: TypeScript check
         run: npx tsc --noEmit
@@ -41,16 +44,16 @@ jobs:
       - name: Ensure Remotion browser
         run: npx remotion browser ensure
 
-      - name: Render FULL Documentary
+      - name: Render ORION Full Narrative
         run: >
-          npx remotion render src/index.ts MyComp
-          out/orion-prabowo-full-documentary.mp4
+          npx remotion render src/index.ts ORION-FULL-NARRATIVE
+          out/orion-prabowo-full-narrative.mp4
           --codec h264 --crf 19 --pixel-format yuv420p
 
-      - name: Upload FULL Documentary MP4
+      - name: Upload MP4
         uses: actions/upload-artifact@v4
         with:
-          name: ORION-Prabowo-Full-Documentary
-          path: orion-app/out/orion-prabowo-full-documentary.mp4
+          name: ORION-Prabowo-Full-Narrative-MP4
+          path: orion-app/out/orion-prabowo-full-narrative.mp4
           if-no-files-found: error
           retention-days: 14
