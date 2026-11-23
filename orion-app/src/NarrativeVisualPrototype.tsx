@@ -4,7 +4,6 @@ import {
   AbsoluteFill,
   Audio,
   Img,
-  Easing,
   interpolate,
   spring,
   staticFile,
@@ -24,16 +23,6 @@ const CLAMP = {
   extrapolateLeft: "clamp" as const,
   extrapolateRight: "clamp" as const,
 };
-
-const ease = (
-  frame: number,
-  input: number[],
-  output: number[]
-) =>
-  interpolate(frame, input, output, {
-    ...CLAMP,
-    easing: Easing.bezier(0.22, 1, 0.36, 1),
-  });
 
 /* =====================================================
    EDITORIAL SCENE LABEL
