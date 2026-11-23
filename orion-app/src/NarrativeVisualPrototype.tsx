@@ -107,139 +107,115 @@ const SceneLabel: React.FC<{
    Documentary photography treatment
 ===================================================== */
 
+
+/* =====================================================
+   SCENE 01 — MILITARY FORMATION
+   Cinematic documentary camera treatment
+===================================================== */
+
 const TrainingScene: React.FC = () => {
   const frame = useCurrentFrame();
 
-  const scale = interpolate(
-    frame,
-    [0, 112],
-    [1.04, 1.17],
-    CLAMP
-  );
-
-  const shiftX = interpolate(
-    frame,
-    [0, 112],
-    [0, -32],
-    CLAMP
-  );
-
-  const sweep = interpolate(
-    frame,
-    [12, 94],
-    [-380, 1180],
-    CLAMP
-  );
-
-  const opacity = interpolate(
-    frame,
-    [0, 8, 98, 116],
-    [0, 1, 1, 0],
-    CLAMP
-  );
+  const progress = interpolate(frame, [0, 112], [0, 1], CLAMP);
+  const scale = interpolate(frame, [0, 112], [1.08, 1.25], CLAMP);
+  const x = interpolate(frame, [0, 112], [22, -52], CLAMP);
+  const y = interpolate(frame, [0, 112], [0, -32], CLAMP);
+  const scan = interpolate(frame, [8, 100], [-200, 1250], CLAMP);
+  const opacity = interpolate(frame, [0, 8, 100, 116], [0, 1, 1, 0], CLAMP);
 
   return (
-    <AbsoluteFill style={{ opacity, overflow: "hidden" }}>
+    <AbsoluteFill style={{ opacity, overflow: "hidden", backgroundColor: "#101713" }}>
+      <Img
+        src={staticFile("academy-cadets.jpg")}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          objectPosition: "center 46%",
+          transform: `translate(${x}px, ${y}px) scale(${scale})`,
+          filter: "contrast(1.16) saturate(.78) sepia(.12)",
+        }}
+      />
+
       <AbsoluteFill
         style={{
-          overflow: "hidden",
-          backgroundColor: "#17241F",
+          background:
+            "linear-gradient(90deg,rgba(5,12,9,.55),transparent 75%),linear-gradient(0deg,rgba(5,10,8,.94),transparent 58%),linear-gradient(180deg,rgba(5,10,8,.42),transparent 30%)",
         }}
+      />
+
+      {/* Moving cinematic light scan */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          bottom: 0,
+          left: scan,
+          width: 4,
+          background: "linear-gradient(180deg,transparent,#E8D2A0,transparent)",
+          boxShadow: "0 0 35px rgba(232,210,160,.55)",
+          opacity: .8,
+        }}
+      />
+
+      {/* Focus frame */}
+      <div
+        style={{
+          position: "absolute",
+          left: 68,
+          right: 68,
+          top: 470,
+          height: 640,
+          borderTop: "1px solid rgba(232,211,164,.8)",
+          borderBottom: "1px solid rgba(232,211,164,.65)",
+          transform: `translateY(${interpolate(frame, [0, 112], [30, -25], CLAMP)}px)`,
+        }}
+      />
+
+      <svg
+        viewBox="0 0 1080 1920"
+        width="100%"
+        height="100%"
+        style={{ position: "absolute", inset: 0 }}
       >
-        <Img
-          src={staticFile("academy-cadets.jpg")}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            objectPosition: "center 42%",
-            transform: `translateX(${shiftX}px) scale(${scale})`,
-            filter: "contrast(1.08) saturate(.72) sepia(.12)",
-          }}
+        <path
+          d="M72 1450 H1008"
+          stroke="rgba(235,218,181,.35)"
+          strokeWidth="2"
+          fill="none"
         />
-
-        {/* Cinematic vignette */}
-        <AbsoluteFill
-          style={{
-            background:
-              "linear-gradient(180deg, rgba(8,15,12,.46) 0%, rgba(8,15,12,.05) 36%, rgba(8,15,12,.2) 62%, rgba(8,15,12,.94) 100%)",
-          }}
+        <path
+          d={`M72 1450 H${72 + progress * 936}`}
+          stroke="#E5D2A5"
+          strokeWidth="4"
+          fill="none"
         />
-
-        <AbsoluteFill
-          style={{
-            background:
-              "linear-gradient(90deg, rgba(8,15,12,.35), transparent 42%, rgba(8,15,12,.18))",
-          }}
+        <circle
+          cx={72 + progress * 936}
+          cy="1450"
+          r="8"
+          fill="#F1D9A7"
         />
-
-        {/* Moving cinematic light */}
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            bottom: 0,
-            left: 0,
-            width: 260,
-            transform: `translateX(${sweep}px) skewX(-18deg)`,
-            background:
-              "linear-gradient(90deg, transparent, rgba(235,215,169,.13), transparent)",
-          }}
-        />
-
-        {/* Documentary frame */}
-        <svg
-          width="100%"
-          height="100%"
-          viewBox="0 0 1080 1920"
-          style={{
-            position: "absolute",
-            inset: 0,
-          }}
+        <text
+          x="76"
+          y="1510"
+          fill="#E9DFC8"
+          fontSize="18"
+          letterSpacing="6"
         >
-          <g
-            fill="none"
-            stroke="#E5D5B0"
-            strokeWidth="3"
-            opacity=".7"
-          >
-            <path d="M64 150 V90 H124" />
-            <path d="M956 90 H1016 V150" />
-            <path d="M64 1770 V1830 H124" />
-            <path d="M956 1830 H1016 V1770" />
-          </g>
-
-          <path
-            d="M72 1550 H1008"
-            stroke="#E5D5B0"
-            strokeWidth="1"
-            opacity=".2"
-          />
-
-          <text
-            x="78"
-            y="1740"
-            fill="#E8D9B9"
-            fontSize="17"
-            letterSpacing="5"
-            opacity=".75"
-          >
-            ARSIP PENDIDIKAN MILITER
-          </text>
-
-          <text
-            x="1000"
-            y="1740"
-            fill="#E8D9B9"
-            fontSize="17"
-            textAnchor="end"
-            letterSpacing="3"
-            opacity=".75"
-          >
-            INDONESIA
-          </text>
-        </svg>
-      </AbsoluteFill>
+          FIELD TRAINING / INDONESIA
+        </text>
+        <text
+          x="1004"
+          y="1510"
+          fill="#E9DFC8"
+          fontSize="18"
+          letterSpacing="4"
+          textAnchor="end"
+        >
+          01 — FORMATION
+        </text>
+      </svg>
 
       <SceneLabel
         number="01"
@@ -252,116 +228,99 @@ const TrainingScene: React.FC = () => {
   );
 };
 
-/* =====================================================
-   SCENE 02 — KELULUSAN AKABRI
-   Layered architecture + diploma reveal
-===================================================== */
 
+/* =====================================================
+   SCENE 02 — AKABRI GRADUATION
+   Archival portrait + monumental year reveal
+===================================================== */
 
 const GraduationScene: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const opacity = interpolate(
-    frame,
-    [88, 103, 192, 210],
-    [0, 1, 1, 0],
-    CLAMP
-  );
-
-  const photoIn = spring({
-    frame: frame - 100,
+  const opacity = interpolate(frame, [88, 103, 192, 210], [0, 1, 1, 0], CLAMP);
+  const reveal = spring({
+    frame: frame - 101,
     fps,
-    config: { damping: 18, stiffness: 65 },
+    config: { damping: 18, stiffness: 75 },
   });
 
-  const photoScale = interpolate(
-    frame,
-    [100, 205],
-    [1.16, 1.02],
-    CLAMP
-  );
-
-  const dateReveal = spring({
-    frame: frame - 125,
-    fps,
-    config: { damping: 15, stiffness: 90 },
-  });
-
-  const lineProgress = interpolate(
-    frame,
-    [112, 165],
-    [0, 1],
-    CLAMP
-  );
+  const zoom = interpolate(frame, [100, 205], [1.06, 1.25], CLAMP);
+  const shift = interpolate(frame, [100, 205], [28, -35], CLAMP);
+  const yearLine = interpolate(frame, [112, 158], [0, 390], CLAMP);
+  const wipe = interpolate(frame, [96, 120], [100, 0], CLAMP);
 
   return (
     <AbsoluteFill
       style={{
         opacity,
         overflow: "hidden",
-        backgroundColor: "#111B18",
+        backgroundColor: "#111713",
       }}
     >
-      {/* Archival photograph */}
-      <AbsoluteFill style={{ overflow: "hidden" }}>
-        <Img
-          src={staticFile("1000827932.jpg.jpeg")}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            objectPosition: "center 35%",
-            transform: `scale(${photoScale}) translateY(${(1-photoIn)*45}px)`,
-            filter: "grayscale(1) contrast(1.08) brightness(.78)",
-          }}
-        />
-
-        <AbsoluteFill
-          style={{
-            background:
-              "linear-gradient(90deg,rgba(8,15,12,.78),rgba(8,15,12,.12) 90%),linear-gradient(0deg,rgba(8,15,12,.88),transparent 65%)",
-          }}
-        />
-      </AbsoluteFill>
-
-      {/* Archival document treatment */}
-      <AbsoluteFill
+      <Img
+        src={staticFile("1000827932.jpg.jpeg")}
         style={{
-          border: "1px solid rgba(225,205,157,.45)",
-          margin: 48,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          objectPosition: "31% 42%",
+          transform: `translateX(${shift}px) scale(${zoom})`,
+          filter: "grayscale(1) contrast(1.16) brightness(.82)",
         }}
       />
 
+      <AbsoluteFill
+        style={{
+          background:
+            "linear-gradient(90deg,rgba(5,10,8,.04) 0%,rgba(5,10,8,.15) 36%,rgba(5,10,8,.92) 100%),linear-gradient(0deg,rgba(5,10,8,.92),transparent 65%),linear-gradient(180deg,rgba(5,10,8,.22),transparent 32%)",
+        }}
+      />
+
+      {/* Diagonal archival transition */}
       <div
         style={{
           position: "absolute",
-          top: 330,
-          left: 78,
-          right: 65,
-          opacity: dateReveal,
-          transform: `translateY(${(1-dateReveal)*35}px)`,
+          inset: 0,
+          background: "#D9C18D",
+          clipPath: `polygon(100% 0,100% 100%,${wipe}% 100%,${wipe + 18}% 0)`,
+          opacity: interpolate(frame, [96, 110, 120], [.7, .7, 0], CLAMP),
+          mixBlendMode: "screen",
+        }}
+      />
+
+      {/* Monumental 1974 typography */}
+      <div
+        style={{
+          position: "absolute",
+          top: 335,
+          right: 62,
+          width: 500,
+          textAlign: "right",
+          opacity: reveal,
+          transform: `translateX(${(1 - reveal) * 110}px)`,
         }}
       >
         <div
           style={{
             color: "#D9C18D",
             fontSize: 18,
-            letterSpacing: 6,
             fontWeight: 700,
+            letterSpacing: 7,
           }}
         >
-          ARSIP PERJALANAN
+          CATATAN SEJARAH
         </div>
 
         <div
           style={{
-            color: "#F3EBDD",
-            fontSize: 112,
+            color: "rgba(242,232,211,.10)",
+            WebkitTextStroke: "2px rgba(235,218,181,.9)",
+            fontSize: 178,
             fontWeight: 900,
-            letterSpacing: -5,
-            marginTop: 15,
-            lineHeight: 1,
+            letterSpacing: -12,
+            lineHeight: .95,
+            marginTop: 12,
           }}
         >
           1974
@@ -369,20 +328,20 @@ const GraduationScene: React.FC = () => {
 
         <div
           style={{
-            width: `${lineProgress * 250}px`,
-            height: 4,
+            width: yearLine,
+            height: 5,
             background: "#D9C18D",
-            marginTop: 25,
+            marginLeft: "auto",
+            marginTop: 22,
           }}
         />
 
         <div
           style={{
-            color: "#F3EBDD",
-            fontSize: 29,
-            fontWeight: 800,
-            marginTop: 22,
-            letterSpacing: 1,
+            color: "#F4EBDD",
+            fontSize: 32,
+            fontWeight: 900,
+            marginTop: 25,
           }}
         >
           LULUS AKABRI
@@ -390,34 +349,36 @@ const GraduationScene: React.FC = () => {
 
         <div
           style={{
-            color: "#D8CBAE",
+            color: "#D9CBAE",
             fontSize: 17,
             letterSpacing: 3,
             marginTop: 12,
           }}
         >
-          AWAL PERJALANAN PENGABDIAN
+          AWAL PENGABDIAN MILITER
         </div>
       </div>
 
-      {/* Archival registration mark */}
       <div
         style={{
           position: "absolute",
-          right: 80,
-          bottom: 360,
-          color: "#D9C18D",
+          inset: 48,
+          border: "1px solid rgba(232,215,178,.4)",
+        }}
+      />
+
+      <div
+        style={{
+          position: "absolute",
+          left: 76,
+          bottom: 390,
+          color: "#E8D9B8",
           fontSize: 16,
-          letterSpacing: 4,
-          opacity: interpolate(
-            frame,
-            [140, 160],
-            [0, 0.8],
-            CLAMP
-          ),
+          letterSpacing: 5,
+          opacity: interpolate(frame, [132, 150], [0, .85], CLAMP),
         }}
       >
-        DOKUMENTASI HISTORIS
+        ARCHIVE FRAME / 1974
       </div>
     </AbsoluteFill>
   );
@@ -425,74 +386,53 @@ const GraduationScene: React.FC = () => {
 
 
 /* =====================================================
-   SCENE 03 — PERJALANAN KARIER
-   Timeline progression + milestone animation
+   SCENE 03 — CAREER JOURNEY
+   Action shot → portrait match cut
 ===================================================== */
-
 
 const CareerScene: React.FC = () => {
   const frame = useCurrentFrame();
 
-  const opacity = interpolate(
+  const opacity = interpolate(frame, [178, 194, 300], [0, 1, 1], CLAMP);
+
+  const actionOpacity = interpolate(
     frame,
-    [178, 194, 300],
+    [188, 222, 236],
+    [0, 1, 0],
+    CLAMP
+  );
+
+  const portraitOpacity = interpolate(
+    frame,
+    [224, 242, 300],
     [0, 1, 1],
     CLAMP
   );
 
-  const photoOne = interpolate(
-    frame,
-    [190, 222, 235],
-    [1, 1, 0],
-    CLAMP
-  );
+  const actionZoom = interpolate(frame, [188, 236], [1.12, 1.02], CLAMP);
+  const portraitZoom = interpolate(frame, [226, 300], [1.18, 1.04], CLAMP);
 
-  const photoTwo = interpolate(
-    frame,
-    [222, 240, 300],
-    [0, 1, 1],
-    CLAMP
-  );
-
-  const scaleOne = interpolate(
-    frame,
-    [190, 235],
-    [1.12, 1],
-    CLAMP
-  );
-
-  const scaleTwo = interpolate(
-    frame,
-    [225, 300],
-    [1.16, 1.02],
-    CLAMP
-  );
-
-  const reveal = spring({
+  const titleIn = spring({
     frame: frame - 198,
     fps: 30,
-    config: { damping: 18, stiffness: 75 },
+    config: { damping: 18, stiffness: 82 },
   });
 
-  const scan = interpolate(
-    frame,
-    [198, 290],
-    [-200, 1200],
-    CLAMP
-  );
+  const diagonal = interpolate(frame, [222, 241], [110, -12], CLAMP);
+  const routeProgress = interpolate(frame, [205, 285], [0, 1], CLAMP);
 
   return (
     <AbsoluteFill
       style={{
         opacity,
         overflow: "hidden",
-        backgroundColor: "#111B18",
+        backgroundColor: "#111713",
       }}
     >
-      {/* Photograph 1: field leadership */}
+      {/* Action photograph */}
       <AbsoluteFill
         style={{
-          opacity: photoOne,
+          opacity: actionOpacity,
           overflow: "hidden",
         }}
       >
@@ -502,18 +442,19 @@ const CareerScene: React.FC = () => {
             width: "100%",
             height: "100%",
             objectFit: "cover",
-            objectPosition: "center center",
-            transform: `scale(${scaleOne})`,
-            filter: "contrast(1.08) saturate(.78)",
+            objectPosition: "68% center",
+            transform: `scale(${actionZoom}) translateX(-18px)`,
+            filter: "contrast(1.14) saturate(.86) brightness(.82)",
           }}
         />
       </AbsoluteFill>
 
-      {/* Photograph 2: military portrait */}
+      {/* Diagonal portrait match cut */}
       <AbsoluteFill
         style={{
-          opacity: photoTwo,
+          opacity: portraitOpacity,
           overflow: "hidden",
+          clipPath: `polygon(${diagonal}% 0,100% 0,100% 100%,${diagonal - 16}% 100%)`,
         }}
       >
         <Img
@@ -522,44 +463,46 @@ const CareerScene: React.FC = () => {
             width: "100%",
             height: "100%",
             objectFit: "cover",
-            objectPosition: "center 35%",
-            transform: `scale(${scaleTwo})`,
-            filter: "contrast(1.08) saturate(.82)",
+            objectPosition: "center 38%",
+            transform: `scale(${portraitZoom})`,
+            filter: "contrast(1.12) saturate(.9)",
           }}
         />
       </AbsoluteFill>
 
-      {/* Cinematic dark overlay */}
       <AbsoluteFill
         style={{
           background:
-            "linear-gradient(180deg,rgba(8,15,12,.35) 0%,rgba(8,15,12,.05) 35%,rgba(8,15,12,.9) 100%)",
+            "linear-gradient(180deg,rgba(5,10,8,.58),rgba(5,10,8,.05) 40%,rgba(5,10,8,.94)),linear-gradient(90deg,rgba(5,10,8,.3),transparent 70%)",
         }}
       />
 
-      {/* Moving editorial scan line */}
+      {/* Oversized chapter number */}
       <div
         style={{
           position: "absolute",
-          top: 0,
-          bottom: 0,
-          width: 2,
-          left: scan,
-          background:
-            "linear-gradient(180deg,transparent,#E4CB94,transparent)",
-          opacity: 0.65,
+          right: 42,
+          top: 300,
+          color: "rgba(230,211,170,.16)",
+          fontSize: 330,
+          fontWeight: 900,
+          lineHeight: .8,
+          letterSpacing: -25,
+          transform: `translateY(${(1 - titleIn) * 80}px)`,
+          opacity: titleIn,
         }}
-      />
+      >
+        03
+      </div>
 
-      {/* Chapter title */}
       <div
         style={{
           position: "absolute",
           left: 76,
-          top: 280,
-          right: 70,
-          opacity: reveal,
-          transform: `translateY(${(1-reveal)*30}px)`,
+          top: 300,
+          right: 80,
+          opacity: titleIn,
+          transform: `translateX(${(1 - titleIn) * -50}px)`,
         }}
       >
         <div
@@ -576,51 +519,73 @@ const CareerScene: React.FC = () => {
         <div
           style={{
             color: "#FFFFFF",
-            fontSize: 44,
+            fontSize: 43,
             fontWeight: 900,
-            lineHeight: 1.12,
-            marginTop: 16,
+            lineHeight: 1.08,
+            marginTop: 15,
           }}
         >
           DI LINGKUNGAN
+          <br />
           ANGKATAN
         </div>
       </div>
 
-      {/* Documentary caption */}
+      {/* Animated journey trajectory */}
+      <svg
+        viewBox="0 0 1080 1920"
+        width="100%"
+        height="100%"
+        style={{
+          position: "absolute",
+          inset: 0,
+        }}
+      >
+        <path
+          d="M72 1470 C280 1370 420 1510 610 1390 S850 1300 1008 1360"
+          fill="none"
+          stroke="#D9C18D"
+          strokeWidth="3"
+          strokeDasharray="1200"
+          strokeDashoffset={1200 * (1 - routeProgress)}
+          opacity=".85"
+        />
+
+        <circle
+          cx={72 + routeProgress * 936}
+          cy={1470 - Math.sin(routeProgress * Math.PI) * 100}
+          r="8"
+          fill="#F0D7A2"
+          opacity={routeProgress}
+        />
+      </svg>
+
       <div
         style={{
           position: "absolute",
           left: 78,
           right: 78,
-          bottom: 350,
+          bottom: 370,
           color: "#F0E7D4",
-          fontSize: 18,
+          fontSize: 17,
           letterSpacing: 3,
-          opacity: interpolate(
-            frame,
-            [215, 238, 285, 300],
-            [0, 1, 1, 0],
-            CLAMP
-          ),
+          opacity: interpolate(frame, [238, 254, 292, 300], [0, 1, 1, 0], CLAMP),
         }}
       >
-        PENGALAMAN DAN TANGGUNG JAWAB
-        MEMBENTUK PERJALANAN
+        PENGALAMAN · TANGGUNG JAWAB · KEPEMIMPINAN
       </div>
 
-      {/* Documentary frame */}
       <div
         style={{
           position: "absolute",
           inset: 48,
           border: "1px solid rgba(231,218,185,.35)",
-          pointerEvents: "none",
         }}
       />
     </AbsoluteFill>
   );
 };
+
 
 
 /* =====================================================
