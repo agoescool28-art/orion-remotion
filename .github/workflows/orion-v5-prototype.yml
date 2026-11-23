@@ -44,7 +44,7 @@ jobs:
       - name: Ensure Remotion browser
         run: npx remotion browser ensure
 
-      - name: Render ORION Full Narrative
+      -       - name: Render ORION Full Narrative
         run: >
           npx remotion render src/index.ts ORION-FULL-NARRATIVE
           out/orion-prabowo-full-narrative.mp4
