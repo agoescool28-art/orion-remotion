@@ -571,11 +571,7 @@ const Chapter: React.FC<{
     clamp
   );
 
-  const beat = data.beats.find(
-    (item) =>
-      frame >= item.start &&
-      frame < item.start + item.duration
-  );
+  
 
   return (
     <AbsoluteFill
