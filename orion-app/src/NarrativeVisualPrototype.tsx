@@ -562,6 +562,70 @@ const NarrativeVisual: React.FC = () => {
         overflow: "hidden",
       }}
     >
+
+{/* ANALOG FILM GRAIN */}
+<svg
+  style={{
+    position: "absolute",
+    inset: 0,
+    width: "100%",
+    height: "100%",
+    opacity: 0.12,
+    mixBlendMode: "soft-light",
+    pointerEvents: "none",
+  }}
+  viewBox="0 0 1080 1920"
+  preserveAspectRatio="none"
+>
+  <filter id="orion-grain">
+    <feTurbulence
+      type="fractalNoise"
+      baseFrequency="0.82"
+      numOctaves="2"
+      seed={Math.floor(frame / 3) % 97}
+    />
+    <feColorMatrix type="saturate" values="0" />
+  </filter>
+  <rect width="100%" height="100%" filter="url(#orion-grain)" />
+</svg>
+
+{/* CINEMATIC VIGNETTE */}
+<AbsoluteFill
+  style={{
+    pointerEvents: "none",
+    boxShadow: "inset 0 0 180px 45px #000c",
+  }}
+/>
+
+{/* EDITORIAL SCANLINES */}
+<AbsoluteFill
+  style={{
+    pointerEvents: "none",
+    opacity: 0.16,
+    background:
+      "repeating-linear-gradient(0deg, transparent 0px, transparent 5px, #d8b87812 6px)",
+  }}
+/>
+
+{/* MOVING LIGHT SWEEP */}
+<div
+  style={{
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    width: 260,
+    left: interpolate(
+      frame,
+      [0, durationInFrames],
+      [-320, 1180],
+      clamp
+    ),
+    transform: "skewX(-18deg)",
+    background:
+      "linear-gradient(90deg, transparent, #ffffff0b, transparent)",
+    pointerEvents: "none",
+  }}
+/>
       {/* Three visual chapters */}
       <TrainingScene />
       <GraduationScene />
