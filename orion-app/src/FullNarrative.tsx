@@ -544,133 +544,196 @@ const ChapterVisual: React.FC<{
   );
 };
 
+
 const Chapter: React.FC<{
   data: SceneData;
   index: number;
   start: number;
-}> = ({data,index,start}) => {
+  duration: number;
+}> = ({ data, index, start, duration }) => {
   const frame = useCurrentFrame();
-  const {durationInFrames} = useVideoConfig();
+  const { fps } = useVideoConfig();
 
   const accent = data.accent || C.gold;
-  const intro = enter(frame,30);
-  const exit = progress(frame,durationInFrames-16,durationInFrames);
+  const intro = enter(frame, fps);
+  const outro = progress(frame, duration - 20, duration - 1);
 
   const zoom = interpolate(
-    frame,[0,durationInFrames],[1.035,1.12],clamp
+    frame,
+    [0, duration],
+    [1.04, 1.13],
+    clamp
   );
 
   const drift = interpolate(
     frame,
-    [0,durationInFrames],
-    [index%2===0?-24:24,index%2===0?24:-24],
+    [0, duration],
+    [index % 2 === 0 ? -22 : 22, index % 2 === 0 ? 22 : -22],
     clamp
   );
 
   const beat = data.beats.find(
-    item => frame>=item.start && frame<item.start+item.duration
+    (item) =>
+      frame >= item.start &&
+      frame < item.start + item.duration
   );
 
   return (
-    <AbsoluteFill style={{
-      background:C.dark,
-      color:C.paper,
-      overflow:"hidden",
-    }}>
+    <AbsoluteFill
+      style={{
+        background: C.dark,
+        color: C.paper,
+        overflow: "hidden",
+      }}
+    >
+      {/* BACKGROUND */}
       {data.imageSrc ? (
         <AbsoluteFill>
           <Img
             src={staticFile(data.imageSrc)}
             style={{
-              width:"100%",
-              height:"100%",
-              objectFit:"cover",
-              transform:`translate3d(${drift}px,0,0) scale(${zoom})`,
-              filter:"brightness(.48) contrast(1.12) saturate(.78)",
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              transform: `translate3d(${drift}px,0,0) scale(${zoom})`,
+              filter: "brightness(.38) contrast(1.15) saturate(.72)",
             }}
           />
         </AbsoluteFill>
       ) : (
-        <AbsoluteFill style={{
-          background:"radial-gradient(ellipse at 72% 28%,#293d35 0%,#111b18 42%,#070b0a 86%)",
-        }}/>
+        <AbsoluteFill
+          style={{
+            background:
+              "radial-gradient(ellipse at 70% 35%,#293d35 0%,#111b18 45%,#070b0a 90%)",
+          }}
+        />
       )}
 
-      <AbsoluteFill style={{
-        background:"linear-gradient(180deg,#050908cc 0%,#05090820 36%,#050908a8 72%,#050908 100%),linear-gradient(90deg,#05090899,transparent 85%)",
-      }}/>
+      {/* CINEMATIC GRADING */}
+      <AbsoluteFill
+        style={{
+          background:
+            "linear-gradient(180deg,#050908dd 0%,#05090822 35%,#05090855 60%,#050908ee 100%)",
+        }}
+      />
 
-      <div style={{
-        position:"absolute",
-        width:720,
-        height:720,
-        borderRadius:"50%",
-        top:250,
-        right:-330+drift*2,
-        background:`radial-gradient(circle,${accent}24,transparent 70%)`,
-        filter:"blur(28px)",
-      }}/>
+      {/* AMBIENT LIGHT */}
+      <div
+        style={{
+          position: "absolute",
+          width: 650,
+          height: 650,
+          top: 360,
+          right: -300 + drift,
+          borderRadius: "50%",
+          background: `radial-gradient(circle,${accent}28,transparent 70%)`,
+          filter: "blur(35px)",
+        }}
+      />
 
-      <div style={{
-        position:"absolute",
-        top:72,left:75,right:75,
-        display:"flex",
-        justifyContent:"space-between",
-        color:accent,
-        fontSize:15,
-        letterSpacing:4,
-        fontWeight:800,
-        opacity:fade(frame),
-      }}>
+      {/* HEADER */}
+      <div
+        style={{
+          position: "absolute",
+          top: 65,
+          left: 75,
+          right: 75,
+          display: "flex",
+          justifyContent: "space-between",
+          color: accent,
+          fontSize: 14,
+          letterSpacing: 3,
+          fontWeight: 800,
+          opacity: fade(frame),
+        }}
+      >
         <span>ORION / DOCUMENTARY</span>
-        <span>INDONESIA • BIOGRAPHY</span>
+        <span>{String(index + 1).padStart(2, "0")} / 12</span>
       </div>
 
-      <div style={{
-        position:"absolute",
-        top:255,left:80,right:80,
-        opacity:fade(frame),
-        transform:`translateY(${interpolate(intro,[0,1],[58,0])}px)`,
-      }}>
-        <div style={{
-          color:accent,fontSize:19,
-          letterSpacing:5,fontWeight:800,
-        }}>
+      {/* CHAPTER TITLE */}
+      <div
+        style={{
+          position: "absolute",
+          top: 205,
+          left: 75,
+          right: 75,
+          opacity: fade(frame),
+          transform: `translateY(${interpolate(
+            intro,
+            [0, 1],
+            [35, 0]
+          )}px)`,
+        }}
+      >
+        <div
+          style={{
+            color: accent,
+            fontSize: 17,
+            letterSpacing: 4,
+            fontWeight: 800,
+          }}
+        >
           {data.eyebrow}
         </div>
 
-        <div style={{
-          fontSize:data.title.length>13?68:104,
-          lineHeight:1,
-          fontWeight:900,
-          letterSpacing:-2,
-          marginTop:20,
-          textShadow:"0 10px 45px #000",
-        }}>
+        <div
+          style={{
+            fontSize: data.title.length > 13 ? 65 : 94,
+            lineHeight: 1.02,
+            fontWeight: 900,
+            letterSpacing: -2,
+            marginTop: 16,
+            textShadow: "0 10px 45px #000",
+          }}
+        >
           {data.title}
         </div>
 
-        <div style={{
-          marginTop:26,
-          width:`${progress(frame,8,42)*380}px`,
-          height:3,
-          background:accent,
-          boxShadow:`0 0 22px ${accent}88`,
-        }}/>
+        <div
+          style={{
+            marginTop: 18,
+            height: 3,
+            width: `${progress(frame, 8, 42) * 145}px`,
+            background: accent,
+            boxShadow: `0 0 20px ${accent}88`,
+          }}
+        />
       </div>
 
-      <ChapterVisual
-        index={index}
-        frame={frame}
-        duration={durationInFrames}
-        accent={accent}
-      />
+      {/* VISUAL STAGE — RAISED TO CREATE SPACE */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          transform: "translateY(-105px)",
+        }}
+      >
+        <ChapterVisual
+          index={index}
+          frame={frame}
+          duration={duration}
+          accent={accent}
+        />
+      </div>
 
-      {/* Word timing remains tied to absolute VO timestamps. */}
-      <div style={{
-        position:"absolute",
-        left:80,right:80,bottom:390,height:125,
-      }}>
+      {/* VOICE-OVER KINETIC TYPOGRAPHY SAFE ZONE */}
+      <div
+        style={{
+          position: "absolute",
+          left: 65,
+          right: 65,
+          bottom: 175,
+          height: 180,
+          padding: "22px 18px",
+          display: "flex",
+          alignItems: "center",
+          background:
+            "linear-gradient(180deg,#080d0c00,#080d0cdd 28%,#080d0cee)",
+          borderBottom: `2px solid ${accent}88`,
+          boxSizing: "border-box",
+        }}
+      >
         <AudioSyncedTypography
           words={prabowoWords}
           globalStartFrame={start}
@@ -678,53 +741,39 @@ const Chapter: React.FC<{
         />
       </div>
 
-      <div style={{
-        position:"absolute",
-        left:80,right:80,bottom:235,
-        fontSize:23,
-        lineHeight:1.45,
-        color:C.paper,
-        textShadow:"0 4px 20px #000",
-        opacity:fade(frame,10),
-      }}>
-        {beat?.text || data.subtitle}
+      {/* CHAPTER PROGRESS */}
+      <div
+        style={{
+          position: "absolute",
+          left: 75,
+          right: 75,
+          bottom: 95,
+          height: 3,
+          background: "#ffffff35",
+        }}
+      >
+        <div
+          style={{
+            height: "100%",
+            width: `${(frame / duration) * 100}%`,
+            background: accent,
+            boxShadow: `0 0 15px ${accent}`,
+          }}
+        />
       </div>
 
-      <div style={{
-        position:"absolute",
-        left:80,right:80,bottom:115,
-        height:3,background:"#ffffff33",
-      }}>
-        <div style={{
-          height:"100%",
-          width:`${frame/durationInFrames*100}%`,
-          background:accent,
-          boxShadow:`0 0 15px ${accent}`,
-        }}/>
-      </div>
-
-      <div style={{
-        position:"absolute",inset:25,
-        border:"1px solid #ffffff22",
-        pointerEvents:"none",
-      }}/>
-
-      <div style={{
-        position:"absolute",
-        right:80,bottom:60,
-        color:accent,fontSize:19,fontWeight:900,
-      }}>
-        {String(index+1).padStart(2,"0")} / 12
-      </div>
-
-      <AbsoluteFill style={{
-        background:C.dark,
-        opacity:exit,
-        pointerEvents:"none",
-      }}/>
+      {/* CINEMATIC EXIT */}
+      <AbsoluteFill
+        style={{
+          background: C.dark,
+          opacity: outro,
+          pointerEvents: "none",
+        }}
+      />
     </AbsoluteFill>
   );
 };
+
 
 export const FullNarrative: React.FC = () => {
   let cursor = 0;
@@ -739,7 +788,12 @@ export const FullNarrative: React.FC = () => {
         from={from}
         durationInFrames={scene.durationFrames}
       >
-        <Chapter data={scene} index={index} start={from}/>
+        <Chapter
+  data={scene}
+  index={index}
+  start={from}
+  duration={scene.durationFrames}
+/>
       </Sequence>
     );
   });
