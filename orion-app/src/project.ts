@@ -48,7 +48,7 @@ export const project = {
       eyebrow: "01 / KELAHIRAN",
       title: "JAKARTA",
       subtitle: "Prabowo Subianto lahir di Jakarta pada 17 Oktober 1951.",
-      durationFrames: 350,
+      durationFrames: 183,
       accent: "#B8D99A",
       beats: [
         { text: "PRABOWO SUBIANTO", start: 20, duration: 65 },
@@ -60,7 +60,7 @@ export const project = {
       eyebrow: "02 / LATAR KELUARGA",
       title: "KELUARGA",
       subtitle: "Ia merupakan putra ekonom dan tokoh pemerintahan, Sumitro Djojohadikusumo.",
-      durationFrames: 323,
+      durationFrames: 169,
       accent: "#D8B878",
       beats: [
         { text: "SUMITRO DJOJOHADIKUSUMO", start: 20, duration: 105 },
@@ -71,7 +71,7 @@ export const project = {
       eyebrow: "03 / PENDIDIKAN MILITER",
       title: "AKABRI",
       subtitle: "Setelah menempuh pendidikan militer, ia lulus dari AKABRI pada tahun 1974.",
-      durationFrames: 254,
+      durationFrames: 187,
       accent: "#A8C9D9",
       beats: [
         { text: "PENDIDIKAN MILITER", start: 18, duration: 82 },
@@ -82,7 +82,7 @@ export const project = {
       eyebrow: "04 / KARIER MILITER",
       title: "KOPASSUS",
       subtitle: "Dari sinilah perjalanan panjangnya di lingkungan Angkatan Darat berkembang.",
-      durationFrames: 329,
+      durationFrames: 225,
       accent: "#D9A8B8",
       beats: [
         { text: "KARIER ANGKATAN DARAT", start: 18, duration: 82 },
@@ -94,7 +94,7 @@ export const project = {
       eyebrow: "05 / JABATAN STRATEGIS",
       title: "1996 — 1998",
       subtitle: "Pada 1996 ia dipercaya menjadi Danjen Kopassus, lalu menjabat Pangkostrad pada 1998.",
-      durationFrames: 248,
+      durationFrames: 280,
       accent: "#E5C58B",
       beats: [
         { text: "1996", start: 15, duration: 48 },
@@ -106,7 +106,7 @@ export const project = {
       eyebrow: "06 / REFORMASI",
       title: "TITIK BALIK",
       subtitle: "Setelah Soeharto mundur, Prabowo dicopot dari jabatan Pangkostrad.",
-      durationFrames: 269,
+      durationFrames: 299,
       accent: "#D9A8B8",
       beats: [
         { text: "REFORMASI 1998", start: 16, duration: 72 },
@@ -118,7 +118,7 @@ export const project = {
       eyebrow: "07 / KONTROVERSI SEJARAH",
       title: "1998",
       subtitle: "Dewan Kehormatan Perwira merekomendasikan pemberhentiannya dari dinas militer. Periode ini juga menyisakan kontroversi terkait penculikan aktivis dan dugaan pelanggaran HAM, yang dibantah Prabowo.",
-      durationFrames: 278,
+      durationFrames: 589,
       accent: "#D9A8B8",
       beats: [
         { text: "DEWAN KEHORMATAN PERWIRA", start: 15, duration: 82 },
@@ -130,7 +130,7 @@ export const project = {
       eyebrow: "08 / BABAK BARU",
       title: "TRANSFORMASI",
       subtitle: "Setelah meninggalkan dinas militer, ia menekuni dunia usaha, kembali ke Indonesia, dan aktif dalam organisasi serta kehidupan publik.",
-      durationFrames: 290,
+      durationFrames: 294,
       accent: "#B8D99A",
       beats: [
         { text: "MENINGGALKAN DINAS MILITER", start: 18, duration: 80 },
@@ -142,7 +142,7 @@ export const project = {
       eyebrow: "09 / PERJALANAN POLITIK",
       title: "GERINDRA",
       subtitle: "Pada 2008 ikut mendirikan Partai Gerindra. Tahun 2009 menjadi calon wakil presiden bersama Megawati, lalu maju sebagai calon presiden pada 2014 dan 2019.",
-      durationFrames: 326,
+      durationFrames: 443,
       accent: "#A8C9D9",
       beats: [
         { text: "2008 • GERINDRA", start: 18, duration: 75 },
@@ -154,7 +154,7 @@ export const project = {
       eyebrow: "10 / KEMENTERIAN PERTAHANAN",
       title: "MENTERI",
       subtitle: "Pada 2019, ia masuk ke pemerintahan sebagai Menteri Pertahanan hingga menjelang pemilihan presiden 2024.",
-      durationFrames: 291,
+      durationFrames: 261,
       accent: "#D8B878",
       beats: [
         { text: "2019", start: 18, duration: 55 },
@@ -166,7 +166,7 @@ export const project = {
       eyebrow: "11 / KEPEMIMPINAN NASIONAL",
       title: "PRESIDEN KE-8",
       subtitle: "Pada 20 Oktober 2024, Prabowo Subianto dilantik sebagai Presiden Republik Indonesia ke-8.",
-      durationFrames: 373,
+      durationFrames: 401,
       accent: "#D8B878",
       beats: [
         { text: "20 OKTOBER 2024", start: 18, duration: 80 },
