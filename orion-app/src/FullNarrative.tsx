@@ -137,181 +137,685 @@ const ChapterVisual: React.FC<{
   const left = 76;
   const right = 76;
 
-  // OPENING — TIMELINE
+  
+  // =====================================================
+  // ORION V3.1 — CINEMATIC VISUAL STORYTELLING
+  // CHAPTER 01–05 | VISUAL ONLY
+  // =====================================================
+
+  // CHAPTER 01 — OPENING / THE LONG JOURNEY
   if (index === 0) {
     const milestones = [
-      ["1951","KELAHIRAN"],
-      ["1974","AKABRI"],
-      ["1998","TITIK BALIK"],
-      ["2024","PRESIDEN"],
+      ["1951", "KELAHIRAN"],
+      ["1974", "AKABRI"],
+      ["1998", "TITIK BALIK"],
+      ["2024", "PRESIDEN"],
     ];
 
+    const lineProgress = progress(frame, 10, 90);
+
     return (
       <AbsoluteFill>
-        <div style={{ position:"absolute",left,right,top:760 }}>
+        <div style={{ position: "absolute", left, right, top: 690 }}>
           <Kicker color={accent}>A LIFE IN FOUR CHAPTERS</Kicker>
-          <BigNumber value="JALAN PANJANG" frame={frame} color={accent} size={68}/>
-          <div style={{marginTop:82,height:4,background:"#ffffff2b"}}>
-            <MovingRule frame={frame} color={accent}/>
+
+          <div style={{
+            marginTop: 20,
+            fontSize: 75,
+            fontWeight: 900,
+            lineHeight: 0.95,
+            letterSpacing: -3,
+            color: C.paper,
+            opacity: fade(frame),
+            transform: `translateY(${interpolate(
+              enter(frame, fps), [0, 1], [55, 0]
+            )}px)`,
+          }}>
+            JALAN
+            <br />
+            <span style={{ color: accent }}>PANJANG.</span>
           </div>
 
           <div style={{
-            display:"grid",
-            gridTemplateColumns:"repeat(4,1fr)",
-            gap:10,
-            marginTop:30,
+            marginTop: 65,
+            height: 3,
+            background: "#ffffff25",
+            position: "relative",
           }}>
-            {milestones.map(([year,label],i)=>(
-              <div key={year} style={{
-                opacity:fade(frame,18+i*12),
-                transform:`translateY(${interpolate(
-                  enter(frame,fps,18+i*12),[0,1],[35,0]
-                )}px)`,
-              }}>
-                <div style={{
-                  width:15,height:15,borderRadius:20,
-                  background:accent,marginBottom:18,
-                  boxShadow:`0 0 22px ${accent}`,
-                }}/>
-                <div style={{color:accent,fontSize:28,fontWeight:900}}>{year}</div>
-                <div style={{color:C.paper,fontSize:15,marginTop:9}}>{label}</div>
-              </div>
-            ))}
+            <div style={{
+              width: `${lineProgress * 100}%`,
+              height: "100%",
+              background: accent,
+              boxShadow: `0 0 22px ${accent}`,
+            }} />
+          </div>
+
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4,1fr)",
+            gap: 12,
+            marginTop: 35,
+          }}>
+            {milestones.map(([year, label], i) => {
+              const reveal = enter(frame, fps, 18 + i * 16);
+
+              return (
+                <div key={year} style={{
+                  opacity: fade(frame, 18 + i * 16),
+                  transform: `translateY(${interpolate(
+                    reveal, [0, 1], [45, 0]
+                  )}px)`,
+                }}>
+                  <div style={{
+                    width: 13,
+                    height: 13,
+                    borderRadius: 20,
+                    background: accent,
+                    boxShadow: `0 0 18px ${accent}`,
+                    marginBottom: 18,
+                  }} />
+                  <div style={{
+                    fontSize: 30,
+                    fontWeight: 900,
+                    color: accent,
+                  }}>
+                    {year}
+                  </div>
+                  <div style={{
+                    fontSize: 15,
+                    color: C.paper,
+                    marginTop: 8,
+                    letterSpacing: 1,
+                  }}>
+                    {label}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </AbsoluteFill>
     );
   }
 
-  // BIRTH — JAKARTA
+  // CHAPTER 02 — BIRTH / JAKARTA
   if (index === 1) {
+    const reveal = enter(frame, fps, 8);
+    const route = progress(frame, 20, 95);
+    const pulse = 1 + Math.sin(frame * 0.09) * 0.12;
+
     return (
       <AbsoluteFill>
-        <div style={{position:"absolute",left,right,top:700}}>
+        <div style={{ position: "absolute", left, right, top: 690 }}>
           <Kicker color={accent}>THE BEGINNING</Kicker>
-          <BigNumber value="1951" frame={frame} color={accent} size={176}/>
-          <div style={{fontSize:25,fontWeight:850,marginTop:18}}>17 OKTOBER</div>
 
-          <svg width="100%" height="390" viewBox="0 0 900 390">
-            <path d="M70 280 L190 245 L300 270 L410 155 L540 195 L680 80 L830 145"
-              fill="none" stroke={`${accent}66`} strokeWidth="3"/>
-            <path d="M70 280 L190 245 L300 270 L410 155 L540 195 L680 80 L830 145"
-              fill="none" stroke={accent} strokeWidth="5"
-              strokeDasharray="1100"
-              strokeDashoffset={1100*(1-p)}/>
-            <circle cx="680" cy="80" r={12+p*12} fill={accent}/>
-            <circle cx="680" cy="80" r={42+p*38}
-              fill="none" stroke={accent} strokeWidth="2" opacity=".45"/>
-            <text x="545" y="165" fill={C.paper} fontSize="36" fontWeight="bold">JAKARTA</text>
-            <text x="548" y="205" fill={accent} fontSize="19">INDONESIA</text>
-          </svg>
+          <div style={{
+            display: "flex",
+            alignItems: "baseline",
+            gap: 18,
+            marginTop: 18,
+          }}>
+            <div style={{
+              fontSize: 172,
+              fontWeight: 900,
+              lineHeight: 0.9,
+              color: accent,
+              letterSpacing: -8,
+              opacity: fade(frame),
+              transform: `scale(${0.9 + reveal * 0.1})`,
+            }}>
+              1951
+            </div>
+          </div>
 
-          <MotionCard frame={frame} fps={fps} delay={24} color={accent}>
-            <div style={{fontSize:32,fontWeight:900}}>PRABOWO SUBIANTO</div>
-            <div style={{color:C.muted,fontSize:20,marginTop:10}}>
+          <div style={{
+            fontSize: 25,
+            fontWeight: 800,
+            letterSpacing: 4,
+            marginTop: 18,
+          }}>
+            17 OKTOBER
+          </div>
+
+          <div style={{
+            position: "relative",
+            height: 330,
+            marginTop: 45,
+            overflow: "hidden",
+            borderTop: `1px solid ${accent}55`,
+            borderBottom: `1px solid ${accent}55`,
+            background: "linear-gradient(145deg,#17231f99,#080d0c55)",
+          }}>
+            <svg
+              width="100%"
+              height="100%"
+              viewBox="0 0 900 330"
+              preserveAspectRatio="none"
+            >
+              <defs>
+                <pattern
+                  id="cityGrid"
+                  width="55"
+                  height="45"
+                  patternUnits="userSpaceOnUse"
+                >
+                  <path
+                    d="M55 0H0V45"
+                    fill="none"
+                    stroke={`${accent}25`}
+                    strokeWidth="1"
+                  />
+                </pattern>
+              </defs>
+
+              <rect width="900" height="330" fill="url(#cityGrid)" />
+
+              <path
+                d="M60 265 L180 225 L290 245 L410 150 L535 190 L680 75 L835 125"
+                fill="none"
+                stroke={`${accent}55`}
+                strokeWidth="3"
+              />
+
+              <path
+                d="M60 265 L180 225 L290 245 L410 150 L535 190 L680 75 L835 125"
+                fill="none"
+                stroke={accent}
+                strokeWidth="5"
+                strokeDasharray="1100"
+                strokeDashoffset={1100 * (1 - route)}
+              />
+
+              <circle
+                cx="680"
+                cy="75"
+                r={14 * pulse}
+                fill={accent}
+              />
+
+              <circle
+                cx="680"
+                cy="75"
+                r={48 * pulse}
+                fill="none"
+                stroke={accent}
+                strokeWidth="2"
+                opacity=".55"
+              />
+
+              <text
+                x="535"
+                y="155"
+                fill={C.paper}
+                fontSize="36"
+                fontWeight="bold"
+              >
+                JAKARTA
+              </text>
+
+              <text
+                x="540"
+                y="190"
+                fill={accent}
+                fontSize="19"
+                letterSpacing="4"
+              >
+                INDONESIA
+              </text>
+            </svg>
+
+            <div style={{
+              position: "absolute",
+              left: 20,
+              bottom: 15,
+              fontSize: 13,
+              letterSpacing: 2,
+              color: C.muted,
+            }}>
+              SKEMA LOKASI
+            </div>
+          </div>
+
+          <div style={{
+            marginTop: 25,
+            borderLeft: `4px solid ${accent}`,
+            paddingLeft: 22,
+            opacity: fade(frame, 30),
+            transform: `translateX(${interpolate(
+              enter(frame, fps, 30), [0, 1], [45, 0]
+            )}px)`,
+          }}>
+            <div style={{
+              fontSize: 31,
+              fontWeight: 900,
+            }}>
+              PRABOWO SUBIANTO
+            </div>
+            <div style={{
+              color: C.muted,
+              fontSize: 20,
+              marginTop: 8,
+            }}>
               Lahir di Jakarta, 17 Oktober 1951
             </div>
-          </MotionCard>
+          </div>
         </div>
       </AbsoluteFill>
     );
   }
 
-  // FAMILY
+  // CHAPTER 03 — FAMILY BACKGROUND
   if (index === 2) {
+    const nodeProgress = progress(frame, 10, 65);
+
     return (
       <AbsoluteFill>
-        <div style={{position:"absolute",left,right,top:735}}>
+        <div style={{ position: "absolute", left, right, top: 715 }}>
           <Kicker color={accent}>FAMILY & BACKGROUND</Kicker>
-          <MotionCard frame={frame} fps={fps} color={accent}>
-            <div style={{color:accent,fontSize:18,letterSpacing:4}}>FIGUR KELUARGA</div>
-            <div style={{fontSize:48,fontWeight:900,marginTop:22}}>SUMITRO</div>
-            <div style={{fontSize:25,color:C.muted,marginTop:8}}>DJOJOHADIKUSUMO</div>
-          </MotionCard>
-
-          <div style={{height:110,display:"flex",justifyContent:"center"}}>
-            <div style={{width:3,height:`${p*100}%`,background:accent}}/>
-          </div>
-
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
-            <MotionCard frame={frame} fps={fps} delay={18} color={accent}>
-              <div style={{fontSize:25,fontWeight:900}}>EKONOM</div>
-            </MotionCard>
-            <MotionCard frame={frame} fps={fps} delay={32} color={accent}>
-              <div style={{fontSize:23,fontWeight:900}}>TOKOH PEMERINTAHAN</div>
-            </MotionCard>
-          </div>
-        </div>
-      </AbsoluteFill>
-    );
-  }
-
-  // MILITARY EDUCATION
-  if (index === 3) {
-    const bars = [44,68,54,88,62,100,76];
-
-    return (
-      <AbsoluteFill>
-        <div style={{position:"absolute",left,right,top:760}}>
-          <Kicker color={accent}>MILITARY EDUCATION</Kicker>
-          <BigNumber value="AKABRI" frame={frame} color={accent} size={130}/>
 
           <div style={{
-            height:300,display:"flex",alignItems:"end",
-            gap:13,marginTop:55,
+            marginTop: 35,
+            position: "relative",
+            padding: 30,
+            borderTop: `1px solid ${accent}88`,
+            borderBottom: `1px solid ${accent}88`,
+            background: "linear-gradient(110deg,#17221eaa,#080d0c55)",
           }}>
-            {bars.map((h,i)=>(
-              <div key={i} style={{
-                flex:1,height:`${h*p}%`,minHeight:4,
-                background:`linear-gradient(180deg,${accent},#405b60)`,
-                opacity:.5+i*.07,
-                transform:`translateY(${interpolate(
-                  enter(frame,fps,i*7),[0,1],[40,0]
-                )}px)`,
-              }}/>
-            ))}
-          </div>
+            <div style={{
+              fontSize: 17,
+              color: accent,
+              letterSpacing: 4,
+              fontWeight: 800,
+            }}>
+              AYAH
+            </div>
 
-          <MotionCard frame={frame} fps={fps} delay={25} color={accent}>
-            <div style={{fontSize:66,fontWeight:900}}>1974</div>
-            <div style={{fontSize:23,marginTop:12}}>LULUS AKADEMI ANGKATAN BERSENJATA</div>
-          </MotionCard>
-        </div>
-      </AbsoluteFill>
-    );
-  }
+            <div style={{
+              fontSize: 47,
+              fontWeight: 900,
+              lineHeight: 1,
+              marginTop: 20,
+            }}>
+              SUMITRO
+            </div>
 
-  // KOPASSUS
-  if (index === 4) {
-    return (
-      <AbsoluteFill>
-        <div style={{position:"absolute",left,right,top:735}}>
-          <Kicker color={accent}>MILITARY CAREER</Kicker>
-          <BigNumber value="KOPASSUS" frame={frame} color={accent} size={91}/>
+            <div style={{
+              fontSize: 25,
+              color: C.muted,
+              marginTop: 10,
+            }}>
+              DJOJOHADIKUSUMO
+            </div>
 
-          <div style={{
-            position:"relative",height:260,marginTop:42,
-            display:"flex",alignItems:"center",justifyContent:"center",
-          }}>
-            {[0,1,2].map(n=>(
-              <div key={n} style={{
-                position:"absolute",
-                width:150+n*95,height:150+n*95,
-                border:`2px solid ${accent}`,borderRadius:"50%",
-                opacity:.7-n*.15,
-                transform:`scale(${.65+p*.35}) rotate(${frame*(n%2?-0.18:0.18)}deg)`,
-              }}/>
-            ))}
-            <div style={{color:accent,fontSize:29,fontWeight:900}}>
-              PASUKAN KHUSUS
+            <div style={{
+              position: "absolute",
+              top: 25,
+              right: 25,
+              fontSize: 60,
+              color: `${accent}55`,
+              fontWeight: 900,
+            }}>
+              01
             </div>
           </div>
 
-          {["ANGKATAN DARAT","PASUKAN KHUSUS","KOPASSUS"].map((t,i)=>(
-            <MotionCard key={t} frame={frame} fps={fps} delay={i*17} color={accent}>
-              <div style={{fontSize:26,fontWeight:900}}>{t}</div>
-            </MotionCard>
-          ))}
+          <div style={{
+            height: 125,
+            display: "flex",
+            justifyContent: "center",
+            position: "relative",
+          }}>
+            <div style={{
+              width: 3,
+              height: `${nodeProgress * 100}%`,
+              background: accent,
+              boxShadow: `0 0 15px ${accent}88`,
+            }} />
+          </div>
+
+          <div style={{
+            display: "flex",
+            justifyContent: "center",
+            marginTop: -5,
+          }}>
+            <div style={{
+              width: 18,
+              height: 18,
+              borderRadius: 20,
+              background: accent,
+              boxShadow: `0 0 25px ${accent}`,
+              transform: `scale(${0.7 + nodeProgress * 0.3})`,
+            }} />
+          </div>
+
+          <div style={{
+            marginTop: 35,
+            padding: 30,
+            border: `1px solid ${accent}88`,
+            background: "linear-gradient(135deg,#1b2822cc,#080d0cee)",
+            opacity: fade(frame, 25),
+            transform: `translateY(${interpolate(
+              enter(frame, fps, 25), [0, 1], [45, 0]
+            )}px)`,
+          }}>
+            <div style={{
+              color: accent,
+              fontSize: 17,
+              letterSpacing: 4,
+              fontWeight: 800,
+            }}>
+              PUTRA
+            </div>
+
+            <div style={{
+              fontSize: 43,
+              fontWeight: 900,
+              marginTop: 18,
+            }}>
+              PRABOWO
+            </div>
+
+            <div style={{
+              fontSize: 23,
+              color: C.muted,
+              marginTop: 8,
+            }}>
+              SUBIANTO
+            </div>
+          </div>
+        </div>
+      </AbsoluteFill>
+    );
+  }
+
+  // CHAPTER 04 — MILITARY EDUCATION
+  if (index === 3) {
+    const steps = [
+      "PENDIDIKAN MILITER",
+      "PEMBENTUKAN DISIPLIN",
+      "AKABRI",
+    ];
+
+    const pathProgress = progress(frame, 8, 95);
+
+    return (
+      <AbsoluteFill>
+        <div style={{ position: "absolute", left, right, top: 700 }}>
+          <Kicker color={accent}>MILITARY EDUCATION</Kicker>
+
+          <div style={{
+            fontSize: 128,
+            fontWeight: 900,
+            lineHeight: 0.95,
+            color: C.paper,
+            marginTop: 20,
+            letterSpacing: -5,
+          }}>
+            AKABRI
+          </div>
+
+          <div style={{
+            fontSize: 18,
+            color: C.muted,
+            letterSpacing: 3,
+            marginTop: 12,
+          }}>
+            PERJALANAN PENDIDIKAN
+          </div>
+
+          <div style={{
+            position: "relative",
+            marginTop: 55,
+            paddingLeft: 42,
+          }}>
+            <div style={{
+              position: "absolute",
+              left: 8,
+              top: 8,
+              bottom: 8,
+              width: 3,
+              background: "#ffffff22",
+            }} />
+
+            <div style={{
+              position: "absolute",
+              left: 8,
+              top: 8,
+              width: 3,
+              height: `${pathProgress * 100}%`,
+              background: accent,
+              boxShadow: `0 0 18px ${accent}`,
+            }} />
+
+            {steps.map((step, i) => {
+              const delay = 12 + i * 20;
+              const reveal = enter(frame, fps, delay);
+
+              return (
+                <div key={step} style={{
+                  position: "relative",
+                  marginBottom: 42,
+                  opacity: fade(frame, delay),
+                  transform: `translateX(${interpolate(
+                    reveal, [0, 1], [45, 0]
+                  )}px)`,
+                }}>
+                  <div style={{
+                    position: "absolute",
+                    left: -41,
+                    top: 5,
+                    width: 18,
+                    height: 18,
+                    borderRadius: 20,
+                    background: accent,
+                    boxShadow: `0 0 18px ${accent}`,
+                  }} />
+
+                  <div style={{
+                    color: accent,
+                    fontSize: 15,
+                    letterSpacing: 3,
+                    fontWeight: 800,
+                  }}>
+                    TAHAP 0{i + 1}
+                  </div>
+
+                  <div style={{
+                    fontSize: 26,
+                    fontWeight: 900,
+                    marginTop: 10,
+                  }}>
+                    {step}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div style={{
+            marginTop: 25,
+            padding: 28,
+            borderLeft: `5px solid ${accent}`,
+            background: "linear-gradient(90deg,#1c2922cc,#080d0c55)",
+            opacity: fade(frame, 55),
+            transform: `translateY(${interpolate(
+              enter(frame, fps, 55), [0, 1], [35, 0]
+            )}px)`,
+          }}>
+            <div style={{
+              fontSize: 76,
+              fontWeight: 900,
+              color: accent,
+            }}>
+              1974
+            </div>
+            <div style={{
+              fontSize: 21,
+              fontWeight: 800,
+              marginTop: 8,
+            }}>
+              LULUS AKADEMI ANGKATAN BERSENJATA
+            </div>
+          </div>
+        </div>
+      </AbsoluteFill>
+    );
+  }
+
+  // CHAPTER 05 — KOPASSUS
+  if (index === 4) {
+    const stages = [
+      ["01", "ANGKATAN DARAT"],
+      ["02", "PASUKAN KHUSUS"],
+      ["03", "KOPASSUS"],
+    ];
+
+    const reveal = progress(frame, 8, 90);
+
+    return (
+      <AbsoluteFill>
+        <div style={{ position: "absolute", left, right, top: 710 }}>
+          <Kicker color={accent}>MILITARY CAREER</Kicker>
+
+          <div style={{
+            fontSize: 105,
+            fontWeight: 900,
+            lineHeight: 0.95,
+            letterSpacing: -4,
+            color: accent,
+            marginTop: 20,
+          }}>
+            KOPASSUS
+          </div>
+
+          <div style={{
+            position: "relative",
+            height: 300,
+            marginTop: 35,
+            overflow: "hidden",
+            borderTop: `1px solid ${accent}66`,
+            borderBottom: `1px solid ${accent}66`,
+            background: "linear-gradient(145deg,#1a2722aa,#080d0c88)",
+          }}>
+            <svg
+              width="100%"
+              height="100%"
+              viewBox="0 0 900 300"
+              preserveAspectRatio="none"
+            >
+              <path
+                d="M0 230 L180 170 L330 205 L490 105 L650 145 L900 45"
+                fill="none"
+                stroke={`${accent}35`}
+                strokeWidth="2"
+              />
+
+              <path
+                d="M0 265 L180 205 L330 240 L490 140 L650 180 L900 80"
+                fill="none"
+                stroke={`${accent}25`}
+                strokeWidth="2"
+              />
+
+              <path
+                d="M0 230 L180 170 L330 205 L490 105 L650 145 L900 45"
+                fill="none"
+                stroke={accent}
+                strokeWidth="4"
+                strokeDasharray="1100"
+                strokeDashoffset={1100 * (1 - reveal)}
+              />
+
+              <circle
+                cx={490}
+                cy={105}
+                r={12 + Math.sin(frame * 0.1) * 3}
+                fill={accent}
+              />
+
+              <circle
+                cx={490}
+                cy={105}
+                r="35"
+                fill="none"
+                stroke={accent}
+                strokeWidth="2"
+                opacity=".6"
+              />
+            </svg>
+
+            <div style={{
+              position: "absolute",
+              left: 25,
+              bottom: 20,
+              fontSize: 14,
+              letterSpacing: 3,
+              color: C.muted,
+            }}>
+              VISUALISASI SIMBOLIS
+            </div>
+          </div>
+
+          <div style={{
+            marginTop: 40,
+            position: "relative",
+            paddingLeft: 35,
+          }}>
+            <div style={{
+              position: "absolute",
+              left: 8,
+              top: 12,
+              bottom: 12,
+              width: 3,
+              background: `${accent}55`,
+            }} />
+
+            {stages.map(([number, title], i) => {
+              const delay = 12 + i * 20;
+              const revealStage = enter(frame, fps, delay);
+
+              return (
+                <div key={number} style={{
+                  position: "relative",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 24,
+                  marginBottom: 30,
+                  opacity: fade(frame, delay),
+                  transform: `translateX(${interpolate(
+                    revealStage, [0, 1], [55, 0]
+                  )}px)`,
+                }}>
+                  <div style={{
+                    position: "absolute",
+                    left: -34,
+                    width: 13,
+                    height: 13,
+                    borderRadius: 20,
+                    background: accent,
+                    boxShadow: `0 0 15px ${accent}`,
+                  }} />
+
+                  <div style={{
+                    fontSize: 37,
+                    fontWeight: 900,
+                    color: accent,
+                    minWidth: 55,
+                  }}>
+                    {number}
+                  </div>
+
+                  <div style={{
+                    fontSize: 25,
+                    fontWeight: 900,
+                    letterSpacing: 1,
+                  }}>
+                    {title}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </AbsoluteFill>
     );
