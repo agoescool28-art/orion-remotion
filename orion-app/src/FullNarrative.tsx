@@ -150,8 +150,7 @@ const ChapterVisual: React.FC<{
       <AbsoluteFill>
         <div style={{ position:"absolute",left,right,top:760 }}>
           <Kicker color={accent}>A LIFE IN FOUR CHAPTERS</Kicker>
-          <BigNumber value="73 TAHUN" frame={frame} color={accent} size={104}/>
-
+          <BigNumber value="JALAN PANJANG" frame={frame} color={accent} size={68}/>
           <div style={{marginTop:82,height:4,background:"#ffffff2b"}}>
             <MovingRule frame={frame} color={accent}/>
           </div>
