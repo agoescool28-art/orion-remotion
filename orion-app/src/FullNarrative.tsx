@@ -582,56 +582,157 @@ const ChapterVisual: React.FC<{
     );
   }
 
-  // 07 — REFORMASI
+  
+  // 07 — REFORMASI: ORION V4 Editorial Archive
   if (index === 6) {
     return stage(
-      "INDONESIA • 1998",
+      "INDONESIA • MEI 1998",
       "REFORMASI",
       "Perubahan politik nasional menjadi titik balik dalam perjalanan kariernya.",
       <div
         style={{
           height: 350,
           marginTop: 35,
-          background: "linear-gradient(180deg,#392522,#11100f)",
-          border: `1px solid ${accent}`,
+          padding: 22,
+          boxSizing: "border-box",
           position: "relative",
           overflow: "hidden",
+          color: "#25251f",
+          background: "linear-gradient(145deg,#e9dfca,#cfc3aa)",
+          boxShadow: "0 22px 55px #0008",
+          transform: `translateY(${interpolate(
+            enter(frame, fps, 10),
+            [0, 1],
+            [35, 0]
+          )}px) rotate(-1deg)`,
         }}
       >
         <div
           style={{
+            display: "flex",
+            justifyContent: "space-between",
+            borderBottom: "2px solid #292b25",
+            paddingBottom: 10,
+            fontSize: 11,
+            fontWeight: 900,
+            letterSpacing: 2,
+          }}
+        >
+          <span>ARSIP NASIONAL</span>
+          <span>EDISI KHUSUS • 1998</span>
+        </div>
+
+        <div
+          style={{
+            marginTop: 20,
+            fontFamily: "Georgia, serif",
+            fontSize: 43,
+            fontWeight: 900,
+            lineHeight: 0.95,
+            letterSpacing: -2,
+            opacity: reveal(5),
+          }}
+        >
+          INDONESIA
+          <br />
+          BERUBAH.
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            gap: 16,
+            marginTop: 18,
+            alignItems: "stretch",
+          }}
+        >
+          <div
+            style={{
+              width: 7,
+              flexShrink: 0,
+              background: "#963e31",
+            }}
+          />
+          <div style={{ flex: 1 }}>
+            <div
+              style={{
+                fontSize: 12,
+                fontWeight: 900,
+                letterSpacing: 2,
+                color: "#963e31",
+              }}
+            >
+              MEI 1998
+            </div>
+            <div
+              style={{
+                marginTop: 7,
+                fontSize: 17,
+                fontWeight: 800,
+                lineHeight: 1.15,
+              }}
+            >
+              Sebuah babak baru dalam sejarah politik Indonesia.
+            </div>
+            <div
+              style={{
+                marginTop: 9,
+                fontSize: 11,
+                lineHeight: 1.4,
+                color: "#555044",
+              }}
+            >
+              Krisis ekonomi, demonstrasi mahasiswa, dan perubahan
+              kepemimpinan nasional.
+            </div>
+          </div>
+          <div
+            style={{
+              width: 105,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "#292b25",
+              color: "#e9dfca",
+              fontSize: 35,
+              fontWeight: 900,
+              letterSpacing: -2,
+              opacity: reveal(18),
+            }}
+          >
+            98
+          </div>
+        </div>
+
+        <div
+          style={{
             position: "absolute",
-            inset: 0,
-            background:
-              "repeating-linear-gradient(0deg,transparent 0 38px,#ffffff10 39px)",
-            transform: `translateY(${p * 65}px)`,
+            left: 22,
+            right: 22,
+            bottom: 17,
+            borderTop: "1px solid #716957",
+            paddingTop: 9,
+            display: "flex",
+            justifyContent: "space-between",
+            fontSize: 9,
+            fontWeight: 800,
+            letterSpacing: 1.5,
+          }}
+        >
+          <span>REFORMASI INDONESIA</span>
+          <span>SEJARAH • POLITIK</span>
+        </div>
+
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            right: 0,
+            width: `${p * 100}%`,
+            height: 3,
+            background: "#963e31",
           }}
         />
-        <div
-          style={{
-            position: "absolute",
-            left: 25,
-            bottom: 20,
-            fontSize: 100,
-            fontWeight: 900,
-            color: accent,
-            opacity: reveal(),
-          }}
-        >
-          1998
-        </div>
-        <div
-          style={{
-            position: "absolute",
-            right: 25,
-            top: 25,
-            fontSize: 14,
-            color: C.paper,
-            letterSpacing: 4,
-          }}
-        >
-          ERA PERUBAHAN
-        </div>
       </div>
     );
   }
