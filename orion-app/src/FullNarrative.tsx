@@ -939,209 +939,181 @@ const ChapterVisual: React.FC<{
     );
   }
 
-  // 12 — PRESIDEN
+  
+  // 12 — PRESIDEN: ORION V4 Monumental Editorial Closing
   return (
     <AbsoluteFill>
+      {/* EDITORIAL FRAME */}
       <div
         style={{
           position: "absolute",
-          left,
-          right,
-          top: 660,
-          textAlign: "center",
+          left: 68,
+          right: 68,
+          top: 620,
+          padding: "30px 26px",
+          background: "linear-gradient(145deg,#eee5d3f2,#d9cdb8ed)",
+          color: "#20231f",
+          boxShadow: "0 25px 65px #0009",
+          borderTop: `5px solid ${accent}`,
+          transform: `translateY(${interpolate(
+            enter(frame, fps, 8),
+            [0, 1],
+            [65, 0]
+          )}px)`,
+          opacity: reveal(8),
         }}
       >
-        <Kicker color={accent}>20 OKTOBER 2024</Kicker>
-
         <div
           style={{
-            fontSize: 65,
+            display: "flex",
+            justifyContent: "space-between",
+            fontSize: 12,
             fontWeight: 900,
-            marginTop: 30,
-            opacity: reveal(),
+            letterSpacing: 2,
+            borderBottom: "1px solid #777064",
+            paddingBottom: 14,
           }}
         >
-          PELANTIKAN
+          <span>ORION • DOKUMENTER</span>
+          <span>INDONESIA / 2024</span>
         </div>
 
         <div
           style={{
-            fontSize: 190,
+            marginTop: 28,
+            fontSize: 15,
             fontWeight: 900,
-            color: accent,
-            lineHeight: 0.95,
-            letterSpacing: -8,
-            opacity: reveal(),
-            transform: `scale(${0.82 + enter(frame, fps) * 0.18})`,
-            textShadow: `0 0 70px ${accent}55`,
+            letterSpacing: 4,
+            color: "#856c3f",
           }}
         >
-          KE-8
+          20 OKTOBER 2024
         </div>
 
         <div
           style={{
-            height: 3,
-            width: `${p * 100}%`,
-            background: accent,
-            margin: "35px auto",
-            boxShadow: `0 0 20px ${accent}`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginTop: 5,
+          }}
+        >
+          <div
+            style={{
+              fontFamily: "Georgia,serif",
+              fontSize: 178,
+              fontWeight: 900,
+              lineHeight: 0.95,
+              letterSpacing: -12,
+              color: "#252820",
+              transform: `scale(${interpolate(
+                enter(frame, fps, 12),
+                [0, 1],
+                [0.78, 1]
+              )})`,
+              transformOrigin: "left center",
+            }}
+          >
+            08
+          </div>
+
+          <div
+            style={{
+              width: 4,
+              height: 145,
+              background: "#a58a53",
+              marginRight: 18,
+            }}
+          />
+
+          <div style={{ flex: 1 }}>
+            <div
+              style={{
+                fontSize: 30,
+                fontWeight: 900,
+                lineHeight: 1.05,
+                letterSpacing: -1,
+              }}
+            >
+              PRESIDEN
+              <br />
+              REPUBLIK
+              <br />
+              INDONESIA
+            </div>
+            <div
+              style={{
+                marginTop: 13,
+                fontSize: 12,
+                fontWeight: 800,
+                letterSpacing: 2,
+                color: "#856c3f",
+              }}
+            >
+              PRABOWO SUBIANTO
+            </div>
+          </div>
+        </div>
+
+        <div
+          style={{
+            height: 2,
+            background: "#9c8c6d",
+            marginTop: 25,
+            transformOrigin: "left",
+            transform: `scaleX(${p})`,
           }}
         />
 
-        <div style={{ fontSize: 31, fontWeight: 900, lineHeight: 1.3 }}>
-          PRESIDEN REPUBLIK
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginTop: 17,
+            fontSize: 11,
+            fontWeight: 900,
+            letterSpacing: 1.5,
+          }}
+        >
+          <span>AWAL BABAK KEPEMIMPINAN NASIONAL</span>
+          <span>01 / 08</span>
+        </div>
+      </div>
+
+      {/* FINAL EDITORIAL STATEMENT */}
+      <div
+        style={{
+          position: "absolute",
+          left: 75,
+          right: 75,
+          top: 1080,
+          textAlign: "center",
+          opacity: reveal(28),
+          transform: `translateY(${interpolate(
+            enter(frame, fps, 28),
+            [0, 1],
+            [25, 0]
+          )}px)`,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: "Georgia,serif",
+            fontSize: 27,
+            fontStyle: "italic",
+            color: C.paper,
+            lineHeight: 1.35,
+          }}
+        >
+          Sebuah perjalanan panjang.
           <br />
-          INDONESIA
-        </div>
-
-        <div
-          style={{
-            fontSize: 18,
-            color: C.muted,
-            letterSpacing: 3,
-            marginTop: 20,
-          }}
-        >
-          BABAK BARU KEPEMIMPINAN NASIONAL
-        </div>
-
-        <div
-          style={{
-            marginTop: 55,
-            fontSize: 14,
-            color: accent,
-            letterSpacing: 5,
-          }}
-        >
-          20 • 10 • 2024
+          Sebuah babak baru bagi Indonesia.
         </div>
       </div>
     </AbsoluteFill>
   );
-};
 
- 
-const CinematicMotionLayer: React.FC<{
-  index: number;
-  frame: number;
-  duration: number;
-  accent: string;
-}> = ({ index, frame, duration, accent }) => {
-  const t = frame;
-  const sweep = ((t * 2.2 + index * 137) % 1200) - 300;
-  const pulse = 0.5 + Math.sin(t * 0.055) * 0.18;
-  const reveal = interpolate(
-    frame,
-    [0, 35],
-    [0, 1],
-    clamp
-  );
-
-  const routePaths = [
-    "M-100 1450 C250 1200 180 900 520 780 S800 400 1200 220",
-    "M-100 1100 C250 900 400 1150 650 750 S900 450 1200 500",
-    "M-100 1350 C200 1000 450 1100 620 700 S950 300 1200 150",
-    "M-100 800 C250 1050 400 650 650 850 S950 500 1200 250",
-  ];
-
-  const path = routePaths[index % routePaths.length];
-
-  return (
-    <AbsoluteFill
-      style={{
-        pointerEvents: "none",
-        opacity: reveal,
-        overflow: "hidden",
-      }}
-    >
-      {/* Atmospheric radial light */}
-      <div
-        style={{
-          position: "absolute",
-          width: 850,
-          height: 850,
-          left: -300,
-          top: 300,
-          borderRadius: "50%",
-          background: `radial-gradient(circle, ${accent}18 0%, transparent 68%)`,
-          transform: `scale(${0.9 + pulse * 0.25})`,
-        }}
-      />
-
-      {/* Moving light sweep */}
-      <div
-        style={{
-          position: "absolute",
-          top: -300,
-          left: sweep,
-          width: 180,
-          height: 2400,
-          transform: "rotate(18deg)",
-          background: `linear-gradient(90deg, transparent, ${accent}12, transparent)`,
-          filter: "blur(22px)",
-        }}
-      />
-
-      {/* Animated journey route */}
-      <svg
-        viewBox="0 0 1080 1920"
-        width="100%"
-        height="100%"
-        style={{
-          position: "absolute",
-          inset: 0,
-          opacity: 0.5,
-        }}
-      >
-        <defs>
-          <linearGradient id={`orion-route-${index}`}>
-            <stop offset="0%" stopColor={accent} stopOpacity="0" />
-            <stop offset="50%" stopColor={accent} stopOpacity="0.9" />
-            <stop offset="100%" stopColor={accent} stopOpacity="0.1" />
-          </linearGradient>
-        </defs>
-
-        <path
-          d={path}
-          fill="none"
-          stroke={`url(#orion-route-${index})`}
-          strokeWidth="3"
-          strokeDasharray="18 22"
-          strokeDashoffset={-t * 2.5}
-        />
-
-        <circle
-          cx={540 + Math.sin(t * 0.035) * 160}
-          cy={920 + Math.cos(t * 0.025) * 230}
-          r={4 + pulse * 5}
-          fill={accent}
-        />
-      </svg>
-
-      {/* Subtle cinematic grain/grid */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          opacity: 0.12,
-          backgroundImage:
-            "repeating-linear-gradient(0deg, transparent 0px, transparent 5px, #ffffff 6px)",
-          backgroundSize: "100% 7px",
-        }}
-      />
-
-      {/* Edge vignette */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "radial-gradient(ellipse at center, transparent 35%, #00000055 100%)",
-        }}
-      />
-    </AbsoluteFill>
-  );
 };
  
 const Chapter: React.FC<{
