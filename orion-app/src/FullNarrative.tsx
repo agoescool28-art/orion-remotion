@@ -853,7 +853,129 @@ const ChapterVisual: React.FC<{
   );
 };
 
-  
+ 
+const CinematicMotionLayer: React.FC<{
+  index: number;
+  frame: number;
+  duration: number;
+  accent: string;
+}> = ({ index, frame, duration, accent }) => {
+  const t = frame;
+  const sweep = ((t * 2.2 + index * 137) % 1200) - 300;
+  const pulse = 0.5 + Math.sin(t * 0.055) * 0.18;
+  const reveal = interpolate(
+    frame,
+    [0, 35],
+    [0, 1],
+    clamp
+  );
+
+  const routePaths = [
+    "M-100 1450 C250 1200 180 900 520 780 S800 400 1200 220",
+    "M-100 1100 C250 900 400 1150 650 750 S900 450 1200 500",
+    "M-100 1350 C200 1000 450 1100 620 700 S950 300 1200 150",
+    "M-100 800 C250 1050 400 650 650 850 S950 500 1200 250",
+  ];
+
+  const path = routePaths[index % routePaths.length];
+
+  return (
+    <AbsoluteFill
+      style={{
+        pointerEvents: "none",
+        opacity: reveal,
+        overflow: "hidden",
+      }}
+    >
+      {/* Atmospheric radial light */}
+      <div
+        style={{
+          position: "absolute",
+          width: 850,
+          height: 850,
+          left: -300,
+          top: 300,
+          borderRadius: "50%",
+          background: `radial-gradient(circle, ${accent}18 0%, transparent 68%)`,
+          transform: `scale(${0.9 + pulse * 0.25})`,
+        }}
+      />
+
+      {/* Moving light sweep */}
+      <div
+        style={{
+          position: "absolute",
+          top: -300,
+          left: sweep,
+          width: 180,
+          height: 2400,
+          transform: "rotate(18deg)",
+          background: `linear-gradient(90deg, transparent, ${accent}12, transparent)`,
+          filter: "blur(22px)",
+        }}
+      />
+
+      {/* Animated journey route */}
+      <svg
+        viewBox="0 0 1080 1920"
+        width="100%"
+        height="100%"
+        style={{
+          position: "absolute",
+          inset: 0,
+          opacity: 0.5,
+        }}
+      >
+        <defs>
+          <linearGradient id={`orion-route-${index}`}>
+            <stop offset="0%" stopColor={accent} stopOpacity="0" />
+            <stop offset="50%" stopColor={accent} stopOpacity="0.9" />
+            <stop offset="100%" stopColor={accent} stopOpacity="0.1" />
+          </linearGradient>
+        </defs>
+
+        <path
+          d={path}
+          fill="none"
+          stroke={`url(#orion-route-${index})`}
+          strokeWidth="3"
+          strokeDasharray="18 22"
+          strokeDashoffset={-t * 2.5}
+        />
+
+        <circle
+          cx={540 + Math.sin(t * 0.035) * 160}
+          cy={920 + Math.cos(t * 0.025) * 230}
+          r={4 + pulse * 5}
+          fill={accent}
+        />
+      </svg>
+
+      {/* Subtle cinematic grain/grid */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          opacity: 0.12,
+          backgroundImage:
+            "repeating-linear-gradient(0deg, transparent 0px, transparent 5px, #ffffff 6px)",
+          backgroundSize: "100% 7px",
+        }}
+      />
+
+      {/* Edge vignette */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "radial-gradient(ellipse at center, transparent 35%, #00000055 100%)",
+        }}
+      />
+    </AbsoluteFill>
+  );
+};
+ 
 const Chapter: React.FC<{
   data: SceneData;
   index: number;
@@ -935,6 +1057,14 @@ const Chapter: React.FC<{
           filter: "blur(35px)",
         }}
       />
+
+{/* CINEMATIC MOTION LAYER */}
+<CinematicMotionLayer
+  index={index}
+  frame={frame}
+  duration={duration}
+  accent={accent}
+/>
 
       {/* HEADER */}
       <div
