@@ -1116,233 +1116,106 @@ const ChapterVisual: React.FC<{
 
 };
  
-const Chapter: React.FC<{
-  data: SceneData;
+
+const CinematicMotionLayer: React.FC<{
   index: number;
-  start: number;
+  frame: number;
   duration: number;
-}> = ({ data, index, start, duration }) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+  accent: string;
+}> = ({ index, frame, duration, accent }) => {
+  const reveal = interpolate(frame, [0, 35], [0, 1], clamp);
+  const pulse = 0.5 + Math.sin(frame * 0.055) * 0.18;
+  const sweep = ((frame * 2.2 + index * 137) % 1200) - 300;
 
-  const accent = data.accent || C.gold;
-  const intro = enter(frame, fps);
-  const outro = progress(frame, duration - 20, duration - 1);
-
-  const zoom = interpolate(
-    frame,
-    [0, duration],
-    [1.04, 1.13],
-    clamp
-  );
-
-  const drift = interpolate(
-    frame,
-    [0, duration],
-    [index % 2 === 0 ? -22 : 22, index % 2 === 0 ? 22 : -22],
-    clamp
-  );
-
-  
+  const paths = [
+    "M-100 1450 C250 1200 180 900 520 780 S800 400 1200 220",
+    "M-100 1100 C250 900 400 1150 650 750 S900 450 1200 500",
+    "M-100 1350 C200 1000 450 1100 620 700 S950 300 1200 150",
+    "M-100 800 C250 1050 400 650 650 850 S950 500 1200 250",
+  ];
 
   return (
     <AbsoluteFill
       style={{
-        background: C.dark,
-        color: C.paper,
+        pointerEvents: "none",
+        opacity: reveal,
         overflow: "hidden",
       }}
     >
-      {/* BACKGROUND */}
-      {data.imageSrc ? (
-        <AbsoluteFill>
-          <Img
-            src={staticFile(data.imageSrc)}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              transform: `translate3d(${drift}px,0,0) scale(${zoom})`,
-              filter: "brightness(.38) contrast(1.15) saturate(.72)",
-            }}
-          />
-        </AbsoluteFill>
-      ) : (
-        <AbsoluteFill
-          style={{
-            background:
-              "radial-gradient(ellipse at 70% 35%,#293d35 0%,#111b18 45%,#070b0a 90%)",
-          }}
-        />
-      )}
-
-      {/* CINEMATIC GRADING */}
-      <AbsoluteFill
-        style={{
-          background:
-            "linear-gradient(180deg,#050908dd 0%,#05090822 35%,#05090855 60%,#050908ee 100%)",
-        }}
-      />
-
-      {/* AMBIENT LIGHT */}
       <div
         style={{
           position: "absolute",
-          width: 650,
-          height: 650,
-          top: 360,
-          right: -300 + drift,
+          width: 850,
+          height: 850,
+          left: -300,
+          top: 300,
           borderRadius: "50%",
-          background: `radial-gradient(circle,${accent}28,transparent 70%)`,
-          filter: "blur(35px)",
+          background: `radial-gradient(circle, ${accent}18, transparent 68%)`,
+          transform: `scale(${0.9 + pulse * 0.25})`,
         }}
       />
 
-{/* CINEMATIC MOTION LAYER */}
-<CinematicMotionLayer
-  index={index}
-  frame={frame}
-  duration={duration}
-  accent={accent}
-/>
-
-      {/* HEADER */}
       <div
         style={{
           position: "absolute",
-          top: 65,
-          left: 75,
-          right: 75,
-          display: "flex",
-          justifyContent: "space-between",
-          color: accent,
-          fontSize: 14,
-          letterSpacing: 3,
-          fontWeight: 800,
-          opacity: fade(frame),
+          top: -300,
+          left: sweep,
+          width: 180,
+          height: 2400,
+          transform: "rotate(18deg)",
+          background: `linear-gradient(90deg, transparent, ${accent}12, transparent)`,
+          filter: "blur(22px)",
         }}
+      />
+
+      <svg
+        viewBox="0 0 1080 1920"
+        width="100%"
+        height="100%"
+        style={{ position: "absolute", inset: 0, opacity: 0.5 }}
       >
-        <span>ORION / DOCUMENTARY</span>
-        <span>{String(index + 1).padStart(2, "0")} / 12</span>
-      </div>
+        <defs>
+          <linearGradient id={`orion-route-${index}`}>
+            <stop offset="0%" stopColor={accent} stopOpacity="0" />
+            <stop offset="50%" stopColor={accent} stopOpacity="0.9" />
+            <stop offset="100%" stopColor={accent} stopOpacity="0.1" />
+          </linearGradient>
+        </defs>
 
-      {/* CHAPTER TITLE */}
-      <div
-        style={{
-          position: "absolute",
-          top: 205,
-          left: 75,
-          right: 75,
-          opacity: fade(frame),
-          transform: `translateY(${interpolate(
-            intro,
-            [0, 1],
-            [35, 0]
-          )}px)`,
-        }}
-      >
-        <div
-          style={{
-            color: accent,
-            fontSize: 17,
-            letterSpacing: 4,
-            fontWeight: 800,
-          }}
-        >
-          {data.eyebrow}
-        </div>
-
-        <div
-          style={{
-            fontSize: data.title.length > 13 ? 65 : 94,
-            lineHeight: 1.02,
-            fontWeight: 900,
-            letterSpacing: -2,
-            marginTop: 16,
-            textShadow: "0 10px 45px #000",
-          }}
-        >
-          {data.title}
-        </div>
-
-        <div
-          style={{
-            marginTop: 18,
-            height: 3,
-            width: `${progress(frame, 8, 42) * 145}px`,
-            background: accent,
-            boxShadow: `0 0 20px ${accent}88`,
-          }}
+        <path
+          d={paths[index % paths.length]}
+          fill="none"
+          stroke={`url(#orion-route-${index})`}
+          strokeWidth="3"
+          strokeDasharray="18 22"
+          strokeDashoffset={-frame * 2.5}
         />
-      </div>
 
-      {/* VISUAL STAGE — RAISED TO CREATE SPACE */}
+        <circle
+          cx={540 + Math.sin(frame * 0.035) * 160}
+          cy={920 + Math.cos(frame * 0.025) * 230}
+          r={4 + pulse * 5}
+          fill={accent}
+        />
+      </svg>
+
       <div
         style={{
           position: "absolute",
           inset: 0,
-          transform: "translateY(-105px)",
+          opacity: 0.12,
+          backgroundImage:
+            "repeating-linear-gradient(0deg, transparent 0px, transparent 5px, #ffffff 6px)",
+          backgroundSize: "100% 7px",
         }}
-      >
-        <ChapterVisual
-          index={index}
-          frame={frame}
-          duration={duration}
-          accent={accent}
-        />
-      </div>
+      />
 
-      {/* VOICE-OVER KINETIC TYPOGRAPHY SAFE ZONE */}
       <div
         style={{
           position: "absolute",
-          left: 65,
-          right: 65,
-          bottom: 175,
-          height: 180,
-          padding: "22px 18px",
-          display: "flex",
-          alignItems: "center",
+          inset: 0,
           background:
-            "linear-gradient(180deg,#080d0c00,#080d0cdd 28%,#080d0cee)",
-          borderBottom: `2px solid ${accent}88`,
-          boxSizing: "border-box",
-        }}
-      >
-        <AudioSyncedTypography
-          words={prabowoWords}
-          globalStartFrame={start}
-          accent={accent}
-        />
-      </div>
-
-      {/* CHAPTER PROGRESS */}
-      <div
-        style={{
-          position: "absolute",
-          left: 75,
-          right: 75,
-          bottom: 95,
-          height: 3,
-          background: "#ffffff35",
-        }}
-      >
-        <div
-          style={{
-            height: "100%",
-            width: `${(frame / duration) * 100}%`,
-            background: accent,
-            boxShadow: `0 0 15px ${accent}`,
-          }}
-        />
-      </div>
-
-      {/* CINEMATIC EXIT */}
-      <AbsoluteFill
-        style={{
-          background: C.dark,
-          opacity: outro,
-          pointerEvents: "none",
+            "radial-gradient(ellipse at center, transparent 35%, #00000055 100%)",
         }}
       />
     </AbsoluteFill>
