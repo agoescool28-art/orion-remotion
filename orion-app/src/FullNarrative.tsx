@@ -121,97 +121,164 @@ const ChapterVisual: React.FC<{
     </AbsoluteFill>
   );
 
-  // 01 — OPENING
+
+  // 01 — OPENING: ORION V4 Editorial Timeline
   if (index === 0) {
     const milestones = [
       ["1951", "KELAHIRAN"],
       ["1974", "AKABRI"],
-      ["1998", "TITIK BALIK"],
+      ["1998", "REFORMASI"],
       ["2024", "PRESIDEN"],
     ];
 
     return (
       <AbsoluteFill>
-        <div style={{ position: "absolute", left, right, top: 665 }}>
-          <Kicker color={accent}>THE LONG ROAD</Kicker>
+        <div style={{ position: "absolute", left, right, top: 650 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div style={{ width: 48, height: 3, background: accent }} />
+            <Kicker color={accent}>
+              SEBUAH PERJALANAN • INDONESIA
+            </Kicker>
+          </div>
 
           <div
             style={{
-              fontSize: 86,
+              marginTop: 24,
+              fontSize: 106,
               fontWeight: 900,
-              lineHeight: 0.9,
-              letterSpacing: -4,
-              marginTop: 22,
+              lineHeight: 0.82,
+              letterSpacing: -7,
               opacity: reveal(),
               transform: `translateY(${lift()}px)`,
             }}
           >
             JEJAK
             <br />
-            <span style={{ color: accent }}>SEJARAH.</span>
+            <span
+              style={{
+                color: C.paper,
+                fontFamily: "Georgia, serif",
+                fontWeight: 500,
+                fontStyle: "italic",
+              }}
+            >
+              langkah.
+            </span>
           </div>
 
           <div
             style={{
-              height: 390,
-              marginTop: 42,
-              position: "relative",
-              overflow: "hidden",
-              borderTop: `1px solid ${accent}`,
-              borderBottom: `1px solid ${accent}`,
-              background:
-                "repeating-linear-gradient(0deg,transparent 0 34px,#ffffff0b 35px),repeating-linear-gradient(90deg,transparent 0 54px,#ffffff0b 55px)",
+              marginTop: 34,
+              padding: "28px 24px 24px",
+              background: "linear-gradient(120deg,#e9dfca 0%,#cfc1a5 100%)",
+              color: "#1a211d",
+              boxShadow: "0 24px 60px #0007",
+              transform: `translateY(${interpolate(
+                enter(frame, fps, 12),
+                [0, 1],
+                [38, 0]
+              )}px)`,
             }}
           >
-            <svg viewBox="0 0 900 360" width="100%" height="100%">
-              <path
-                d="M0 290 C150 260 170 180 320 205 S510 110 630 145 S780 70 900 40"
-                fill="none"
-                stroke={accent}
-                strokeWidth="5"
-                strokeDasharray="1200"
-                strokeDashoffset={1200 * (1 - p)}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: 13,
+                letterSpacing: 3,
+                fontWeight: 800,
+                opacity: 0.7,
+              }}
+            >
+              <span>GARIS WAKTU</span>
+              <span>1951 — 2024</span>
+            </div>
+
+            <div
+              style={{
+                height: 3,
+                background: "#8c8069",
+                marginTop: 28,
+                position: "relative",
+              }}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  width: `${p * 100}%`,
+                  background: "#273b31",
+                }}
               />
 
-              {milestones.map(([year, label], i) => {
-                const x = 55 + i * 260;
-                const y = [278, 205, 135, 55][i];
+              {milestones.map(([year], i) => {
+                const x = [0, 33.3, 66.6, 100][i];
 
                 return (
-                  <g key={year} opacity={reveal(18 + i * 15)}>
-                    <circle cx={x} cy={y} r="9" fill={accent} />
-                    <text
-                      x={x}
-                      y={y - 30}
-                      fill={C.paper}
-                      fontSize="30"
-                      fontWeight="bold"
-                    >
-                      {year}
-                    </text>
-                    <text
-                      x={x}
-                      y={y + 45}
-                      fill={accent}
-                      fontSize="15"
-                    >
-                      {label}
-                    </text>
-                  </g>
+                  <div
+                    key={year}
+                    style={{
+                      position: "absolute",
+                      left: `${x}%`,
+                      top: -8,
+                      width: 16,
+                      height: 16,
+                      borderRadius: "50%",
+                      background: "#273b31",
+                      border: "3px solid #e9dfca",
+                      transform: "translateX(-50%)",
+                      opacity: reveal(12 + i * 13),
+                    }}
+                  />
                 );
               })}
-            </svg>
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(4,1fr)",
+                gap: 8,
+                marginTop: 22,
+              }}
+            >
+              {milestones.map(([year, label], i) => (
+                <div key={year} style={{ opacity: reveal(12 + i * 13) }}>
+                  <div
+                    style={{
+                      fontSize: 28,
+                      fontWeight: 900,
+                      letterSpacing: -1,
+                    }}
+                  >
+                    {year}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 10,
+                      letterSpacing: 1.2,
+                      fontWeight: 800,
+                      marginTop: 5,
+                    }}
+                  >
+                    {label}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div
             style={{
-              fontSize: 18,
+              marginTop: 22,
+              display: "flex",
+              justifyContent: "space-between",
               color: C.muted,
-              letterSpacing: 3,
-              marginTop: 25,
+              fontSize: 13,
+              letterSpacing: 2,
             }}
           >
-            EMPAT ERA • SATU PERJALANAN
+            <span>ARSIP • BIOGRAFI</span>
+            <span>ORION DOCUMENTARY / 01</span>
           </div>
         </div>
       </AbsoluteFill>
