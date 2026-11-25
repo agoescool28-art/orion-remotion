@@ -121,97 +121,164 @@ const ChapterVisual: React.FC<{
     </AbsoluteFill>
   );
 
-  // 01 — OPENING
+
+  // 01 — OPENING: ORION V4 Editorial Timeline
   if (index === 0) {
     const milestones = [
       ["1951", "KELAHIRAN"],
       ["1974", "AKABRI"],
-      ["1998", "TITIK BALIK"],
+      ["1998", "REFORMASI"],
       ["2024", "PRESIDEN"],
     ];
 
     return (
       <AbsoluteFill>
-        <div style={{ position: "absolute", left, right, top: 665 }}>
-          <Kicker color={accent}>THE LONG ROAD</Kicker>
+        <div style={{ position: "absolute", left, right, top: 650 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div style={{ width: 48, height: 3, background: accent }} />
+            <Kicker color={accent}>
+              SEBUAH PERJALANAN • INDONESIA
+            </Kicker>
+          </div>
 
           <div
             style={{
-              fontSize: 86,
+              marginTop: 24,
+              fontSize: 106,
               fontWeight: 900,
-              lineHeight: 0.9,
-              letterSpacing: -4,
-              marginTop: 22,
+              lineHeight: 0.82,
+              letterSpacing: -7,
               opacity: reveal(),
               transform: `translateY(${lift()}px)`,
             }}
           >
             JEJAK
             <br />
-            <span style={{ color: accent }}>SEJARAH.</span>
+            <span
+              style={{
+                color: C.paper,
+                fontFamily: "Georgia, serif",
+                fontWeight: 500,
+                fontStyle: "italic",
+              }}
+            >
+              langkah.
+            </span>
           </div>
 
           <div
             style={{
-              height: 390,
-              marginTop: 42,
-              position: "relative",
-              overflow: "hidden",
-              borderTop: `1px solid ${accent}`,
-              borderBottom: `1px solid ${accent}`,
-              background:
-                "repeating-linear-gradient(0deg,transparent 0 34px,#ffffff0b 35px),repeating-linear-gradient(90deg,transparent 0 54px,#ffffff0b 55px)",
+              marginTop: 34,
+              padding: "28px 24px 24px",
+              background: "linear-gradient(120deg,#e9dfca 0%,#cfc1a5 100%)",
+              color: "#1a211d",
+              boxShadow: "0 24px 60px #0007",
+              transform: `translateY(${interpolate(
+                enter(frame, fps, 12),
+                [0, 1],
+                [38, 0]
+              )}px)`,
             }}
           >
-            <svg viewBox="0 0 900 360" width="100%" height="100%">
-              <path
-                d="M0 290 C150 260 170 180 320 205 S510 110 630 145 S780 70 900 40"
-                fill="none"
-                stroke={accent}
-                strokeWidth="5"
-                strokeDasharray="1200"
-                strokeDashoffset={1200 * (1 - p)}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: 13,
+                letterSpacing: 3,
+                fontWeight: 800,
+                opacity: 0.7,
+              }}
+            >
+              <span>GARIS WAKTU</span>
+              <span>1951 — 2024</span>
+            </div>
+
+            <div
+              style={{
+                height: 3,
+                background: "#8c8069",
+                marginTop: 28,
+                position: "relative",
+              }}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  width: `${p * 100}%`,
+                  background: "#273b31",
+                }}
               />
 
-              {milestones.map(([year, label], i) => {
-                const x = 55 + i * 260;
-                const y = [278, 205, 135, 55][i];
+              {milestones.map(([year], i) => {
+                const x = [0, 33.3, 66.6, 100][i];
 
                 return (
-                  <g key={year} opacity={reveal(18 + i * 15)}>
-                    <circle cx={x} cy={y} r="9" fill={accent} />
-                    <text
-                      x={x}
-                      y={y - 30}
-                      fill={C.paper}
-                      fontSize="30"
-                      fontWeight="bold"
-                    >
-                      {year}
-                    </text>
-                    <text
-                      x={x}
-                      y={y + 45}
-                      fill={accent}
-                      fontSize="15"
-                    >
-                      {label}
-                    </text>
-                  </g>
+                  <div
+                    key={year}
+                    style={{
+                      position: "absolute",
+                      left: `${x}%`,
+                      top: -8,
+                      width: 16,
+                      height: 16,
+                      borderRadius: "50%",
+                      background: "#273b31",
+                      border: "3px solid #e9dfca",
+                      transform: "translateX(-50%)",
+                      opacity: reveal(12 + i * 13),
+                    }}
+                  />
                 );
               })}
-            </svg>
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(4,1fr)",
+                gap: 8,
+                marginTop: 22,
+              }}
+            >
+              {milestones.map(([year, label], i) => (
+                <div key={year} style={{ opacity: reveal(12 + i * 13) }}>
+                  <div
+                    style={{
+                      fontSize: 28,
+                      fontWeight: 900,
+                      letterSpacing: -1,
+                    }}
+                  >
+                    {year}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 10,
+                      letterSpacing: 1.2,
+                      fontWeight: 800,
+                      marginTop: 5,
+                    }}
+                  >
+                    {label}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div
             style={{
-              fontSize: 18,
+              marginTop: 22,
+              display: "flex",
+              justifyContent: "space-between",
               color: C.muted,
-              letterSpacing: 3,
-              marginTop: 25,
+              fontSize: 13,
+              letterSpacing: 2,
             }}
           >
-            EMPAT ERA • SATU PERJALANAN
+            <span>ARSIP • BIOGRAFI</span>
+            <span>ORION DOCUMENTARY / 01</span>
           </div>
         </div>
       </AbsoluteFill>
@@ -515,56 +582,157 @@ const ChapterVisual: React.FC<{
     );
   }
 
-  // 07 — REFORMASI
+  
+  // 07 — REFORMASI: ORION V4 Editorial Archive
   if (index === 6) {
     return stage(
-      "INDONESIA • 1998",
+      "INDONESIA • MEI 1998",
       "REFORMASI",
       "Perubahan politik nasional menjadi titik balik dalam perjalanan kariernya.",
       <div
         style={{
           height: 350,
           marginTop: 35,
-          background: "linear-gradient(180deg,#392522,#11100f)",
-          border: `1px solid ${accent}`,
+          padding: 22,
+          boxSizing: "border-box",
           position: "relative",
           overflow: "hidden",
+          color: "#25251f",
+          background: "linear-gradient(145deg,#e9dfca,#cfc3aa)",
+          boxShadow: "0 22px 55px #0008",
+          transform: `translateY(${interpolate(
+            enter(frame, fps, 10),
+            [0, 1],
+            [35, 0]
+          )}px) rotate(-1deg)`,
         }}
       >
         <div
           style={{
+            display: "flex",
+            justifyContent: "space-between",
+            borderBottom: "2px solid #292b25",
+            paddingBottom: 10,
+            fontSize: 11,
+            fontWeight: 900,
+            letterSpacing: 2,
+          }}
+        >
+          <span>ARSIP NASIONAL</span>
+          <span>EDISI KHUSUS • 1998</span>
+        </div>
+
+        <div
+          style={{
+            marginTop: 20,
+            fontFamily: "Georgia, serif",
+            fontSize: 43,
+            fontWeight: 900,
+            lineHeight: 0.95,
+            letterSpacing: -2,
+            opacity: reveal(5),
+          }}
+        >
+          INDONESIA
+          <br />
+          BERUBAH.
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            gap: 16,
+            marginTop: 18,
+            alignItems: "stretch",
+          }}
+        >
+          <div
+            style={{
+              width: 7,
+              flexShrink: 0,
+              background: "#963e31",
+            }}
+          />
+          <div style={{ flex: 1 }}>
+            <div
+              style={{
+                fontSize: 12,
+                fontWeight: 900,
+                letterSpacing: 2,
+                color: "#963e31",
+              }}
+            >
+              MEI 1998
+            </div>
+            <div
+              style={{
+                marginTop: 7,
+                fontSize: 17,
+                fontWeight: 800,
+                lineHeight: 1.15,
+              }}
+            >
+              Sebuah babak baru dalam sejarah politik Indonesia.
+            </div>
+            <div
+              style={{
+                marginTop: 9,
+                fontSize: 11,
+                lineHeight: 1.4,
+                color: "#555044",
+              }}
+            >
+              Krisis ekonomi, demonstrasi mahasiswa, dan perubahan
+              kepemimpinan nasional.
+            </div>
+          </div>
+          <div
+            style={{
+              width: 105,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "#292b25",
+              color: "#e9dfca",
+              fontSize: 35,
+              fontWeight: 900,
+              letterSpacing: -2,
+              opacity: reveal(18),
+            }}
+          >
+            98
+          </div>
+        </div>
+
+        <div
+          style={{
             position: "absolute",
-            inset: 0,
-            background:
-              "repeating-linear-gradient(0deg,transparent 0 38px,#ffffff10 39px)",
-            transform: `translateY(${p * 65}px)`,
+            left: 22,
+            right: 22,
+            bottom: 17,
+            borderTop: "1px solid #716957",
+            paddingTop: 9,
+            display: "flex",
+            justifyContent: "space-between",
+            fontSize: 9,
+            fontWeight: 800,
+            letterSpacing: 1.5,
+          }}
+        >
+          <span>REFORMASI INDONESIA</span>
+          <span>SEJARAH • POLITIK</span>
+        </div>
+
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            right: 0,
+            width: `${p * 100}%`,
+            height: 3,
+            background: "#963e31",
           }}
         />
-        <div
-          style={{
-            position: "absolute",
-            left: 25,
-            bottom: 20,
-            fontSize: 100,
-            fontWeight: 900,
-            color: accent,
-            opacity: reveal(),
-          }}
-        >
-          1998
-        </div>
-        <div
-          style={{
-            position: "absolute",
-            right: 25,
-            top: 25,
-            fontSize: 14,
-            color: C.paper,
-            letterSpacing: 4,
-          }}
-        >
-          ERA PERUBAHAN
-        </div>
       </div>
     );
   }
@@ -771,209 +939,181 @@ const ChapterVisual: React.FC<{
     );
   }
 
-  // 12 — PRESIDEN
+  
+  // 12 — PRESIDEN: ORION V4 Monumental Editorial Closing
   return (
     <AbsoluteFill>
+      {/* EDITORIAL FRAME */}
       <div
         style={{
           position: "absolute",
-          left,
-          right,
-          top: 660,
-          textAlign: "center",
+          left: 68,
+          right: 68,
+          top: 620,
+          padding: "30px 26px",
+          background: "linear-gradient(145deg,#eee5d3f2,#d9cdb8ed)",
+          color: "#20231f",
+          boxShadow: "0 25px 65px #0009",
+          borderTop: `5px solid ${accent}`,
+          transform: `translateY(${interpolate(
+            enter(frame, fps, 8),
+            [0, 1],
+            [65, 0]
+          )}px)`,
+          opacity: reveal(8),
         }}
       >
-        <Kicker color={accent}>20 OKTOBER 2024</Kicker>
-
         <div
           style={{
-            fontSize: 65,
+            display: "flex",
+            justifyContent: "space-between",
+            fontSize: 12,
             fontWeight: 900,
-            marginTop: 30,
-            opacity: reveal(),
+            letterSpacing: 2,
+            borderBottom: "1px solid #777064",
+            paddingBottom: 14,
           }}
         >
-          PELANTIKAN
+          <span>ORION • DOKUMENTER</span>
+          <span>INDONESIA / 2024</span>
         </div>
 
         <div
           style={{
-            fontSize: 190,
+            marginTop: 28,
+            fontSize: 15,
             fontWeight: 900,
-            color: accent,
-            lineHeight: 0.95,
-            letterSpacing: -8,
-            opacity: reveal(),
-            transform: `scale(${0.82 + enter(frame, fps) * 0.18})`,
-            textShadow: `0 0 70px ${accent}55`,
+            letterSpacing: 4,
+            color: "#856c3f",
           }}
         >
-          KE-8
+          20 OKTOBER 2024
         </div>
 
         <div
           style={{
-            height: 3,
-            width: `${p * 100}%`,
-            background: accent,
-            margin: "35px auto",
-            boxShadow: `0 0 20px ${accent}`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginTop: 5,
+          }}
+        >
+          <div
+            style={{
+              fontFamily: "Georgia,serif",
+              fontSize: 178,
+              fontWeight: 900,
+              lineHeight: 0.95,
+              letterSpacing: -12,
+              color: "#252820",
+              transform: `scale(${interpolate(
+                enter(frame, fps, 12),
+                [0, 1],
+                [0.78, 1]
+              )})`,
+              transformOrigin: "left center",
+            }}
+          >
+            08
+          </div>
+
+          <div
+            style={{
+              width: 4,
+              height: 145,
+              background: "#a58a53",
+              marginRight: 18,
+            }}
+          />
+
+          <div style={{ flex: 1 }}>
+            <div
+              style={{
+                fontSize: 30,
+                fontWeight: 900,
+                lineHeight: 1.05,
+                letterSpacing: -1,
+              }}
+            >
+              PRESIDEN
+              <br />
+              REPUBLIK
+              <br />
+              INDONESIA
+            </div>
+            <div
+              style={{
+                marginTop: 13,
+                fontSize: 12,
+                fontWeight: 800,
+                letterSpacing: 2,
+                color: "#856c3f",
+              }}
+            >
+              PRABOWO SUBIANTO
+            </div>
+          </div>
+        </div>
+
+        <div
+          style={{
+            height: 2,
+            background: "#9c8c6d",
+            marginTop: 25,
+            transformOrigin: "left",
+            transform: `scaleX(${p})`,
           }}
         />
 
-        <div style={{ fontSize: 31, fontWeight: 900, lineHeight: 1.3 }}>
-          PRESIDEN REPUBLIK
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginTop: 17,
+            fontSize: 11,
+            fontWeight: 900,
+            letterSpacing: 1.5,
+          }}
+        >
+          <span>AWAL BABAK KEPEMIMPINAN NASIONAL</span>
+          <span>01 / 08</span>
+        </div>
+      </div>
+
+      {/* FINAL EDITORIAL STATEMENT */}
+      <div
+        style={{
+          position: "absolute",
+          left: 75,
+          right: 75,
+          top: 1080,
+          textAlign: "center",
+          opacity: reveal(28),
+          transform: `translateY(${interpolate(
+            enter(frame, fps, 28),
+            [0, 1],
+            [25, 0]
+          )}px)`,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: "Georgia,serif",
+            fontSize: 27,
+            fontStyle: "italic",
+            color: C.paper,
+            lineHeight: 1.35,
+          }}
+        >
+          Sebuah perjalanan panjang.
           <br />
-          INDONESIA
-        </div>
-
-        <div
-          style={{
-            fontSize: 18,
-            color: C.muted,
-            letterSpacing: 3,
-            marginTop: 20,
-          }}
-        >
-          BABAK BARU KEPEMIMPINAN NASIONAL
-        </div>
-
-        <div
-          style={{
-            marginTop: 55,
-            fontSize: 14,
-            color: accent,
-            letterSpacing: 5,
-          }}
-        >
-          20 • 10 • 2024
+          Sebuah babak baru bagi Indonesia.
         </div>
       </div>
     </AbsoluteFill>
   );
-};
 
- 
-const CinematicMotionLayer: React.FC<{
-  index: number;
-  frame: number;
-  duration: number;
-  accent: string;
-}> = ({ index, frame, duration, accent }) => {
-  const t = frame;
-  const sweep = ((t * 2.2 + index * 137) % 1200) - 300;
-  const pulse = 0.5 + Math.sin(t * 0.055) * 0.18;
-  const reveal = interpolate(
-    frame,
-    [0, 35],
-    [0, 1],
-    clamp
-  );
-
-  const routePaths = [
-    "M-100 1450 C250 1200 180 900 520 780 S800 400 1200 220",
-    "M-100 1100 C250 900 400 1150 650 750 S900 450 1200 500",
-    "M-100 1350 C200 1000 450 1100 620 700 S950 300 1200 150",
-    "M-100 800 C250 1050 400 650 650 850 S950 500 1200 250",
-  ];
-
-  const path = routePaths[index % routePaths.length];
-
-  return (
-    <AbsoluteFill
-      style={{
-        pointerEvents: "none",
-        opacity: reveal,
-        overflow: "hidden",
-      }}
-    >
-      {/* Atmospheric radial light */}
-      <div
-        style={{
-          position: "absolute",
-          width: 850,
-          height: 850,
-          left: -300,
-          top: 300,
-          borderRadius: "50%",
-          background: `radial-gradient(circle, ${accent}18 0%, transparent 68%)`,
-          transform: `scale(${0.9 + pulse * 0.25})`,
-        }}
-      />
-
-      {/* Moving light sweep */}
-      <div
-        style={{
-          position: "absolute",
-          top: -300,
-          left: sweep,
-          width: 180,
-          height: 2400,
-          transform: "rotate(18deg)",
-          background: `linear-gradient(90deg, transparent, ${accent}12, transparent)`,
-          filter: "blur(22px)",
-        }}
-      />
-
-      {/* Animated journey route */}
-      <svg
-        viewBox="0 0 1080 1920"
-        width="100%"
-        height="100%"
-        style={{
-          position: "absolute",
-          inset: 0,
-          opacity: 0.5,
-        }}
-      >
-        <defs>
-          <linearGradient id={`orion-route-${index}`}>
-            <stop offset="0%" stopColor={accent} stopOpacity="0" />
-            <stop offset="50%" stopColor={accent} stopOpacity="0.9" />
-            <stop offset="100%" stopColor={accent} stopOpacity="0.1" />
-          </linearGradient>
-        </defs>
-
-        <path
-          d={path}
-          fill="none"
-          stroke={`url(#orion-route-${index})`}
-          strokeWidth="3"
-          strokeDasharray="18 22"
-          strokeDashoffset={-t * 2.5}
-        />
-
-        <circle
-          cx={540 + Math.sin(t * 0.035) * 160}
-          cy={920 + Math.cos(t * 0.025) * 230}
-          r={4 + pulse * 5}
-          fill={accent}
-        />
-      </svg>
-
-      {/* Subtle cinematic grain/grid */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          opacity: 0.12,
-          backgroundImage:
-            "repeating-linear-gradient(0deg, transparent 0px, transparent 5px, #ffffff 6px)",
-          backgroundSize: "100% 7px",
-        }}
-      />
-
-      {/* Edge vignette */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "radial-gradient(ellipse at center, transparent 35%, #00000055 100%)",
-        }}
-      />
-    </AbsoluteFill>
-  );
 };
  
 const Chapter: React.FC<{
