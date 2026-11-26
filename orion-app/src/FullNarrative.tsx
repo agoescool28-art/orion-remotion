@@ -1126,8 +1126,7 @@ const Chapter: React.FC<{
   const { fps } = useVideoConfig();
 
   const accent = data.accent || C.gold;
-  const intro = enter(frame, fps);
-  const outro = progress(frame, duration - 20, duration - 1);
+  
 
   const zoom = interpolate(
     frame,
