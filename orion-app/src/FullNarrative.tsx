@@ -62,7 +62,7 @@ const ChapterVisual: React.FC<{
   duration: number;
   accent: string;
 }> = ({ index, frame, duration, accent }) => {
-  const { fps } = useVideoConfig();
+
 
   const p = progress(frame, 8, duration * 0.82);
   const left = 76;
