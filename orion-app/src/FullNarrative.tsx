@@ -1123,7 +1123,7 @@ const Chapter: React.FC<{
   duration: number;
 }> = ({ data, index, start, duration }) => {
   const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+  
 
   const accent = data.accent || C.gold;
   
