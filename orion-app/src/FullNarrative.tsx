@@ -1116,7 +1116,87 @@ const ChapterVisual: React.FC<{
 
 };
  
+const Chapter: React.FC<{
+  data: SceneData;
+  index: number;
+  start: number;
+  duration: number;
+}> = ({ data, index, start, duration }) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
 
+  const accent = data.accent || C.gold;
+  const intro = enter(frame, fps);
+  const outro = progress(frame, duration - 20, duration - 1);
+
+  const zoom = interpolate(
+    frame,
+    [0, duration],
+    [1.04, 1.13],
+    clamp
+  );
+
+  const drift = interpolate(
+    frame,
+    [0, duration],
+    [index % 2 === 0 ? -22 : 22, index % 2 === 0 ? 22 : -22],
+    clamp
+  );
+
+  
+
+  return (
+    <AbsoluteFill
+      style={{
+        background: C.dark,
+        color: C.paper,
+        overflow: "hidden",
+      }}
+    >
+      {/* BACKGROUND */}
+      {data.imageSrc ? (
+        <AbsoluteFill>
+          <Img
+            src={staticFile(data.imageSrc)}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              transform: `translate3d(${drift}px,0,0) scale(${zoom})`,
+              filter: "brightness(.38) contrast(1.15) saturate(.72)",
+            }}
+          />
+        </AbsoluteFill>
+      ) : (
+        <AbsoluteFill
+          style={{
+            background:
+              "radial-gradient(ellipse at 70% 35%,#293d35 0%,#111b18 45%,#070b0a 90%)",
+          }}
+        />
+      )}
+
+      {/* CINEMATIC GRADING */}
+      <AbsoluteFill
+        style={{
+          background:
+            "linear-gradient(180deg,#050908dd 0%,#05090822 35%,#05090855 60%,#050908ee 100%)",
+        }}
+      />
+
+      {/* AMBIENT LIGHT */}
+      <div
+        style={{
+          position: "absolute",
+          width: 650,
+          height: 650,
+          top: 360,
+          right: -300 + drift,
+          borderRadius: "50%",
+          background: `radial-gradient(circle,${accent}28,transparent 70%)`,
+          filter: "blur(35px)",
+        }}
+      />
 const CinematicMotionLayer: React.FC<{
   index: number;
   frame: number;
