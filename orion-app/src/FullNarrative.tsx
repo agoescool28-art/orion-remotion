@@ -1197,6 +1197,22 @@ const Chapter: React.FC<{
           filter: "blur(35px)",
         }}
       />
+      <CinematicMotionLayer
+  index={index}
+  frame={frame}
+  duration={duration}
+  accent={accent}
+/>
+
+<ChapterVisual
+  index={index}
+  frame={frame}
+  duration={duration}
+  accent={accent}
+/>
+</AbsoluteFill>
+);
+};
 const CinematicMotionLayer: React.FC<{
   index: number;
   frame: number;
