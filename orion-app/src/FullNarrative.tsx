@@ -1210,6 +1210,22 @@ const Chapter: React.FC<{
   duration={duration}
   accent={accent}
 />
+     <div
+  style={{
+    position: "absolute",
+    left: 65,
+    right: 65,
+    bottom: 175,
+    height: 180,
+    zIndex: 20,
+  }}
+>
+  <AudioSyncedTypography
+    words={prabowoWords}
+    globalStartFrame={start}
+    accent={accent}
+  />
+</div>
 </AbsoluteFill>
 );
 };
