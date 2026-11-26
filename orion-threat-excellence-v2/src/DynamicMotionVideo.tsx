@@ -732,6 +732,13 @@ const FlatVectorStage: React.FC<{
 
         {/* 6 TRUK PENGIRIMAN DI BAWAH */}
         <text
+          const getSpeechWeight = (text?: string) => {
+    const clean = (text || "").trim();
+    const wordWeight = clean.split(/\s+/).filter(Boolean).length * 1.0;
+    const sentencePauses = (clean.match(/[.!?]+/g) || []).length * 1.65;
+    const commaPauses = (clean.match(/[,;:]+/g) || []).length * 0.75;
+    return Math.max(4, wordWeight + sentencePauses + commaPauses);
+  };
           x="480"
           y="465"
           textAnchor="middle"
