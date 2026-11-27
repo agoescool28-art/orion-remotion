@@ -108,6 +108,7 @@ export const project = {
       subtitle: "Setelah Soeharto mundur, Prabowo dicopot dari jabatan Pangkostrad.",
       durationFrames: 299,
       accent: "#D9A8B8",
+      imageSrc: "1000827938.jpg.jpeg",
       beats: [
         { text: "REFORMASI 1998", start: 16, duration: 72 },
         { text: "SOEHARTO MUNDUR", start: 105, duration: 70 },
