@@ -1162,7 +1162,7 @@ const Chapter: React.FC<{
               height: "100%",
               objectFit: "cover",
               transform: `translate3d(${drift}px,0,0) scale(${zoom})`,
-              filter: "brightness(.38) contrast(1.15) saturate(.72)",
+              filter: "brightness(.64) contrast(1.08) saturate(.88)",
             }}
           />
         </AbsoluteFill>
@@ -1179,7 +1179,7 @@ const Chapter: React.FC<{
       <AbsoluteFill
         style={{
           background:
-            "linear-gradient(180deg,#050908dd 0%,#05090822 35%,#05090855 60%,#050908ee 100%)",
+            "linear-gradient(180deg,#080b09aa 0%,#080b0910 32%,#080b0938 58%,#080b09d9 100%)",
         }}
       />
 
