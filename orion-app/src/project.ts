@@ -73,6 +73,7 @@ export const project = {
       subtitle: "Setelah menempuh pendidikan militer, ia lulus dari AKABRI pada tahun 1974.",
       durationFrames: 187,
       accent: "#A8C9D9",
+      imageSrc: "academy-cadets.jpg",
       beats: [
         { text: "PENDIDIKAN MILITER", start: 18, duration: 82 },
         { text: "LULUS AKABRI • 1974", start: 132, duration: 88 },
@@ -84,6 +85,7 @@ export const project = {
       subtitle: "Dari sinilah perjalanan panjangnya di lingkungan Angkatan Darat berkembang.",
       durationFrames: 225,
       accent: "#D9A8B8",
+      imageSrc: "1000827935.jpg.jpeg",
       beats: [
         { text: "KARIER ANGKATAN DARAT", start: 18, duration: 82 },
         { text: "LINGKUNGAN PASUKAN KHUSUS", start: 120, duration: 92 },
@@ -96,6 +98,7 @@ export const project = {
       subtitle: "Pada 1996 ia dipercaya menjadi Danjen Kopassus, lalu menjabat Pangkostrad pada 1998.",
       durationFrames: 280,
       accent: "#E5C58B",
+      imageSrc: "1000827941.jpg.jpeg",
       beats: [
         { text: "1996", start: 15, duration: 48 },
         { text: "DANJEN KOPASSUS", start: 82, duration: 68 },
@@ -145,6 +148,7 @@ export const project = {
       subtitle: "Pada 2008 ikut mendirikan Partai Gerindra. Tahun 2009 menjadi calon wakil presiden bersama Megawati, lalu maju sebagai calon presiden pada 2014 dan 2019.",
       durationFrames: 443,
       accent: "#A8C9D9",
+      imageSrc: "1000827944.jpg.jpeg",
       beats: [
         { text: "2008 • GERINDRA", start: 18, duration: 75 },
         { text: "2009 • CALON WAKIL PRESIDEN", start: 112, duration: 100 },
@@ -157,6 +161,7 @@ export const project = {
       subtitle: "Pada 2019, ia masuk ke pemerintahan sebagai Menteri Pertahanan hingga menjelang pemilihan presiden 2024.",
       durationFrames: 261,
       accent: "#D8B878",
+      imageSrc: "1000827945.jpg.jpeg",
       beats: [
         { text: "2019", start: 18, duration: 55 },
         { text: "MENTERI PERTAHANAN", start: 100, duration: 90 },
