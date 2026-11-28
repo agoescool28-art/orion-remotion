@@ -14,14 +14,12 @@ import {
 
 import { project, type SceneData } from "./project";
 import { prabowoWords } from "./audio/prabowo.words";
-import { AudioSyncedTypography } from "./audio/AudioSyncedTypography";
 import {
   HandDrawnCanvas,
   HandDrawnCard,
   HandDrawnHighlight,
   HANDDRAWN_PALETTE,
 } from "./HandDrawnStyle";
-
 const C = {
   gold: "#D5A52F",
   paper: "#292820",
