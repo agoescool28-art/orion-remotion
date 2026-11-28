@@ -17,9 +17,11 @@ import { prabowoWords } from "./audio/prabowo.words";
 import {
   HandDrawnCanvas,
   HandDrawnCard,
-  HandDrawnHighlight,
   HANDDRAWN_PALETTE,
 } from "./HandDrawnStyle";
+
+import { AudioSyncedTypography } from "./audio/AudioSyncedTypography";
+
 const C = {
   gold: "#D5A52F",
   paper: "#292820",
