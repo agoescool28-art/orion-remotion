@@ -1363,10 +1363,15 @@ export const FullNarrative: React.FC = () => {
     );
   });
 
-  return (
-    <AbsoluteFill style={{background:C.dark}}>
-      {sequences}
-      <Audio src={staticFile(project.voiceoverSrc)} volume={1}/>
-    </AbsoluteFill>
-  );
+  
+return (
+  <HandDrawnCanvas chapter={0}>
+    {sequences}
+    <Audio
+      src={staticFile(project.voiceoverSrc)}
+      volume={1}
+    />
+  </HandDrawnCanvas>
+);
+
 };
