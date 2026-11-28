@@ -22,47 +22,11 @@ import {
 
 import { AudioSyncedTypography } from "./audio/AudioSyncedTypography";
 
-const C = {
-  gold: "#D5A52F",
-  paper: "#292820",
-  muted: "#777064",
-  dark: "#F3EBDD",
-  paperDark: "#E6DAC4",
-  red: "#A94D3D",
-  olive: "#687354",
-};
 const clamp = {
   extrapolateLeft: "clamp" as const,
   extrapolateRight: "clamp" as const,
 };
 
-const progress = (frame: number, from: number, to: number) =>
-  interpolate(frame, [from, Math.max(from + 1, to)], [0, 1], clamp);
-
-const enter = (frame: number, fps: number, delay = 0) =>
-  spring({
-    frame: Math.max(0, frame - delay),
-    fps,
-    config: { damping: 18, stiffness: 115, mass: 0.65 },
-  });
-
-const fade = (frame: number, delay = 0) =>
-  progress(frame, delay, delay + 18);
-
-const Kicker: React.FC<{
-  children: React.ReactNode;
-  color: string;
-}> = ({ children, color }) => (
-  <div style={{
-    color,
-    fontSize: 17,
-    letterSpacing: 5,
-    fontWeight: 800,
-    textTransform: "uppercase",
-  }}>
-    {children}
-  </div>
-);
 
 const ChapterVisual: React.FC<{
   index: number;
@@ -1157,6 +1121,12 @@ const Chapter: React.FC<{
 
   return (
     <HandDrawnCanvas chapter={index} accent={accent}>
+      <CinematicMotionLayer
+        index={index}
+        frame={frame}
+        duration={duration}
+        accent={accent}
+      />
       <AbsoluteFill
         style={{
           padding: "150px 75px 150px",
