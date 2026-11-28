@@ -1129,111 +1129,194 @@ const Chapter: React.FC<{
   duration: number;
 }> = ({ data, index, start, duration }) => {
   const frame = useCurrentFrame();
-  
+  const { fps } = useVideoConfig();
 
-  const accent = data.accent || C.gold;
-  
+  const accent = data.accent || HANDDRAWN_PALETTE.mustard;
+
+  const reveal = spring({
+    frame,
+    fps,
+    config: { damping: 18, stiffness: 100 },
+  });
 
   const zoom = interpolate(
     frame,
     [0, duration],
-    [1.04, 1.13],
+    [1.02, 1.12],
     clamp
   );
 
   const drift = interpolate(
     frame,
     [0, duration],
-    [index % 2 === 0 ? -22 : 22, index % 2 === 0 ? 22 : -22],
+    [index % 2 === 0 ? -18 : 18, index % 2 === 0 ? 18 : -18],
     clamp
   );
 
-  
-
   return (
-    <AbsoluteFill
-      style={{
-        background: C.dark,
-        color: C.paper,
-        overflow: "hidden",
-      }}
-    >
-      {/* BACKGROUND */}
-      {data.imageSrc ? (
-        <AbsoluteFill>
-          <Img
-            src={staticFile(data.imageSrc)}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              transform: `translate3d(${drift}px,0,0) scale(${zoom})`,
-              filter: "brightness(.64) contrast(1.08) saturate(.88)",
-            }}
-          />
-        </AbsoluteFill>
-      ) : (
-        <AbsoluteFill
-          style={{
-            background:
-              "radial-gradient(ellipse at 70% 35%,#293d35 0%,#111b18 45%,#070b0a 90%)",
-          }}
-        />
-      )}
-
-      {/* CINEMATIC GRADING */}
+    <HandDrawnCanvas chapter={index} accent={accent}>
       <AbsoluteFill
         style={{
-          background:
-            "linear-gradient(180deg,#080b09aa 0%,#080b0910 32%,#080b0938 58%,#080b09d9 100%)",
+          padding: "150px 75px 150px",
+          boxSizing: "border-box",
         }}
-      />
+      >
+        {/* EDITORIAL HEADER */}
+        <div
+          style={{
+            opacity: reveal,
+            transform: `translateY(${(1 - reveal) * 35}px)`,
+          }}
+        >
+          <div
+            style={{
+              fontSize: 19,
+              fontWeight: 900,
+              letterSpacing: 4,
+              color: HANDDRAWN_PALETTE.muted,
+            }}
+          >
+            {data.eyebrow}
+          </div>
 
-      {/* AMBIENT LIGHT */}
-      <div
-        style={{
-          position: "absolute",
-          width: 650,
-          height: 650,
-          top: 360,
-          right: -300 + drift,
-          borderRadius: "50%",
-          background: `radial-gradient(circle,${accent}28,transparent 70%)`,
-          filter: "blur(35px)",
-        }}
-      />
-      <CinematicMotionLayer
-  index={index}
-  frame={frame}
-  duration={duration}
-  accent={accent}
-/>
+          <div
+            style={{
+              marginTop: 22,
+              fontSize: data.title.length > 16 ? 64 : 88,
+              lineHeight: 0.98,
+              fontWeight: 900,
+              letterSpacing: -3,
+              color: HANDDRAWN_PALETTE.ink,
+              maxWidth: 900,
+            }}
+          >
+            {data.title}
+          </div>
 
-<ChapterVisual
-  index={index}
-  frame={frame}
-  duration={duration}
-  accent={accent}
-/>
-     <div
-  style={{
-    position: "absolute",
-    left: 65,
-    right: 65,
-    bottom: 175,
-    height: 180,
-    zIndex: 20,
-  }}
->
-  <AudioSyncedTypography
-    words={prabowoWords}
-    globalStartFrame={start}
-    accent={accent}
-  />
-</div>
-</AbsoluteFill>
-);
+          <div
+            style={{
+              width: 180,
+              height: 9,
+              marginTop: 28,
+              background: accent,
+              transform: `scaleX(${reveal})`,
+              transformOrigin: "left",
+            }}
+          />
+        </div>
+
+        {/* DOCUMENTARY PHOTO */}
+        <div
+          style={{
+            position: "absolute",
+            top: 470,
+            left: 75,
+            right: 75,
+            height: 850,
+            padding: 18,
+            background: "#FFF9EC",
+            border: `3px solid ${HANDDRAWN_PALETTE.ink}`,
+            boxShadow: "12px 14px 0px #29282025",
+            transform: `translateY(${(1 - reveal) * 45}px) rotate(-0.5deg)`,
+            opacity: reveal,
+            overflow: "hidden",
+          }}
+        >
+          {data.imageSrc ? (
+            <Img
+              src={staticFile(data.imageSrc)}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                transform: `translateX(${drift}px) scale(${zoom})`,
+                filter: "contrast(1.06) saturate(.88)",
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                width: "100%",
+                height: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: HANDDRAWN_PALETTE.paperDark,
+                color: HANDDRAWN_PALETTE.muted,
+                fontSize: 30,
+                fontWeight: 800,
+              }}
+            >
+              ARSIP DOKUMENTER
+            </div>
+          )}
+
+          {/* PHOTO LABEL */}
+          <div
+            style={{
+              position: "absolute",
+              left: 35,
+              bottom: 35,
+              padding: "12px 20px",
+              background: HANDDRAWN_PALETTE.paper,
+              color: HANDDRAWN_PALETTE.ink,
+              border: `2px solid ${HANDDRAWN_PALETTE.ink}`,
+              fontSize: 17,
+              fontWeight: 900,
+              letterSpacing: 2,
+            }}
+          >
+            ARSIP SEJARAH • {String(index + 1).padStart(2, "0")}
+          </div>
+        </div>
+
+        {/* STORY DESCRIPTION */}
+        <div
+          style={{
+            position: "absolute",
+            top: 1370,
+            left: 75,
+            right: 75,
+            opacity: reveal,
+            transform: `translateY(${(1 - reveal) * 25}px)`,
+          }}
+        >
+          <HandDrawnCard accent={accent}>
+            <div
+              style={{
+                fontSize: 28,
+                lineHeight: 1.4,
+                fontWeight: 600,
+                color: HANDDRAWN_PALETTE.ink,
+              }}
+            >
+              {data.subtitle}
+            </div>
+          </HandDrawnCard>
+        </div>
+
+        {/* AUDIO-SYNCED KINETIC TYPOGRAPHY */}
+        <div
+          style={{
+            position: "absolute",
+            left: 75,
+            right: 75,
+            bottom: 175,
+            height: 180,
+            zIndex: 20,
+          }}
+        >
+          <AudioSyncedTypography
+            words={prabowoWords}
+            globalStartFrame={start}
+            accent={accent}
+          />
+        </div>
+      </AbsoluteFill>
+    </HandDrawnCanvas>
+  );
 };
+
 const CinematicMotionLayer: React.FC<{
   index: number;
   frame: number;
