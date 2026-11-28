@@ -67,275 +67,256 @@ const getSpeechWeight = (text: string): number => {
   return words * 1.15 + pauses * 1.8;
 };
 
-// Ilustrasi Vektor Animasi Kaya Gerak (Gaya Claude / Flat Editorial Motion)
-const VectorIllustrationStage: React.FC<{
-  type: string;
+// Tema warna panggung yang berganti setiap scene agar tidak monoton
+const STAGE_THEMES = [
+  { bg: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', text: '#f8fafc', border: '#1e1b18' },
+  { bg: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', text: '#1e1b18', border: '#1e1b18' },
+  { bg: 'linear-gradient(135deg, #064e3b 0%, #022c22 100%)', text: '#ecfdf5', border: '#1e1b18' },
+  { bg: 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)', text: '#1e1b18', border: '#1e1b18' },
+  { bg: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)', text: '#1e1b18', border: '#1e1b18' },
+  { bg: 'linear-gradient(135deg, #27272a 0%, #18181b 100%)', text: '#fafafa', border: '#1e1b18' },
+];
+
+// 12 Ilustrasi Vektor Bercerita (Story-Driven Illustrations)
+const StoryVectorArtwork: React.FC<{
+  sceneIndex: number;
   frame: number;
   fps: number;
   accent: string;
   gold: string;
   danger: string;
   success: string;
-  heroStat?: string;
-  heroLabel?: string;
-}> = ({ type, frame, fps, accent, gold, danger, success, heroStat, heroLabel }) => {
-  const enter = spring({ frame, fps, config: { damping: 14, stiffness: 120 } });
-  const floatY = Math.sin(frame / 14) * 7;
-  const pulse = 1 + Math.sin(frame / 10) * 0.04;
-  const spin = (frame * 1.4) % 360;
-  const dashOffset = -(frame * 2.5);
+  isLightBg: boolean;
+}> = ({ sceneIndex, frame, fps, accent, gold, danger, success, isLightBg }) => {
+  const strokeMain = isLightBg ? '#1e1b18' : '#ffffff';
+  const floatY = Math.sin(frame / 13) * 6;
+  const wave = Math.sin(frame / 8);
+  const spin = (frame * 1.2) % 360;
+  const dash = -(frame * 2.4);
+  const pop = spring({ frame, fps, config: { damping: 13, stiffness: 130 } });
+
+  const variant = sceneIndex % 12;
 
   return (
-    <div
-      style={{
-        width: '100%',
-        height: '100%',
-        background: 'linear-gradient(145deg, #1e1b18 0%, #2c2620 100%)',
-        borderRadius: 28,
-        border: '3px solid #1e1b18',
-        boxShadow: '0 14px 0 #1e1b18',
-        position: 'relative',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        transform: `scale(${interpolate(enter, [0, 1], [0.92, 1])})`,
-      }}
-    >
-      {/* Grid Latar Halus */}
-      <svg width="100%" height="100%" style={{ position: 'absolute', opacity: 0.14 }}>
-        <defs>
-          <pattern id="vecGrid" width="36" height="36" patternUnits="userSpaceOnUse">
-            <path d="M 36 0 L 0 0 0 36" fill="none" stroke="#f5efe6" strokeWidth="1" />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#vecGrid)" />
-      </svg>
-
-      {/* Badge Atas */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 16,
-          left: 18,
-          background: gold,
-          color: '#1e1b18',
-          padding: '5px 14px',
-          borderRadius: 99,
-          fontWeight: 900,
-          fontSize: 18,
-          letterSpacing: 1,
-          border: '2px solid #1e1b18',
-        }}
-      >
-        {heroStat || 'INSIGHT'}
-      </div>
-
-      {heroLabel && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 20,
-            right: 20,
-            color: '#f5efe6',
-            opacity: 0.85,
-            fontWeight: 700,
-            fontSize: 16,
-            letterSpacing: 0.8,
-          }}
-        >
-          {heroLabel}
-        </div>
+    <div style={{ transform: `translateY(${floatY}px) scale(${interpolate(pop, [0, 1], [0.88, 1])})` }}>
+      {/* 0: Deretan 3 Rumah dengan Cahaya Koneksi Pagi */}
+      {variant === 0 && (
+        <svg width="760" height="290" viewBox="0 0 760 290">
+          {/* Matahari Pagi */}
+          <circle cx="640" cy="65" r="34" fill={gold} stroke="#1e1b18" strokeWidth="4" />
+          {/* Garis Koneksi Sosial */}
+          <path
+            d="M 160 155 C 260 70, 500 70, 600 155"
+            fill="none"
+            stroke={accent}
+            strokeWidth="6"
+            strokeDasharray="14 10"
+            strokeDashoffset={dash}
+          />
+          {/* 3 Rumah */}
+          {[
+            { x: 90, roof: danger, door: gold },
+            { x: 315, roof: gold, door: accent },
+            { x: 540, roof: success, door: gold },
+          ].map((h, i) => (
+            <g key={i} transform={`translate(${h.x}, 115)`}>
+              <polygon points="65,0 130,52 0,52" fill={h.roof} stroke="#1e1b18" strokeWidth="4" />
+              <rect x="16" y="52" width="98" height="82" rx="10" fill="#ffffff" stroke="#1e1b18" strokeWidth="4" />
+              <rect x="48" y="84" width="34" height="50" rx="5" fill={h.door} stroke="#1e1b18" strokeWidth="3" />
+              <circle cx="74" cy="110" r="3.5" fill="#1e1b18" />
+            </g>
+          ))}
+        </svg>
       )}
 
-      {/* Vektor Utama Berdasarkan Tipe */}
-      <div style={{ transform: `translateY(${floatY}px) scale(${pulse})`, marginTop: 22 }}>
-        {type === 'flow' && (
-          <svg width="460" height="220" viewBox="0 0 460 220">
-            {/* Jalur Koneksi Animasi */}
-            <path
-              d="M 110 130 Q 230 40 350 130"
-              fill="none"
-              stroke={accent}
-              strokeWidth="5"
-              strokeDasharray="12 10"
-              strokeDashoffset={dashOffset}
-            />
-            <path
-              d="M 110 145 Q 230 210 350 145"
-              fill="none"
-              stroke={gold}
-              strokeWidth="4"
-              strokeDasharray="10 8"
-              strokeDashoffset={-dashOffset}
-            />
-            {/* Rumah Kiri */}
-            <g transform="translate(50, 75)">
-              <polygon points="55,0 110,45 0,45" fill={gold} stroke="#1e1b18" strokeWidth="4" />
-              <rect x="14" y="45" width="82" height="65" rx="8" fill="#ffffff" stroke="#1e1b18" strokeWidth="4" />
-              <rect x="42" y="68" width="26" height="42" rx="4" fill={accent} />
-            </g>
-            {/* Node Hati/Harmoni di Tengah */}
-            <circle cx="230" cy="118" r="32" fill={success} stroke="#1e1b18" strokeWidth="4" />
-            <path
-              d="M230 132 L217 119 A8 8 0 0 1 230 108 A8 8 0 0 1 243 119 Z"
-              fill="#ffffff"
-            />
-            {/* Rumah Kanan */}
-            <g transform="translate(300, 75)">
-              <polygon points="55,0 110,45 0,45" fill={success} stroke="#1e1b18" strokeWidth="4" />
-              <rect x="14" y="45" width="82" height="65" rx="8" fill="#ffffff" stroke="#1e1b18" strokeWidth="4" />
-              <rect x="42" y="68" width="26" height="42" rx="4" fill={gold} />
-            </g>
-          </svg>
-        )}
+      {/* 1: Jembatan Hubungan 2 Arah (Hak & Tanggung Jawab) */}
+      {variant === 1 && (
+        <svg width="760" height="290" viewBox="0 0 760 290">
+          <rect x="110" y="95" width="170" height="110" rx="22" fill="#ffffff" stroke="#1e1b18" strokeWidth="5" />
+          <text x="195" y="158" textAnchor="middle" fontSize="28" fontWeight="900" fill="#1e1b18">HAK</text>
+          <rect x="480" y="95" width="170" height="110" rx="22" fill={gold} stroke="#1e1b18" strokeWidth="5" />
+          <text x="565" y="158" textAnchor="middle" fontSize="24" fontWeight="900" fill="#1e1b18">AMANAH</text>
+          {/* Panah Bolak-Balik Animasi */}
+          <path d="M 300 130 H 460" stroke={success} strokeWidth="8" strokeLinecap="round" strokeDasharray="16 10" strokeDashoffset={dash} />
+          <polygon points="465,130 442,115 442,145" fill={success} />
+          <path d="M 460 175 H 300" stroke={accent} strokeWidth="8" strokeLinecap="round" strokeDasharray="16 10" strokeDashoffset={dash} />
+          <polygon points="295,175 318,160 318,190" fill={accent} />
+        </svg>
+      )}
 
-        {type === 'shield' && (
-          <svg width="420" height="220" viewBox="0 0 420 220">
-            <circle
-              cx="210"
-              cy="110"
-              r="88"
-              fill="none"
-              stroke={accent}
-              strokeWidth="3"
-              strokeDasharray="14 10"
-              transform={`rotate(${spin} 210 110)`}
-            />
+      {/* 2: Kitab Terbuka & Pancaran Dalil QS. An-Nisa: 36 */}
+      {variant === 2 && (
+        <svg width="760" height="290" viewBox="0 0 760 290">
+          {/* Cahaya Geometris */}
+          <circle cx="380" cy="145" r={105 + wave * 6} fill="none" stroke={gold} strokeWidth="3" strokeDasharray="12 10" />
+          {/* Halaman Kiri & Kanan */}
+          <path d="M 380 85 Q 290 65 205 90 V 225 Q 290 200 380 225 Z" fill="#ffffff" stroke="#1e1b18" strokeWidth="5" />
+          <path d="M 380 85 Q 470 65 555 90 V 225 Q 470 200 380 225 Z" fill="#fef9c3" stroke="#1e1b18" strokeWidth="5" />
+          <line x1="380" y1="85" x2="380" y2="225" stroke="#1e1b18" strokeWidth="5" />
+          {/* Baris Teks Simbolik */}
+          {[115, 140, 165, 190].map((y, idx) => (
+            <React.Fragment key={idx}>
+              <line x1="235" y1={y} x2="350" y2={y - 5} stroke="#94a3b8" strokeWidth="6" strokeLinecap="round" />
+              <line x1="410" y1={y - 5} x2="525" y2={y} stroke={gold} strokeWidth="6" strokeLinecap="round" />
+            </React.Fragment>
+          ))}
+        </svg>
+      )}
+
+      {/* 3: Peredam Kebisingan & Lisan Santun (Volume Down) */}
+      {variant === 3 && (
+        <svg width="760" height="290" viewBox="0 0 760 290">
+          {/* Speaker Kiri */}
+          <polygon points="190,115 245,115 305,70 305,220 245,175 190,175" fill={danger} stroke="#1e1b18" strokeWidth="5" />
+          {/* Gelombang Suara Mengecil */}
+          <path d="M 340 110 Q 365 145 340 180" fill="none" stroke={danger} strokeWidth="7" strokeLinecap="round" />
+          <path
+            d="M 380 85 Q 420 145 380 205"
+            fill="none"
+            stroke={danger}
+            strokeWidth="7"
+            strokeLinecap="round"
+            opacity={0.35 + Math.abs(wave) * 0.4}
+          />
+          {/* Tanda Silang / Mute */}
+          <circle cx="515" cy="145" r="64" fill={success} stroke="#1e1b18" strokeWidth="5" />
+          <path d="M 488 145 L 508 165 L 546 125" fill="none" stroke="#ffffff" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+
+      {/* 4: Paket Kepedulian & Bantuan (Hati + Kotak Kebaikan) */}
+      {variant === 4 && (
+        <svg width="760" height="290" viewBox="0 0 760 290">
+          <rect x="275" y="115" width="210" height="130" rx="20" fill={gold} stroke="#1e1b18" strokeWidth="5" />
+          <rect x="358" y="115" width="44" height="130" fill={danger} stroke="#1e1b18" strokeWidth="4" />
+          <rect x="275" y="162" width="210" height="36" fill={danger} stroke="#1e1b18" strokeWidth="4" />
+          {/* Ikon Hati Mengambang */}
+          <g transform={`translate(380, ${68 + wave * 6})`}>
+            <circle r="36" fill="#ffffff" stroke="#1e1b18" strokeWidth="4" />
+            <path d="M 0 14 L -15 -1 A9 9 0 0 1 0 -13 A9 9 0 0 1 15 -1 Z" fill={danger} />
+          </g>
+        </svg>
+      )}
+
+      {/* 5: Gembok Privasi & Tirai Amanah */}
+      {variant === 5 && (
+        <svg width="760" height="290" viewBox="0 0 760 290">
+          <path d="M 325 125 V 90 A 55 55 0 0 1 435 90 V 125" fill="none" stroke={gold} strokeWidth="18" strokeLinecap="round" />
+          <rect x="295" y="120" width="170" height="130" rx="24" fill={accent} stroke="#1e1b18" strokeWidth="5" />
+          <circle cx="380" cy="172" r="18" fill="#1e1b18" />
+          <rect x="372" y="182" width="16" height="34" rx="6" fill="#1e1b18" />
+        </svg>
+      )}
+
+      {/* 6: Perisai Keamanan Lingkungan (4 Pilar Hak) */}
+      {variant === 6 && (
+        <svg width="760" height="290" viewBox="0 0 760 290">
+          <circle cx="380" cy="145" r="112" fill="none" stroke={success} strokeWidth="4" strokeDasharray="16 12" transform={`rotate(${spin} 380 145)`} />
+          <path d="M 380 42 L 475 80 V 150 C 475 208 432 244 380 262 C 328 244 285 208 285 150 V 80 Z" fill={success} stroke="#1e1b18" strokeWidth="5" />
+          <path d="M 342 150 L 370 178 L 424 120" fill="none" stroke="#ffffff" strokeWidth="14" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+
+      {/* 7: Kebaikan Kecil — Piring Makanan & Senyum Sapaan */}
+      {variant === 7 && (
+        <svg width="760" height="290" viewBox="0 0 760 290">
+          {/* Tudung Saji / Piring Hangat */}
+          <path d="M 245 185 A 135 110 0 0 1 515 185 Z" fill={gold} stroke="#1e1b18" strokeWidth="5" />
+          <circle cx="380" cy="65" r="16" fill={danger} stroke="#1e1b18" strokeWidth="4" />
+          <rect x="220" y="185" width="320" height="24" rx="12" fill="#ffffff" stroke="#1e1b18" strokeWidth="5" />
+          {/* Uap Hangat */}
+          {[-45, 0, 45].map((dx, i) => (
             <path
-              d="M210 26 L282 56 V112 C282 158 250 188 210 202 C170 188 138 158 138 112 V56 Z"
-              fill={success}
-              stroke="#1e1b18"
+              key={i}
+              d={`M ${380 + dx} ${42 + wave * 4} Q ${392 + dx} 24 ${380 + dx} 10`}
+              fill="none"
+              stroke={strokeMain}
               strokeWidth="5"
-            />
-            <path
-              d="M180 112 L202 134 L244 88"
-              fill="none"
-              stroke="#ffffff"
-              strokeWidth="12"
               strokeLinecap="round"
-              strokeLinejoin="round"
             />
-          </svg>
-        )}
+          ))}
+        </svg>
+      )}
 
-        {type === 'gear' && (
-          <svg width="440" height="220" viewBox="0 0 440 220">
-            <g transform={`translate(155, 110) rotate(${spin})`}>
-              <circle r="48" fill={gold} stroke="#1e1b18" strokeWidth="5" />
-              <circle r="18" fill="#1e1b18" />
-              {[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => (
-                <rect
-                  key={deg}
-                  x="-9"
-                  y="-64"
-                  width="18"
-                  height="22"
-                  rx="4"
-                  fill={gold}
-                  stroke="#1e1b18"
-                  strokeWidth="3"
-                  transform={`rotate(${deg})`}
-                />
-              ))}
+      {/* 8: Lingkaran Kesetaraan Warga (Beragam Warna Bersatu) */}
+      {variant === 8 && (
+        <svg width="760" height="290" viewBox="0 0 760 290">
+          <circle cx="380" cy="145" r="92" fill="none" stroke={strokeMain} strokeWidth="5" strokeDasharray="12 10" strokeDashoffset={dash} />
+          {[
+            { cx: 380, cy: 53, c: gold },
+            { cx: 472, cy: 145, c: success },
+            { cx: 380, cy: 237, c: accent },
+            { cx: 288, cy: 145, c: danger },
+          ].map((node, i) => (
+            <g key={i}>
+              <circle cx={node.cx} cy={node.cy} r="34" fill={node.c} stroke="#1e1b18" strokeWidth="5" />
+              <circle cx={node.cx} cy={node.cy - 6} r="10" fill="#ffffff" />
+              <path d={`M ${node.cx - 16} ${node.cy + 18} A 16 12 0 0 1 ${node.cx + 16} ${node.cy + 18}`} fill="#ffffff" />
             </g>
-            <g transform={`translate(285, 110) rotate(${-spin})`}>
-              <circle r="48" fill={accent} stroke="#1e1b18" strokeWidth="5" />
-              <circle r="18" fill="#1e1b18" />
-              {[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => (
-                <rect
-                  key={deg}
-                  x="-9"
-                  y="-64"
-                  width="18"
-                  height="22"
-                  rx="4"
-                  fill={accent}
-                  stroke="#1e1b18"
-                  strokeWidth="3"
-                  transform={`rotate(${deg})`}
-                />
-              ))}
+          ))}
+        </svg>
+      )}
+
+      {/* 9: Timbangan Aksi vs Tuntutan */}
+      {variant === 9 && (
+        <svg width="760" height="290" viewBox="0 0 760 290">
+          <rect x="368" y="65" width="24" height="175" rx="8" fill="#ffffff" stroke="#1e1b18" strokeWidth="4" />
+          <rect x="295" y="230" width="170" height="24" rx="10" fill={gold} stroke="#1e1b18" strokeWidth="4" />
+          <g transform={`rotate(${wave * 5} 380 95)`}>
+            <rect x="195" y="86" width="370" height="18" rx="9" fill={accent} stroke="#1e1b18" strokeWidth="4" />
+            <circle cx="220" cy="155" r="42" fill={danger} stroke="#1e1b18" strokeWidth="4" />
+            <circle cx="540" cy="155" r="42" fill={success} stroke="#1e1b18" strokeWidth="4" />
+          </g>
+        </svg>
+      )}
+
+      {/* 10: Kompas Langkah Awal dari Diri Sendiri */}
+      {variant === 10 && (
+        <svg width="760" height="290" viewBox="0 0 760 290">
+          <circle cx="380" cy="145" r="105" fill="#ffffff" stroke="#1e1b18" strokeWidth="6" />
+          <circle cx="380" cy="145" r="85" fill="none" stroke={accent} strokeWidth="3" strokeDasharray="8 8" />
+          <g transform={`rotate(${wave * 18} 380 145)`}>
+            <polygon points="380,62 402,145 380,162 358,145" fill={danger} stroke="#1e1b18" strokeWidth="3" />
+            <polygon points="380,228 402,145 380,128 358,145" fill={success} stroke="#1e1b18" strokeWidth="3" />
+          </g>
+          <circle cx="380" cy="145" r="14" fill={gold} stroke="#1e1b18" strokeWidth="4" />
+        </svg>
+      )}
+
+      {/* 11: Panorama Lingkungan Damai & Harmonis */}
+      {variant === 11 && (
+        <svg width="760" height="290" viewBox="0 0 760 290">
+          <circle cx="380" cy="135" r="78" fill={gold} stroke="#1e1b18" strokeWidth="5" />
+          <path d="M 120 225 Q 380 165 640 225 L 640 255 L 120 255 Z" fill={success} stroke="#1e1b18" strokeWidth="5" />
+          {[220, 345, 470].map((x, idx) => (
+            <g key={idx} transform={`translate(${x}, 145)`}>
+              <polygon points="35,0 70,28 0,28" fill={danger} stroke="#1e1b18" strokeWidth="3" />
+              <rect x="10" y="28" width="50" height="44" rx="5" fill="#ffffff" stroke="#1e1b18" strokeWidth="3" />
             </g>
-          </svg>
-        )}
-
-        {type === 'chart' && (
-          <svg width="440" height="220" viewBox="0 0 440 220">
-            <line x1="60" y1="185" x2="380" y2="185" stroke="#f5efe6" strokeWidth="4" strokeLinecap="round" />
-            {[
-              { x: 95, h: 75, c: accent },
-              { x: 165, h: 110, c: gold },
-              { x: 235, h: 135, c: success },
-              { x: 305, h: 160, c: danger },
-            ].map((bar, i) => {
-              const grow = spring({ frame: Math.max(0, frame - i * 4), fps, config: { damping: 12 } });
-              const curH = bar.h * grow;
-              return (
-                <rect
-                  key={i}
-                  x={bar.x}
-                  y={185 - curH}
-                  width="46"
-                  height={curH}
-                  rx="8"
-                  fill={bar.c}
-                  stroke="#1e1b18"
-                  strokeWidth="4"
-                />
-              );
-            })}
-          </svg>
-        )}
-
-        {(type === 'bulb' || !['flow', 'shield', 'gear', 'chart'].includes(type)) && (
-          <svg width="420" height="220" viewBox="0 0 420 220">
-            {[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => (
-              <line
-                key={deg}
-                x1="210"
-                y1="105"
-                x2="210"
-                y2="18"
-                stroke={gold}
-                strokeWidth="4"
-                strokeLinecap="round"
-                strokeDasharray="10 14"
-                strokeDashoffset={dashOffset}
-                transform={`rotate(${deg} 210 105)`}
-              />
-            ))}
-            <circle cx="210" cy="105" r="56" fill={gold} stroke="#1e1b18" strokeWidth="5" />
-            <rect x="186" y="152" width="48" height="26" rx="8" fill="#ffffff" stroke="#1e1b18" strokeWidth="4" />
-            <path d="M196 105 L208 118 L228 92" fill="none" stroke="#1e1b18" strokeWidth="7" strokeLinecap="round" />
-          </svg>
-        )}
-      </div>
+          ))}
+        </svg>
+      )}
     </div>
   );
 };
 
-// Komponen Kinetic Subtitle Cepat Per Frasa (3-4 kata per tampil, pop-up responsif)
+// Komponen Kinetic Subtitle Cepat Per Frasa (3 Kata Pop-Up)
 const KineticPhraseCaption: React.FC<{
   body: string;
   sceneFrame: number;
   sceneDurationFrames: number;
   fps: number;
-  accentColor: string;
   goldColor: string;
-}> = ({ body, sceneFrame, sceneDurationFrames, fps, accentColor, goldColor }) => {
+}> = ({ body, sceneFrame, sceneDurationFrames, fps, goldColor }) => {
   const words = (body || '').trim().split(/\s+/).filter(Boolean);
   if (words.length === 0) return null;
 
-  // Bagi teks menjadi frasa 3 kata agar terbaca cepat & tidak menumpuk
   const CHUNK_SIZE = 3;
   const chunks: string[][] = [];
   for (let i = 0; i < words.length; i += CHUNK_SIZE) {
     chunks.push(words.slice(i, i + CHUNK_SIZE));
   }
 
-  // Beri sedikit buffer 6% di akhir scene agar tidak telat saat pindah scene
   const effectiveFrames = Math.max(1, sceneDurationFrames * 0.94);
   const progress = Math.min(0.999, Math.max(0, sceneFrame / effectiveFrames));
   const activeChunkIdx = Math.min(chunks.length - 1, Math.floor(progress * chunks.length));
@@ -359,7 +340,7 @@ const KineticPhraseCaption: React.FC<{
     <div
       style={{
         width: '100%',
-        minHeight: 118,
+        minHeight: 116,
         backgroundColor: '#1e1b18',
         borderRadius: 24,
         padding: '18px 26px',
@@ -386,7 +367,6 @@ const KineticPhraseCaption: React.FC<{
               backgroundColor: isCurrent ? goldColor : 'transparent',
               color: isCurrent ? '#1e1b18' : '#ffffff',
               transform: isCurrent ? 'scale(1.08) translateY(-2px)' : 'scale(1)',
-              transition: 'all 0.08s ease-out',
             }}
           >
             {word}
@@ -418,7 +398,6 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
   const safeScenes = scenes.length > 0 ? scenes : [];
   if (safeScenes.length === 0) return <AbsoluteFill style={{ backgroundColor: bgColor }} />;
 
-  // Hitung durasi tiap scene secara proporsional dari jumlah kata & tanda baca
   const weights = safeScenes.map((s) =>
     s.durationSec && s.durationSec > 0 ? s.durationSec : getSpeechWeight(s.body)
   );
@@ -442,6 +421,9 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
   const { scene, startFrame, duration: sceneDuration } = activeRange;
   const sceneFrame = Math.max(0, frame - startFrame);
 
+  const stageTheme = STAGE_THEMES[currentIdx % STAGE_THEMES.length];
+  const isLightStage = stageTheme.text === '#1e1b18';
+
   const headerSpring = spring({ frame: sceneFrame, fps, config: { damping: 14, stiffness: 150 } });
   const headingColor =
     scene.headingTone === 'danger'
@@ -463,22 +445,24 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
       ? Math.min(points.length - 1, Math.floor((sceneFrame / sceneDuration) * points.length))
       : 0;
 
+  // Efek Ken Burns halus jika Pixabay imageUrl tersedia
+  const kenBurnsScale = interpolate(sceneFrame, [0, sceneDuration], [1.02, 1.12]);
+
   return (
     <AbsoluteFill
       style={{
         backgroundColor: bgColor,
         fontFamily: "'Inter', 'Montserrat', system-ui, sans-serif",
         color: '#1e1b18',
-        padding: '48px 44px',
+        padding: '44px 42px',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
       }}
     >
-      {/* Audio Narasi */}
       {audioSrc ? <Audio src={staticFile(audioSrc)} /> : null}
 
-      {/* Pola Grid Kertas Edukatif */}
+      {/* Grid Kertas Edukatif */}
       <svg width="100%" height="100%" style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
         <defs>
           <pattern id="paperGrid" width="48" height="48" patternUnits="userSpaceOnUse">
@@ -489,16 +473,7 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
       </svg>
 
       {/* Progress Bar Atas */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 10,
-          backgroundColor: 'rgba(30,27,24,0.12)',
-        }}
-      >
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 10, backgroundColor: 'rgba(30,27,24,0.12)' }}>
         <div
           style={{
             height: '100%',
@@ -508,7 +483,7 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
         />
       </div>
 
-      {/* HEADER: Tag Kategori + Watermark + Judul */}
+      {/* HEADER */}
       <div
         style={{
           zIndex: 2,
@@ -516,7 +491,7 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
           opacity: headerSpring,
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <div
             style={{
               backgroundColor: '#1e1b18',
@@ -546,7 +521,7 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
 
         <div
           style={{
-            fontSize: 54,
+            fontSize: 52,
             fontWeight: 900,
             lineHeight: 1.08,
             color: headingColor,
@@ -558,19 +533,96 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
         </div>
       </div>
 
-      {/* PANGGUNG VISUAL TENGAH: Ilustrasi Vektor Animasi (Selalu Penuh & Dinamis) */}
-      <div style={{ zIndex: 2, height: 340, width: '100%', my: 10 }}>
-        <VectorIllustrationStage
-          type={scene.visualType || 'flow'}
-          frame={sceneFrame}
-          fps={fps}
-          accent={accentColor}
-          gold={goldColor}
-          danger={dangerColor}
-          success={successColor}
-          heroStat={scene.heroStat}
-          heroLabel={scene.heroLabel}
-        />
+      {/* PANGGUNG ILUSTRASI UTAMA (Besar, Variatif Warna & Vektor Bercerita + Backdrop Pixabay) */}
+      <div
+        style={{
+          zIndex: 2,
+          height: 460,
+          width: '100%',
+          background: stageTheme.bg,
+          borderRadius: 30,
+          border: '4px solid #1e1b18',
+          boxShadow: '0 14px 0 #1e1b18',
+          position: 'relative',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {/* Lapisan Foto Pixabay Transparan jika tersedia */}
+        {scene.imageUrl ? (
+          <Img
+            src={scene.imageUrl}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              opacity: isLightStage ? 0.14 : 0.22,
+              transform: `scale(${kenBurnsScale})`,
+            }}
+          />
+        ) : null}
+
+        {/* Pill Info Atas */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 18,
+            left: 20,
+            right: 20,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            zIndex: 3,
+          }}
+        >
+          <span
+            style={{
+              backgroundColor: goldColor,
+              color: '#1e1b18',
+              padding: '6px 16px',
+              borderRadius: 99,
+              fontWeight: 900,
+              fontSize: 19,
+              border: '2px solid #1e1b18',
+            }}
+          >
+            {scene.heroStat || `BAGIAN ${currentIdx + 1}`}
+          </span>
+          {scene.heroLabel && (
+            <span
+              style={{
+                backgroundColor: isLightStage ? '#1e1b18' : 'rgba(255,255,255,0.16)',
+                color: isLightStage ? '#ffffff' : stageTheme.text,
+                padding: '6px 14px',
+                borderRadius: 10,
+                fontWeight: 800,
+                fontSize: 16,
+                letterSpacing: 0.6,
+              }}
+            >
+              {scene.heroLabel}
+            </span>
+          )}
+        </div>
+
+        {/* Karya Vektor Spesifik Scene */}
+        <div style={{ zIndex: 2, marginTop: 32 }}>
+          <StoryVectorArtwork
+            sceneIndex={currentIdx}
+            frame={sceneFrame}
+            fps={fps}
+            accent={accentColor}
+            gold={goldColor}
+            danger={dangerColor}
+            success={successColor}
+            isLightBg={isLightStage}
+          />
+        </div>
       </div>
 
       {/* KARTU DATA / PERBANDINGAN / CHECKLIST */}
@@ -588,7 +640,7 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
                     border: '3px solid #1e1b18',
                     boxShadow: '0 8px 0 #1e1b18',
                     borderRadius: 22,
-                    padding: '20px 18px',
+                    padding: '18px 16px',
                     transform: `scale(${interpolate(pop, [0, 1], [0.92, 1])})`,
                   }}
                 >
@@ -597,26 +649,26 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
                       display: 'inline-block',
                       backgroundColor: colColor,
                       color: '#ffffff',
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: 800,
                       padding: '4px 12px',
                       borderRadius: 8,
-                      marginBottom: 8,
+                      marginBottom: 6,
                     }}
                   >
                     {col.badge}
                   </div>
-                  <div style={{ fontSize: 28, fontWeight: 900, marginBottom: 12, color: '#1e1b18' }}>
+                  <div style={{ fontSize: 26, fontWeight: 900, marginBottom: 10, color: '#1e1b18' }}>
                     {col.title}
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {(col.items || []).map((it, i) => (
                       <div
                         key={i}
                         style={{
-                          fontSize: 22,
+                          fontSize: 21,
                           fontWeight: 700,
-                          padding: '8px 12px',
+                          padding: '7px 10px',
                           backgroundColor: bgColor,
                           borderRadius: 10,
                           borderLeft: `6px solid ${colColor}`,
@@ -637,10 +689,10 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
               border: '3px solid #1e1b18',
               boxShadow: '0 8px 0 #1e1b18',
               borderRadius: 22,
-              padding: '22px 24px',
+              padding: '20px 22px',
               display: 'flex',
               flexDirection: 'column',
-              gap: 16,
+              gap: 14,
             }}
           >
             {points.map((pt, idx) => {
@@ -649,11 +701,11 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
               const fillColor = toneBadgeColor(pt.tone);
               return (
                 <div key={idx}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 23, fontWeight: 800, marginBottom: 6 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 22, fontWeight: 800, marginBottom: 5 }}>
                     <span>{pt.text}</span>
                     <span style={{ color: fillColor }}>{Math.round(targetVal * barProgress)}%</span>
                   </div>
-                  <div style={{ height: 18, backgroundColor: bgColor, borderRadius: 99, overflow: 'hidden', border: '2px solid #1e1b18' }}>
+                  <div style={{ height: 16, backgroundColor: bgColor, borderRadius: 99, overflow: 'hidden', border: '2px solid #1e1b18' }}>
                     <div
                       style={{
                         height: '100%',
@@ -667,7 +719,7 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
             })}
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {points.map((pt, idx) => {
               const isActive = idx === activePointIdx;
               const badgeBg = toneBadgeColor(pt.tone);
@@ -676,26 +728,26 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
                 <div
                   key={idx}
                   style={{
-                    backgroundColor: isActive ? cardBg : 'rgba(255,255,255,0.68)',
+                    backgroundColor: isActive ? cardBg : 'rgba(255,255,255,0.72)',
                     border: isActive ? '3px solid #1e1b18' : '2px solid rgba(30,27,24,0.25)',
                     boxShadow: isActive ? '0 7px 0 #1e1b18' : 'none',
                     borderRadius: 18,
-                    padding: '16px 20px',
+                    padding: '15px 18px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 16,
+                    gap: 15,
                     transform: `scale(${isActive ? 1.02 : 0.98}) translateX(${interpolate(pop, [0, 1], [-18, 0])}px)`,
                   }}
                 >
                   <div
                     style={{
-                      width: 38,
-                      height: 38,
+                      width: 36,
+                      height: 36,
                       borderRadius: 99,
                       backgroundColor: badgeBg,
                       color: '#ffffff',
                       fontWeight: 900,
-                      fontSize: 20,
+                      fontSize: 19,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -705,7 +757,7 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
                   >
                     {scene.overlayType === 'checklist' ? '✓' : idx + 1}
                   </div>
-                  <div style={{ fontSize: 25, fontWeight: 800, color: '#1e1b18', lineHeight: 1.25 }}>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: '#1e1b18', lineHeight: 1.25 }}>
                     {pt.text}
                   </div>
                 </div>
@@ -715,14 +767,13 @@ export const DynamicMotionVideo: React.FC<DynamicMotionProps> = ({
         )}
       </div>
 
-      {/* KINETIC CAPTION BAWAH: Pop-Up Per 3 Kata Cepat & Responsif */}
+      {/* KINETIC CAPTION BAWAH */}
       <div style={{ zIndex: 2, width: '100%' }}>
         <KineticPhraseCaption
           body={scene.body}
           sceneFrame={sceneFrame}
           sceneDurationFrames={sceneDuration}
           fps={fps}
-          accentColor={accentColor}
           goldColor={goldColor}
         />
       </div>
