@@ -16,13 +16,16 @@ import { project, type SceneData } from "./project";
 import { prabowoWords } from "./audio/prabowo.words";
 import { AudioSyncedTypography } from "./audio/AudioSyncedTypography";
 
-const C = {
-  gold: "#D8B878",
-  paper: "#F2EBDD",
-  muted: "#B8B6AD",
-  dark: "#080D0C",
-};
 
+const C = {
+  gold: "#D5A52F",
+  paper: "#292820",
+  muted: "#777064",
+  dark: "#F3EBDD",
+  paperDark: "#E6DAC4",
+  red: "#A94D3D",
+  olive: "#687354",
+};
 const clamp = {
   extrapolateLeft: "clamp" as const,
   extrapolateRight: "clamp" as const,
